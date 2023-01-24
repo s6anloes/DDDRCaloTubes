@@ -1,0 +1,148 @@
+<!-- ====================================================================== -->
+<!--                                                                        -->
+<!--    XML description of the complete SCEPCAL IDEA detector               -->
+<!--    of the SCEPCAL IDEA collider detector design.                       -->
+<!--                                                                        -->
+<!--    Contained are the required                                          -->
+<!--      ++ global constants used uniquely by this module                  -->
+<!--      ++ visualization attributes                                       -->
+<!--      ++ the definition of the readout structure and the                -->
+<!--         readout segmentation (if necessary)                            -->
+<!--      ++ the include statements for the sensitive detectors and         -->
+<!--         the corresponding support structure(s)                         -->
+<!--                                                                        -->
+<!--                                                                        -->
+<!--   @author  M.Frank                                                     -->
+<!--   @date    14/11/2014                                                  -->
+<!--                                                                        -->
+<!-- ====================================================================== -->
+
+
+<lccdd>
+
+<!--
+  <surfaces>
+    <opticalsurface name="/world/DRCrystal#mirrorSurface" finish="polished" model="glisur" type="dielectric_metal">
+    </opticalsurface>
+    <opticalsurface name="/world/DRCrystal#tyvekSurface" finish="etchedtyvekair" model="LUT" type="dielectric_LUT" value="1.0">
+    </opticalsurface>
+    <opticalsurface name="/world/DRCrystal#dielectricSurface" finish="polished" model="glisur" type="dielectric_dielectric">
+    </opticalsurface>
+  </surfaces>
+
+
+
+  <comment>EM Calorimeters</comment>
+  <include ref="SCEPCAL_ECAL.xml"/> 
+
+
+</lccdd>
+
+<lccdd xmlns:compact="http://www.lcsim.org/schemas/compact/1.0"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xs:noNamespaceSchemaLocation="http://www.lcsim.org/schemas/compact/1.0/compact.xsd">-->
+
+
+    <info name="DRCaloTubes"
+        title="My first detector"
+	    author="Andreas Loeschcke Centeno"
+        status="development"
+        version="1">
+        <comment>My first detector</comment>
+    </info>
+
+    <!-- Constants, Readout, VIS goes here -->
+    <includes>
+        <gdmlFile  ref="elements.xml"/>
+        <gdmlFile  ref="materials.xml"/>
+    </includes> 
+
+    <include ref="${DD4hepINSTALL}/DDDetectors/compact/detector_types.xml"/>
+    
+    <define>
+        <constant name="world_side" value="600.*m"/>
+        <constant name="world_x" value="world_side"/>
+        <constant name="world_y" value="world_side"/>
+        <constant name="world_z" value="world_side"/>
+
+        <constant name="ECalBarrel_inner_radius" value="2150*mm"/>
+        <constant name="ECalBarrel_outer_radius" value="2352*mm"/>
+        <constant name="ECalBarrel_half_length" value="2210*mm"/>
+    </define>
+
+    
+    <materials>
+
+        <material name="Vacuum">
+            <D type="density" unit="g/cm3" value="0.0000000001" />
+            <fraction n="0.754" ref="N"/>
+            <fraction n="0.234" ref="O"/>
+            <fraction n="0.012" ref="Ar"/>
+        </material>
+
+
+        <material name="Air">
+            <D type="density" unit="g/cm3" value="0.0012"/>
+            <fraction n="0.754" ref="N"/>
+            <fraction n="0.234" ref="O"/>
+            <fraction n="0.012" ref="Ar"/>
+            <property name="RINDEX"        ref="RINDEX__Air"/>
+        </material>
+
+    </materials>
+
+    <detectors>
+        <detector 
+            name="DRCaloTubes"
+            type="DRCaloTubes"
+            id="1234"
+            readout="MyReadout"
+            vis="MyVis" >
+
+            <type_flags type=" DetType_CALORIMETER + DetType_ELECTROMAGNETIC + DetType_BARREL"/>
+
+            <dimensions
+                zmax="ECalBarrel_half_length"
+                rmin="ECalBarrel_inner_radius"
+                rmax="ECalBarrel_outer_radius"/>
+
+            <layer repeat="1" vis="MyVis">
+                <slice material="Iron" thickness="1*cm" />
+                <slice material="G10" thickness="1*mm" />
+                <slice material="Silicon" thickness="1*mm" sensitive="true" />
+                <slice material="G10" thickness="1*mm" />
+            </layer>
+
+        </detector>
+    </detectors>
+
+    <define>
+        <constant name="ECal_cell_size" value="5.1*mm"/>
+    </define>
+
+    <readouts>
+        <readout name="MyReadout">
+            <segmentation type="GridRPhiEta"
+                grid_size_eta="ECal_cell_size"
+                phi_bins="360"
+                offset_r="ECalBarrel_inner_radius"
+                grid_size_r="1*cm" />
+            <id>system:5,side:2,module:8,stave:4,layer:9,submodule:4,r:32:10,eta:-11,phi:-11</id>
+        </readout>
+    </readouts>
+
+    <display>
+        <vis name="MyVis" 
+            alpha="0.1"
+            r="0.1" g=".5" b=".5"
+            showDaughters="true"
+            visible="false"/>
+    </display>
+
+    <limits>
+        <limitset name="cal_limits">
+            <limit name="step_length_max" particles="*" value="100.0" unit="mm" />
+        </limitset>
+    </limits>
+
+</lccdd>
