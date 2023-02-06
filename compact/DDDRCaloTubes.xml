@@ -68,6 +68,14 @@
         <constant name="ECalBarrel_inner_radius" value="2150*mm"/>
         <constant name="ECalBarrel_outer_radius" value="2352*mm"/>
         <constant name="ECalBarrel_half_length" value="2210*mm"/>
+
+        <constant name="TubeInnerRadius" value="0.5*mm" />
+        <constant name="TubeOuterRadius" value="1.0*mm" />
+        <constant name="TubeThickness"   value="TubeOuterRadius-TubeInnerRadius"/>
+        <constant name="TowerHalfLength" value="50*cm"  />
+
+        <constant name="NumRows" value="1" />
+        <constant name="NumCols" value="1" />
     </define>
 
     
@@ -89,6 +97,12 @@
             <property name="RINDEX"        ref="RINDEX__Air"/>
         </material>
 
+        <material name="Brass">
+            <D type="density" unit="g/cm3" value="8.44" />
+            <fraction n="0.7" ref="Cu" />
+            <fraction n="0.3" ref="Zn" />
+        </material>
+
     </materials>
 
     <detectors>
@@ -102,15 +116,18 @@
             <type_flags type=" DetType_CALORIMETER + DetType_ELECTROMAGNETIC + DetType_BARREL"/>
 
             <dimensions
-                zmax="ECalBarrel_half_length"
-                rmin="ECalBarrel_inner_radius"
-                rmax="ECalBarrel_outer_radius"/>
+                zmax="TowerHalfLength"
+                rmin="TubeInnerRadius"
+                rmax="TubeOuterRadius"/>
+
+            <tube number="NumRows" count="NumCols">
+                <capillary material="Brass"       inner_r="TubeInnerRadius" outer_r="TubeOuterRadius" sensitive="false" />
+                <scinfibre material="Polystyrene" inner_r="0.0*mm"          outer_r="TubeInnerRadius" sensitive="true"  />
+            </tube>
 
             <layer repeat="1" vis="MyVis">
-                <slice material="Iron" thickness="1*cm" />
-                <slice material="G10" thickness="1*mm" />
-                <slice material="Silicon" thickness="1*mm" sensitive="true" />
-                <slice material="G10" thickness="1*mm" />
+                <slice material="Polystyrene" thickness="TubeInnerRadius" />
+                <slice material="Brass"       thickness="TubeThickness"   />
             </layer>
 
         </detector>
@@ -122,12 +139,10 @@
 
     <readouts>
         <readout name="MyReadout">
-            <segmentation type="GridRPhiEta"
-                grid_size_eta="ECal_cell_size"
-                phi_bins="360"
-                offset_r="ECalBarrel_inner_radius"
-                grid_size_r="1*cm" />
-            <id>system:5,side:2,module:8,stave:4,layer:9,submodule:4,r:32:10,eta:-11,phi:-11</id>
+            <segmentation type="CartesianGridXY" 
+                grid_size_x="2*mm" 
+                grid_size_y="2*mm"/>
+            <id>system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16</id>
         </readout>
     </readouts>
 
