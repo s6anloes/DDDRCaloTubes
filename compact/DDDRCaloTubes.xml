@@ -43,7 +43,7 @@
     xs:noNamespaceSchemaLocation="http://www.lcsim.org/schemas/compact/1.0/compact.xsd">-->
 
 
-    <info name="DRCaloTubes"
+    <info name="DDDRCaloTubes"
         title="My first detector"
 	    author="Andreas Loeschcke Centeno"
         status="development"
@@ -93,8 +93,8 @@
 
     <detectors>
         <detector 
-            name="DRCaloTubes"
-            type="DRCaloTubes"
+            name="DDDRCaloTubes"
+            type="DDDRCaloTubes"
             id="1234"
             readout="MyReadout"
             vis="MyVis" >

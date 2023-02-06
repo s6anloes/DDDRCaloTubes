@@ -83,4 +83,4 @@ static dd4hep::Ref_t create_detector(dd4hep::Detector& theDetector,
     return sdet;
 }
 
-DECLARE_DETELEMENT(DRCaloTubes,create_detector)
+DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)

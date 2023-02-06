@@ -9,7 +9,7 @@
 #
 #==========================================================================
 #
-# DRCaloTubes is a detector description of a homogeneous dualreadout calorimeter
+# DDDRCaloTubes is a detector description of a homogeneous dualreadout calorimeter
 #
 #==========================================================================
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
@@ -30,20 +30,20 @@ if(NOT TARGET CLHEP::CLHEP)
   find_package(CLHEP QUIET)
 endif()
 if (TARGET CLHEP::CLHEP)
-  dd4hep_print("|++> CLHEP PRESENT. Building DRCaloTubes examples.")
+  dd4hep_print("|++> CLHEP PRESENT. Building DDDRCaloTubes examples.")
 else()
-  dd4hep_print("|++> CLHEP is not present. NOT building DRCaloTubes examples.")
+  dd4hep_print("|++> CLHEP is not present. NOT building DDDRCaloTubes examples.")
   return()
 endif()
 #==========================================================================
 if(NOT TARGET Geant4::Interface)
-  dd4hep_print("Not creating DRCaloTubes tests [No Geant4 found]")
+  dd4hep_print("Not creating DDDRCaloTubes tests [No Geant4 found]")
   return()
 endif()
 
 if (DD4HEP_USE_GEANT4)
   #---------------------------  Plugin library for the simulation framework  ---------
-  dd4hep_add_dictionary(G__DRCaloTubes
+  dd4hep_add_dictionary(G__DDDRCaloTubes
     SOURCES ${DD4hep_DIR}/include/ROOT/Warnings.h src/DualCrystalCalorimeterHit.h 
     LINKDEF ${DD4hep_DIR}/include/ROOT/LinkDef.h
     OUTPUT  ${LIBRARY_OUTPUT_PATH}
@@ -66,18 +66,18 @@ endif()
 #==========================================================================
 #
 dd4hep_configure_output ()
-dd4hep_configure_scripts(DRCaloTubes DEFAULT_SETUP WITH_TESTS)
+dd4hep_configure_scripts(DDDRCaloTubes DEFAULT_SETUP WITH_TESTS)
 #
 #-------------------------------------------------------------------------------
-# we only create only library for DRCaloTubes. The whole package is a single component
+# we only create only library for DDDRCaloTubes. The whole package is a single component
 # library. A priory there is no need to seperate the implementation from the
 # plugins....
 #
 # If need arises, this can be changed easily.
 #
-#---DRCaloTubes plugin library -------------------------------------------------------
-dd4hep_add_plugin ( DRCaloTubes
-    GENERATED G__DRCaloTubes.cxx 
+#---DDDRCaloTubes plugin library -------------------------------------------------------
+dd4hep_add_plugin ( DDDRCaloTubes
+    GENERATED G__DDDRCaloTubes.cxx 
   SOURCES src/*.cpp src/plugins/*.cpp
   USES    DD4hep::DDCore DD4hep::DDAlign DD4hep::DDCond DD4hep::DDG4 DDDetectors
           ROOT::Core ROOT::Geom ROOT::GenVector CLHEP::CLHEP Geant4::Interface
@@ -87,16 +87,16 @@ dd4hep_add_plugin ( DRCaloTubes
 
 
 
-target_include_directories(DRCaloTubes PUBLIC include)
-target_link_options(DRCaloTubes PRIVATE -L${Geant4_DIR}/..)
+target_include_directories(DDDRCaloTubes PUBLIC include)
+target_link_options(DDDRCaloTubes PRIVATE -L${Geant4_DIR}/..)
 #message (STATUS "CLHEP: ${CLHEP}")
 #
 #
-install(TARGETS DRCaloTubes LIBRARY DESTINATION lib)
-install(DIRECTORY include/DRCaloTubes DESTINATION include)
+install(TARGETS DDDRCaloTubes LIBRARY DESTINATION lib)
+install(DIRECTORY include/DDDRCaloTubes DESTINATION include)
 #
 #---Package installation procedure(s) -----------------------------------------
-install(DIRECTORY data eve scripts DESTINATION ${CMAKE_INSTALL_PREFIX}/examples/DRCaloTubes )
+install(DIRECTORY data eve scripts DESTINATION ${CMAKE_INSTALL_PREFIX}/examples/DDDRCaloTubes )
 #
 #
 #
