@@ -74,8 +74,8 @@
         <constant name="TubeThickness"   value="TubeOuterRadius-TubeInnerRadius"/>
         <constant name="TowerHalfLength" value="50*cm"  />
 
-        <constant name="NumRows" value="1" />
-        <constant name="NumCols" value="1" />
+        <constant name="NumRows" value="20" />
+        <constant name="NumCols" value="16" />
     </define>
 
     
@@ -103,6 +103,13 @@
             <fraction n="0.3" ref="Zn" />
         </material>
 
+        <material name="PMMA" >
+            <D type="density" unit="g/cm3" value="1.19" />
+            <composite n="5" ref="C" />
+            <composite n="2" ref="O" />
+            <composite n="8" ref="H" />
+        </material>
+
     </materials>
 
     <detectors>
@@ -121,8 +128,9 @@
                 rmax="TubeOuterRadius"/>
 
             <tube number="NumRows" count="NumCols">
-                <capillary material="Brass"       inner_r="TubeInnerRadius" outer_r="TubeOuterRadius" sensitive="false" />
-                <scinfibre material="Polystyrene" inner_r="0.0*mm"          outer_r="TubeInnerRadius" sensitive="true"  />
+                <capillary  material="Brass"       inner_r="TubeInnerRadius" outer_r="TubeOuterRadius" sensitive="false" vis="capillary_vis"  />
+                <scin_fibre material="Polystyrene" inner_r="0.0*mm"          outer_r="TubeInnerRadius" sensitive="true"  vis="scin_fibre_vis" />
+                <cher_fibre material="PMMA"        inner_r="0.0*mm"          outer_r="TubeInnerRadius" sensitive="true"  vis="cher_fibre_vis" />
             </tube>
 
             <layer repeat="1" vis="MyVis">
@@ -142,7 +150,7 @@
             <segmentation type="CartesianGridXY" 
                 grid_size_x="2*mm" 
                 grid_size_y="2*mm"/>
-            <id>system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16</id>
+            <id>system:5,side:2,module:9,stave:1,layer:9,submodule:4,x:32:-16,y:-16</id>
         </readout>
     </readouts>
 
@@ -152,6 +160,25 @@
             r="0.1" g=".5" b=".5"
             showDaughters="true"
             visible="false"/>
+
+        <vis name="capillary_vis"
+            alpha="1.0"
+            r="0.855" g="0.647" b="0.125"
+            showDaughters="true"
+            visible="true" />
+
+        <vis name="scin_fibre_vis" 
+            alpha="1.0"
+            r="1.000" g="0.388" b="0.278"
+            showDaughters="true"
+            visible="true" />
+
+        <vis name="cher_fibre_vis" 
+            alpha="1.0"
+            r="0.392" g="0.584" b="0.929"
+            showDaughters="true"
+            visible="true" />
+
     </display>
 
     <limits>

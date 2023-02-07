@@ -38,37 +38,71 @@ static Ref_t create_detector(Detector& description,
     double      capillary_inner_r   = x_capillary.inner_r();
     double      capillary_outer_r   = x_capillary.outer_r();
 
-    xml_comp_t  x_scinfibre         = x_tube.child(_Unicode(scinfibre));
-    Material    scinfibre_material  = description.material(x_scinfibre.materialStr()); 
-    double      scinfibre_inner_r   = x_scinfibre.inner_r();
-    double      scinfibre_outer_r   = x_scinfibre.outer_r();
+    xml_comp_t  x_scin_fibre         = x_tube.child(_Unicode(scin_fibre));
+    Material    scin_fibre_material  = description.material(x_scin_fibre.materialStr()); 
+    double      scin_fibre_inner_r   = x_scin_fibre.inner_r();
+    double      scin_fibre_outer_r   = x_scin_fibre.outer_r();
 
-    
+    xml_comp_t  x_cher_fibre         = x_tube.child(_Unicode(cher_fibre));
+    Material    cher_fibre_material  = description.material(x_cher_fibre.materialStr()); 
+    double      cher_fibre_inner_r   = x_cher_fibre.inner_r();
+    double      cher_fibre_outer_r   = x_cher_fibre.outer_r();
+
+    Tube            capillary_solid(0.0*mm, capillary_outer_r, z_half);
+    std::string     capillary_name = "capillary";//_"+std::to_string(row)+"_"+std::to_string(col);
+    // Need two volumes for scintillation and Cherenkov channels
+    Volume          scin_tube_volume(capillary_name, capillary_solid, capillary_material);
+    Volume          cher_tube_volume(capillary_name, capillary_solid, capillary_material);
+    if (x_capillary.isSensitive())
+    {
+        scin_tube_volume.setSensitiveDetector(sens);
+        cher_tube_volume.setSensitiveDetector(sens);
+    }
+    scin_tube_volume.setAttributes(description, x_capillary.regionStr(), x_capillary.limitsStr(), x_capillary.visStr());
+    cher_tube_volume.setAttributes(description, x_capillary.regionStr(), x_capillary.limitsStr(), x_capillary.visStr());    
+
+    Tube            scin_fibre_solid(0.0*mm, scin_fibre_outer_r, z_half);
+    std::string     scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+    Volume          scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_fibre_material);
+    if (x_scin_fibre.isSensitive())
+    {
+        scin_fibre_volume.setSensitiveDetector(sens);
+    }
+    PlacedVolume    scin_fibre_placed = scin_tube_volume.placeVolume(scin_fibre_volume);
+    scin_fibre_volume.setAttributes(description, x_scin_fibre.regionStr(), x_scin_fibre.limitsStr(), x_scin_fibre.visStr());
+
+    Tube            cher_fibre_solid(0.0*mm, cher_fibre_outer_r, z_half);
+    std::string     cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+    Volume          cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_fibre_material);
+    if (x_cher_fibre.isSensitive())
+    {
+        cher_fibre_volume.setSensitiveDetector(sens);
+    }
+    PlacedVolume    cher_fibre_placed = cher_tube_volume.placeVolume(cher_fibre_volume);
+    cher_fibre_volume.setAttributes(description, x_cher_fibre.regionStr(), x_cher_fibre.limitsStr(), x_cher_fibre.visStr());
+
+
+    int tube_id = 0;
+
     for (int row=0; row<num_rows; row++)
     {
         for (int col=0; col<num_cols; col++)
         {
-            auto position = Position(row*2*rmax, col*2*rmax, 0.0*mm);
+            double offset = (row & 1) ? capillary_outer_r : 0.0*mm;
+            double x = col*2*capillary_outer_r + offset;
+            double D = 4.0*capillary_outer_r/sqrt(3.0); // Long diagonal of hexagaon with capillary_outer_r as inradius
+            double y = row*D*3.0/4.0;                     // Vertical spacing for hexagonal grid (pointy-top)
+            auto position = Position(x, y, 0.0*mm);
 
-            Tube            capillary_solid(0.0*mm, capillary_outer_r, z_half);
-            std::string     capillary_name = "capillary_"+std::to_string(row)+"_"+std::to_string(col);
-            Volume          capillary_volume(capillary_name, capillary_solid, capillary_material);
-            if (x_capillary.isSensitive())
-            {
-                capillary_volume.setSensitiveDetector(sens);
-            }
-            PlacedVolume    capillary_placed = module_volume.placeVolume(capillary_volume, position);
-            capillary_placed.addPhysVolID("module", (row+1)*(col+1));
+            auto tube_to_be_placed = (row & 1) ? &cher_tube_volume : &scin_tube_volume;
 
-            Tube            scinfibre_solid(0.0*mm, scinfibre_outer_r, z_half);
-            std::string     scinfibre_name = "scinfibre_"+std::to_string(row)+"_"+std::to_string(col);
-            Volume          scinfibre_volume(scinfibre_name, scinfibre_solid, scinfibre_material);
-            if (x_scinfibre.isSensitive())
-            {
-                scinfibre_volume.setSensitiveDetector(sens);
-            }
-            PlacedVolume    scinfibre_placed = capillary_volume.placeVolume(scinfibre_volume);
-            scinfibre_placed.addPhysVolID("layer", (row+1)*(col+1));
+            PlacedVolume    capillary_placed = module_volume.placeVolume(*tube_to_be_placed, tube_id, position);
+            capillary_placed.addPhysVolID("module", tube_id);
+
+            
+            scin_fibre_placed.addPhysVolID("layer", tube_id);
+
+            tube_id++;
         }
     }
 
