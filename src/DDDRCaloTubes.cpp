@@ -88,10 +88,10 @@ static Ref_t create_detector(Detector& description,
     {
         for (int col=0; col<num_cols; col++)
         {
-            double offset = (row & 1) ? capillary_outer_r : 0.0*mm;
+            double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
             double x = col*2*capillary_outer_r + offset;
-            double D = 4.0*capillary_outer_r/sqrt(3.0); // Long diagonal of hexagaon with capillary_outer_r as inradius
-            double y = row*D*3.0/4.0;                     // Vertical spacing for hexagonal grid (pointy-top)
+            double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+            double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
             auto position = Position(x, y, 0.0*mm);
 
             auto tube_to_be_placed = (row & 1) ? &cher_tube_volume : &scin_tube_volume;
