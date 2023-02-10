@@ -2,5 +2,8 @@ bin/
 build/
 lib/
 .vscode/
+examples/DDDRCaloTubes/scripts/
+examples/DDDRCaloTubes/data/
+examples/DDDRCaloTubes/eve/README.md
 
 *root
