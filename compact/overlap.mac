@@ -1,0 +1,3 @@
+# use with ddsim --compactFile DDDRCaloTubes.xml --runType run --macroFile overlap.mac --part.userParticleHandler='' > overlapTest
+/geometry/test/run
+exit
