@@ -96,11 +96,13 @@ static Ref_t create_detector(Detector& description,
 
             auto tube_to_be_placed = (row & 1) ? &cher_tube_volume : &scin_tube_volume;
 
-            PlacedVolume    capillary_placed = module_volume.placeVolume(*tube_to_be_placed, tube_id, position);
-            capillary_placed.addPhysVolID("module", tube_id);
-
-            
-            scin_fibre_placed.addPhysVolID("layer", tube_id);
+            PlacedVolume    tube_placed = module_volume.placeVolume(*tube_to_be_placed, tube_id, position);
+            // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
+            // Slighty changed to fit my q and r directions
+            int q = col + (row - (row&1))/2;
+            int r = row;
+            //std::cout<<"(row, col) -> (r, q) : (" <<row<<", "<<col<<") -> (" << r<<", " <<q<<")" <<std::endl;
+            tube_placed.addPhysVolID("fibre", 0).addPhysVolID("q", q).addPhysVolID("r", r);
 
             tube_id++;
         }
