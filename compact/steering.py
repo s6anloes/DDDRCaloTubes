@@ -59,7 +59,7 @@ SIM.vertexSigma = [0.0, 0.0, 0.0, 0.0]
 ##   For specific subdetectors specific sensitive detectors can be set based on patterns in the name of the subdetector.
 ## 
 ##   >>> SIM = DD4hepSimulation()
-##   >>> SIM.action.mapActions['tpc'] = "TPCSDAction"
+SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 ## 
 ##   and additional parameters for the sensitive detectors can be set when the map is given a tuple
 ## 
