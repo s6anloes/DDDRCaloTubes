@@ -407,6 +407,29 @@ SIM.physics.rejectPDGs = {1, 2, 3, 4, 5, 6, 3201, 3203, 4101, 4103, 21, 23, 24, 
 ##     
 SIM.physics.zeroTimePDGs = {17, 11, 13, 15}
 
+################################################################################
+## Configuration for User Physics
+################################################################################
+
+def setupCerenkov(kernel):
+    from DDG4 import PhysicsList
+    seq = kernel.physicsList()
+    cerenkov = PhysicsList(kernel, 'Geant4CerenkovPhysics/CerenkovPhys')
+    cerenkov.MaxNumPhotonsPerStep = 10
+    cerenkov.MaxBetaChangePerStep = 10.0
+    cerenkov.TrackSecondariesFirst = True
+    cerenkov.VerboseLevel = 0
+    cerenkov.enableUI()
+    seq.adopt(cerenkov)
+    ph = PhysicsList(kernel, 'Geant4OpticalPhotonPhysics/OpticalGammaPhys')
+    ph.addParticleConstructor('G4OpticalPhoton')
+    ph.VerboseLevel = 0
+    ph.enableUI()
+    seq.adopt(ph)
+    return None
+
+SIM.physics.setupUserPhysics(setupCerenkov)
+
 
 ################################################################################
 ## Properties for the random number generator 
