@@ -59,7 +59,6 @@ SIM.vertexSigma = [0.0, 0.0, 0.0, 0.0]
 ##   For specific subdetectors specific sensitive detectors can be set based on patterns in the name of the subdetector.
 ## 
 ##   >>> SIM = DD4hepSimulation()
-SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 ## 
 ##   and additional parameters for the sensitive detectors can be set when the map is given a tuple
 ## 
@@ -70,10 +69,10 @@ SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 ################################################################################
 
 ##  set the default calorimeter action 
-SIM.action.calo = "Geant4ScintillatorCalorimeterAction"
+SIM.action.calo = "DRCaloTubesSDAction"
 
 ## List of patterns matching sensitive detectors of type Calorimeter.
-SIM.action.calorimeterSDTypes = ['calorimeter']
+SIM.action.calorimeterSDTypes = [u'calorimeter']
 
 ## Create a map of patterns and actions to be applied to sensitive detectors.
 ## 
@@ -81,7 +80,9 @@ SIM.action.calorimeterSDTypes = ['calorimeter']
 ## 
 ##       SIM.action.mapActions['tpc'] = "TPCSDAction"
 ##     
-SIM.action.mapActions = {}
+#SIM.action.mapActions = {}
+
+SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 
 ##  set the default tracker action 
 SIM.action.tracker = ('Geant4TrackerWeightedAction', {'HitPositionCombination': 2, 'CollectSingleDeposits': False})
@@ -131,7 +132,8 @@ SIM.field.stepper = "ClassicalRK4"
 ##     default filter for calorimeter sensitive detectors;
 ##     this is applied if no other filter is used for a calorimeter
 ##     
-SIM.filter.calo = "edep0"
+#SIM.filter.calo = "edep0"
+SIM.filter.calo = ""
 
 ##  list of filter objects: map between name and parameter dictionary 
 SIM.filter.filters = {'geantino': {'name': 'GeantinoRejectFilter/GeantinoRejector', 'parameter': {}}, 'edep1kev': {'name': 'EnergyDepositMinimumCut', 'parameter': {'Cut': 0.001}}, 'edep0': {'name': 'EnergyDepositMinimumCut/Cut0', 'parameter': {'Cut': 0.0}}}
@@ -410,7 +412,7 @@ SIM.physics.zeroTimePDGs = {17, 11, 13, 15}
 ################################################################################
 ## Configuration for User Physics
 ################################################################################
-
+""""""
 def setupCerenkov(kernel):
     from DDG4 import PhysicsList
     seq = kernel.physicsList()

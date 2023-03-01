@@ -1,5 +1,6 @@
 #include "DD4hep/Version.h"
 #include "DDG4/Geant4SensDetAction.inl"
+#include "DDG4/Factories.h"
 #include "DDG4/Geant4EventAction.h"
 #include "DDG4/Geant4Mapping.h"
 #include "G4OpticalPhoton.hh"
@@ -11,11 +12,9 @@
 #include "G4ProcessManager.hh"
 #include "G4OpBoundaryProcess.hh"
 
-#if DD4HEP_VERSION_GE(1, 21)
-#define GEANT4_CONST_STEP const
-#else
-#define GEANT4_CONST_STEP
-#endif
+
+#include "DRCaloTubesHit.h"
+
 
 //Forward declarations from Geant4
 //
@@ -24,22 +23,195 @@ enum G4OpBoundaryProcessStatus;
 class G4ProcessVector;
 enum G4ProcessVectorTypeIndex;
 
+
+#if DD4HEP_VERSION_GE(1, 21)
+#define GEANT4_CONST_STEP const
+#else
+#define GEANT4_CONST_STEP
+#endif
+
+
+
+class DRCaloTubesSD {
+    public:
+        typedef DRCaloTubesHit Hit;
+        int placeholer;
+};
+
+
+int NofCherDet, NofScinDet = 0;
+
+/// Namespace for the AIDA detector description toolkit
+namespace dd4hep {
+  
+    /// Namespace for the Geant4 based simulation part of the AIDA detector description toolkit
+    namespace sim {
+
+
+        /// Define collections created by this sensitivie action object
+        template <> void Geant4SensitiveAction<DRCaloTubesSD>::defineCollections() {
+            m_collectionID = declareReadoutFilteredCollection<DRCaloTubesSD::Hit>();
+        }
+
+        /// Apply Birks Law
+        G4double ApplyBirks( const G4double& de, const G4double& steplength ) 
+        {
+            const G4double k_B = 0.126; //Birks constant
+            return (de/steplength) / ( 1+k_B*(de/steplength) ) * steplength;
+        }
+
+        /// Smear Scintillation Signal
+        G4int SmearSSignal( const G4double& satde ) 
+        {
+            return G4Poisson(satde*9.5);
+        }
+
+        /// Smear Cherenkov Signal
+        G4int SmearCSignal( )
+        {
+            return G4Poisson(0.153);
+        }
+
+        /// Method for generating hit(s) using the information of G4Step object.
+        template <> bool Geant4SensitiveAction<DRCaloTubesSD>::process(const G4Step* step, G4TouchableHistory* ) {
+
+            // Get step info
+            //{{{
+            //std::cout<<"SDAction::process() call"<<std::endl;
+            //if (step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition()){
+            //    std::cout<<"TrackID = " << step->GetTrack()->GetTrackID()<<std::endl;
+            //    if (step->IsFirstStepInVolume() && step->IsLastStepInVolume() && step->GetTrack()->GetCurrentStepNumber()){
+            //        std::cout<<"Track only one STEP" << std::endl;
+            //    }
+            //}
+            G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
+            G4double edep = step->GetTotalEnergyDeposit();
+            G4double steplength = step->GetStepLength();
+            
+            //--------------------------------------------------
+            //Store information from Scintillation and Cherenkov
+            //signals
+            //--------------------------------------------------
+        
+            std::string fibre_name;
+            std::string scin_fibre_name = "scin_fibre_0";
+            std::string scin_clad_name  = "scin_clad_0";
+            std::string cher_fibre_name = "cher_fibre_0";
+            std::string cher_clad_name  = "cher_clad_0";
+            fibre_name = volume->GetName(); 
+            //std::cout<<"SDAction::process: fibre_name = " <<fibre_name<<std::endl;
+            G4int signalhit = 0;
+
+            
+            if ( fibre_name==scin_fibre_name || fibre_name==scin_clad_name ) //scintillating fiber/tube
+            { 
+                if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() ) 
+                {
+                    //std::cout<<"SCINTILLATION:: PostStep Position = "<<step->GetPostStepPoint()->GetPosition()<<std::endl;
+                    step->GetTrack()->SetTrackStatus( fStopAndKill ); 
+                }
+
+                if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return true; } //not ionizing particle
+
+
+                
+                            
+                signalhit = SmearSSignal( ApplyBirks( edep, steplength ) );
+                NofScinDet += signalhit; 
+                //std::cout<<"SteppingAction:: NofScinDet = "<<NofScinDet<<std::endl;
+            }
+
+            if ( fibre_name==cher_fibre_name || fibre_name==cher_clad_name ) //Cherenkov fiber/tube
+            {
+                //std::cout<<"SteppingAction:: Cherenkov Fibre"<<std::endl;
+                //std::cout<<"SteppingAction:: Particle name = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
+                //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;
+                //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;    
+                //std::cout<<"SteppingAction Optical Photon name = " <<G4OpticalPhoton::Definition()->GetParticleName()<<std::endl;
+                if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
+                {
+                    //std::cout<<"SteppingAction:: Optical Photon"<<std::endl;
+                    //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
+                    //std::cout<<"OpticalPhoton IsFirstStepInVolume = "<<step->IsFirstStepInVolume()<<std::endl;
+                    //std::cout<<"OpticalPhoton IsLastStepInVolume  = "<<step->IsLastStepInVolume()<<std::endl;
+                    //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;
+                    //std::cout<<"SDAction::process: fibre_name = " <<fibre_name<<std::endl;
+                    //std::cout<<"Next Volume = " << step->GetTrack()->GetNextVolume()->GetName() <<std::endl;
+                    //std::cout<<"Stepnumber = "<<step->GetTrack()->GetCurrentStepNumber()<<std::endl;   
+                    G4OpBoundaryProcessStatus theStatus = Undefined;
+
+                    G4ProcessManager* OpManager = G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
+
+                    if (OpManager) 
+                    {
+                        //std::cout<<"SteppingAction:: OpManager"<<std::endl;
+                        G4int MAXofPostStepLoops = OpManager->GetPostStepProcessVector()->entries();
+                        G4ProcessVector* fPostStepDoItVector = OpManager->GetPostStepProcessVector(typeDoIt);
+
+                        for ( G4int i=0; i<MAXofPostStepLoops; i++) 
+                        {
+                            G4VProcess* fCurrentProcess = (*fPostStepDoItVector)[i];
+                            G4OpBoundaryProcess* fOpProcess = dynamic_cast<G4OpBoundaryProcess*>(fCurrentProcess);
+                            if (fOpProcess) { theStatus = fOpProcess->GetStatus(); break; }
+                        }
+                    }
+
+                    //std::cout<<"SteppingAction:: theStatus = " <<theStatus<<std::endl;
+                    
+
+                    //G4int c_signal = SmearCSignal( );
+                    //NofCherDet += c_signal;
+
+                    switch ( theStatus ){
+                                            
+                        case TotalInternalReflection: 
+                        {
+                            //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
+                            G4int c_signal = SmearCSignal( );
+                            NofCherDet += c_signal;
+                            step->GetTrack()->SetTrackStatus( fStopAndKill );
+                            //break;
+                        }
+                        default:
+                            step->GetTrack()->SetTrackStatus( fStopAndKill );
+                    } //end of swich cases
+
+                } //end of optical photon
+
+            } //end of Cherenkov fiber
+
+            return true;
+
+        }
+
+    }
+}
+
+
+//--- Factory declaration
+namespace dd4hep { namespace sim {
+    typedef Geant4SensitiveAction<DRCaloTubesSD> DRCaloTubesSDAction;
+  }}
+DECLARE_GEANT4SENSITIVE(DRCaloTubesSDAction)
+
+
+
+
+
+/*
+//Forward declarations from Geant4
+//
+class G4OpBoundaryProcess;
+enum G4OpBoundaryProcessStatus;
+class G4ProcessVector;
+enum G4ProcessVectorTypeIndex; 
+
 /// Namespace for the AIDA detector description toolkit
 namespace dd4hep {
   
     /// Namespace for the Geant4 based simulation part of the AIDA detector description toolkit
     namespace sim   {
-        
-        /**
-         *  Geant4SensitiveAction<DRCaloTubesSDData> sensitive detector for the special case of 
-         *  of a TPC, where every pad row is devided into two halfs in order to get
-         *  the position from the crossing of the middle of the pad row from
-         *  geant4 via volume boundary. Ported of Mokka/TPCSD04.cc
-         * 
-         *  \author  F.Gaede ( ported from Mokka/TPCSD04.cc )
-         *  \version 1.0
-         *  \ingroup DD4HEP_SIMULATION
-         */
+
         struct DRCaloTubesSDData {
 
             Geant4Sensitive*  sensitive{};
@@ -107,10 +279,14 @@ namespace dd4hep {
                 { 
                     if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() ) 
                     {
+                        //std::cout<<"SCINTILLATION:: PostStep Position = "<<step->GetPostStepPoint()->GetPosition()<<std::endl;
                         step->GetTrack()->SetTrackStatus( fStopAndKill ); 
                     }
 
                     if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return true; } //not ionizing particle
+
+
+                    
                                 
                     signalhit = SmearSSignal( ApplyBirks( edep, steplength ) );
                     NofScinDet += signalhit; 
@@ -119,18 +295,21 @@ namespace dd4hep {
                 if ( fibre_name==cher_name ) //Cherenkov fiber/tube
                 {
                     //std::cout<<"SteppingAction:: Cherenkov Fibre"<<std::endl;
-                    //std::cout<<"SteppingAction Particle name = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
+                    //std::cout<<"SteppingAction:: Particle name = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
                     //std::cout<<"SteppingAction Optical Photon name = " <<G4OpticalPhoton::Definition()->GetParticleName()<<std::endl;
                     if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                     {
-                        std::cout<<"SteppingAction:: Optical Photon"<<std::endl;    
+                        //std::cout<<"SteppingAction:: Optical Photon"<<std::endl;
+                        std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
+                        std::cout<<"OpticalPhoton IsLastStepInVolume = "<<step->IsLastStepInVolume()<<std::endl;
+                        std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;    
                         G4OpBoundaryProcessStatus theStatus = Undefined;
 
                         G4ProcessManager* OpManager = G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
 
                         if (OpManager) 
                         {
-                            std::cout<<"SteppingAction:: OpManager"<<std::endl;
+                            //std::cout<<"SteppingAction:: OpManager"<<std::endl;
                             G4int MAXofPostStepLoops = OpManager->GetPostStepProcessVector()->entries();
                             G4ProcessVector* fPostStepDoItVector = OpManager->GetPostStepProcessVector(typeDoIt);
 
@@ -141,6 +320,12 @@ namespace dd4hep {
                                 if (fOpProcess) { theStatus = fOpProcess->GetStatus(); break; }
                             }
                         }
+
+                        //std::cout<<"SteppingAction:: theStatus = " <<theStatus<<std::endl;
+                        
+
+                        //G4int c_signal = SmearCSignal( );
+                        //NofCherDet += c_signal;
 
                         switch ( theStatus ){
                                                 
@@ -165,14 +350,14 @@ namespace dd4hep {
 
 
             /// Pre-event action callback
-            void beginEvent(const G4Event* /*event*/)
+            void beginEvent(const G4Event* event)
             {
                 NofScinDet = 0;
                 NofCherDet = 0;
             }
 
             /// Post-event action callback
-            void endEvent(const G4Event* /* event */)   {
+            void endEvent(const G4Event* event)   {
                 std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
                 std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
                 std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
@@ -220,3 +405,4 @@ namespace dd4hep {
 
 #include "DDG4/Factories.h"
 DECLARE_GEANT4SENSITIVE( DRCaloTubesSDAction )
+*/
