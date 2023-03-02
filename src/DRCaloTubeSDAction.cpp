@@ -31,7 +31,7 @@ enum G4ProcessVectorTypeIndex;
 #endif
 
 
-
+/*
 class DRCaloTubesSD {
     public:
         typedef DRCaloTubesHit Hit;
@@ -193,7 +193,7 @@ namespace dd4hep { namespace sim {
     typedef Geant4SensitiveAction<DRCaloTubesSD> DRCaloTubesSDAction;
   }}
 DECLARE_GEANT4SENSITIVE(DRCaloTubesSDAction)
-
+*/
 
 
 
@@ -204,7 +204,7 @@ DECLARE_GEANT4SENSITIVE(DRCaloTubesSDAction)
 class G4OpBoundaryProcess;
 enum G4OpBoundaryProcessStatus;
 class G4ProcessVector;
-enum G4ProcessVectorTypeIndex; 
+enum G4ProcessVectorTypeIndex; */
 
 /// Namespace for the AIDA detector description toolkit
 namespace dd4hep {
@@ -300,9 +300,9 @@ namespace dd4hep {
                     if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                     {
                         //std::cout<<"SteppingAction:: Optical Photon"<<std::endl;
-                        std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
-                        std::cout<<"OpticalPhoton IsLastStepInVolume = "<<step->IsLastStepInVolume()<<std::endl;
-                        std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;    
+                        //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
+                        //std::cout<<"OpticalPhoton IsLastStepInVolume = "<<step->IsLastStepInVolume()<<std::endl;
+                        //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;    
                         G4OpBoundaryProcessStatus theStatus = Undefined;
 
                         G4ProcessManager* OpManager = G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
@@ -331,7 +331,7 @@ namespace dd4hep {
                                                 
                             case TotalInternalReflection: 
                             {
-                                std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
+                                //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
                                 G4int c_signal = SmearCSignal( );
                                 NofCherDet += c_signal;
                                 step->GetTrack()->SetTrackStatus( fStopAndKill );
@@ -405,4 +405,3 @@ namespace dd4hep {
 
 #include "DDG4/Factories.h"
 DECLARE_GEANT4SENSITIVE( DRCaloTubesSDAction )
-*/
