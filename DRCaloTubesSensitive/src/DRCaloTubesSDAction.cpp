@@ -15,6 +15,7 @@
 
 //#include "DRCaloTubesHit.h"
 #include "DRCaloTubesEventAction.h"
+#include "DRCaloTubesSteppingAction.h"
 
 
 //Forward declarations from Geant4
@@ -52,6 +53,7 @@ namespace dd4hep {
             G4int     NofScinDet; //Number of Scintillating p.e. detected
 
             DRCaloTubesEventAction* fEventAction;
+            DRCaloTubesSteppingAction* fSteppingAction;
 
             G4OpBoundaryProcess* fOpProcess;
 
@@ -90,6 +92,9 @@ namespace dd4hep {
             /// Method for generating hit(s) using the information of G4Step object.
             G4bool process(G4Step GEANT4_CONST_STEP * step, G4TouchableHistory* ) 
             {
+                fSteppingAction->UserSteppingAction(step);
+                return true;
+                /*
                 // Get step info
                 //
                 //std::cout<<"SDAction::process() call"<<std::endl;
@@ -179,7 +184,7 @@ namespace dd4hep {
                 } //end of Cherenkov fiber
 
 
-                return true;
+                return true;*/
             } // end of process()
 
 
@@ -187,6 +192,7 @@ namespace dd4hep {
             void beginEvent(const G4Event* event)
             {
                 fEventAction = new DRCaloTubesEventAction();
+                fSteppingAction = new DRCaloTubesSteppingAction(fEventAction);
                 fEventAction->BeginOfEventAction(event);
                 NofScinDet = 0;
                 NofCherDet = 0;
