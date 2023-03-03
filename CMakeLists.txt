@@ -67,6 +67,9 @@ endif()
 #
 dd4hep_configure_output ()
 dd4hep_configure_scripts(DDDRCaloTubes DEFAULT_SETUP WITH_TESTS)
+
+
+add_subdirectory(DRCaloTubesSensitive)
 #
 #-------------------------------------------------------------------------------
 # we only create only library for DDDRCaloTubes. The whole package is a single component
@@ -78,7 +81,7 @@ dd4hep_configure_scripts(DDDRCaloTubes DEFAULT_SETUP WITH_TESTS)
 #---DDDRCaloTubes plugin library -------------------------------------------------------
 dd4hep_add_plugin ( DDDRCaloTubes
     GENERATED G__DDDRCaloTubes.cxx 
-  SOURCES src/*.cpp src/plugins/*.cpp DRCaloTubesSDAction/*.cpp
+  SOURCES src/*.cpp src/plugins/*.cpp 
   USES    DD4hep::DDCore DD4hep::DDAlign DD4hep::DDCond DD4hep::DDG4 DDDetectors
           ROOT::Core ROOT::Geom ROOT::GenVector CLHEP::CLHEP Geant4::Interface
 )
