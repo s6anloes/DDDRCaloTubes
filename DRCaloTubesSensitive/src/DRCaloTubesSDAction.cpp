@@ -94,6 +94,7 @@ namespace dd4hep {
             {
                 fSteppingAction->UserSteppingAction(step);
                 return true;
+                
                 /*
                 // Get step info
                 //

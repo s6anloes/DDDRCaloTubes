@@ -6,4 +6,6 @@ examples/DDDRCaloTubes/scripts/
 examples/DDDRCaloTubes/data/
 examples/DDDRCaloTubes/eve/README.md
 
+include/*.h
+
 *root

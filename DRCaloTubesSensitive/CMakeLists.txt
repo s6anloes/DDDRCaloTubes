@@ -23,3 +23,10 @@ target_link_libraries(
   DD4hep::DDCore
   DD4hep::DDG4
 )
+
+dd4hep_generate_rootmap(DRCaloTubesSensitive)
+
+install(TARGETS DRCaloTubesSensitive EXPORT DetectorTargets
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT dev
+)

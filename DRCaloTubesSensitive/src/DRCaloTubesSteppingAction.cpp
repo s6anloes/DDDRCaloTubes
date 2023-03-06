@@ -64,7 +64,6 @@ namespace dd4hep {
             std::string cher_fibre_name = "cher_fibre_0";
             std::string cher_clad_name  = "cher_clad_0";
             fibre_name = volume->GetName(); 
-            //std::cout<<"SDAction::process: fibre_name = " <<fibre_name<<std::endl;
             G4int signalhit = 0;
 
             
@@ -72,7 +71,6 @@ namespace dd4hep {
             { 
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() ) 
                 {
-                    //std::cout<<"SCINTILLATION:: PostStep Position = "<<step->GetPostStepPoint()->GetPosition()<<std::endl;
                     step->GetTrack()->SetTrackStatus( fStopAndKill ); 
                 }
 
@@ -83,33 +81,18 @@ namespace dd4hep {
                             
                 signalhit = DRCaloTubesSteppingAction::SmearSSignal( DRCaloTubesSteppingAction::ApplyBirks( edep, steplength ) );
                 fEventAction->AddScin(signalhit); 
-                //std::cout<<"SteppingAction:: fEventAction->NofScinDet = "<<fEventAction->NofScinDet<<std::endl;
             }
 
             if ( fibre_name==cher_fibre_name || fibre_name==cher_clad_name ) //Cherenkov fiber/tube
             {
-                //std::cout<<"SteppingAction:: Cherenkov Fibre"<<std::endl;
-                //std::cout<<"SteppingAction:: Particle name = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
-                //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;
-                //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;    
-                //std::cout<<"SteppingAction Optical Photon name = " <<G4OpticalPhoton::Definition()->GetParticleName()<<std::endl;
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                 {
-                    //std::cout<<"SteppingAction:: Optical Photon"<<std::endl;
-                    //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
-                    //std::cout<<"OpticalPhoton IsFirstStepInVolume = "<<step->IsFirstStepInVolume()<<std::endl;
-                    //std::cout<<"OpticalPhoton IsLastStepInVolume  = "<<step->IsLastStepInVolume()<<std::endl;
-                    //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;
-                    //std::cout<<"SDAction::process: fibre_name = " <<fibre_name<<std::endl;
-                    //std::cout<<"Next Volume = " << step->GetTrack()->GetNextVolume()->GetName() <<std::endl;
-                    //std::cout<<"Stepnumber = "<<step->GetTrack()->GetCurrentStepNumber()<<std::endl;   
                     G4OpBoundaryProcessStatus theStatus = Undefined;
 
                     G4ProcessManager* OpManager = G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
 
                     if (OpManager) 
                     {
-                        //std::cout<<"SteppingAction:: OpManager"<<std::endl;
                         G4int MAXofPostStepLoops = OpManager->GetPostStepProcessVector()->entries();
                         G4ProcessVector* fPostStepDoItVector = OpManager->GetPostStepProcessVector(typeDoIt);
 
@@ -121,12 +104,6 @@ namespace dd4hep {
                         }
                     }
 
-                    //std::cout<<"SteppingAction:: theStatus = " <<theStatus<<std::endl;
-                    
-
-                    //G4int c_signal = SmearCSignal( );
-                    //fEventAction->NofCherDet += c_signal;
-
                     switch ( theStatus ){
                                             
                         case TotalInternalReflection: 
@@ -135,7 +112,7 @@ namespace dd4hep {
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
                             fEventAction->AddCher(c_signal);
                             step->GetTrack()->SetTrackStatus( fStopAndKill );
-                            //break;
+                            break;
                         }
                         default:
                             step->GetTrack()->SetTrackStatus( fStopAndKill );
