@@ -2,6 +2,7 @@
 #include "DDG4/Geant4SensDetAction.inl"
 #include "DDG4/Factories.h"
 #include "DDG4/Geant4EventAction.h"
+#include "DDG4/Geant4RunAction.h"
 #include "DDG4/Geant4Mapping.h"
 #include "G4OpticalPhoton.hh"
 #include "G4VProcess.hh"
@@ -14,6 +15,7 @@
 
 
 //#include "DRCaloTubesHit.h"
+#include "DRCaloTubesRunAction.h"
 #include "DRCaloTubesEventAction.h"
 #include "DRCaloTubesSteppingAction.h"
 
@@ -36,7 +38,6 @@ enum G4ProcessVectorTypeIndex;
 
 //class dd4hep::sim::DRCaloTubesEventAction;
 
-
 /// Namespace for the AIDA detector description toolkit
 namespace dd4hep {
   
@@ -52,8 +53,9 @@ namespace dd4hep {
             G4int     NofCherDet; //Number of Cherenkov p.e. detected 
             G4int     NofScinDet; //Number of Scintillating p.e. detected
 
-            DRCaloTubesEventAction* fEventAction;
-            DRCaloTubesSteppingAction* fSteppingAction;
+            DRCaloTubesRunAction*       fRunAction;
+            DRCaloTubesEventAction*     fEventAction;
+            DRCaloTubesSteppingAction*  fSteppingAction;
 
             G4OpBoundaryProcess* fOpProcess;
 
@@ -189,11 +191,23 @@ namespace dd4hep {
             } // end of process()
 
 
+            void beginRun(const G4Run* run)
+            {
+                fRunAction = new DRCaloTubesRunAction();
+                fEventAction = new DRCaloTubesEventAction(fRunAction);
+                fSteppingAction = new DRCaloTubesSteppingAction(fEventAction);
+                fRunAction->BeginOfRunAction(run);
+            }
+
+            void endRun(const G4Run* run)
+            {
+                fRunAction->EndOfRunAction(run);
+            }
+
             /// Pre-event action callback
             void beginEvent(const G4Event* event)
             {
-                fEventAction = new DRCaloTubesEventAction();
-                fSteppingAction = new DRCaloTubesSteppingAction(fEventAction);
+                
                 fEventAction->BeginOfEventAction(event);
                 NofScinDet = 0;
                 NofCherDet = 0;
@@ -201,9 +215,9 @@ namespace dd4hep {
 
             /// Post-event action callback
             void endEvent(const G4Event* event)   {
-                std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
-                std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
-                std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
+                //std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
+                //std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
+                //std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
 
                 fEventAction->EndOfEventAction(event);
             }
@@ -214,21 +228,22 @@ namespace dd4hep {
 
 
         /// Initialization overload for specialization
-        template <> void Geant4SensitiveAction<DRCaloTubesSDData>::initialize() {
-        eventAction().callAtBegin(&m_userData, &DRCaloTubesSDData::beginEvent);
-        eventAction().callAtEnd(&m_userData,&DRCaloTubesSDData::endEvent);
+        template <> void Geant4SensitiveAction<DRCaloTubesSDData>::initialize() 
+        {
+                
+            eventAction().callAtBegin(&m_userData, &DRCaloTubesSDData::beginEvent);
+            eventAction().callAtEnd(&m_userData,&DRCaloTubesSDData::endEvent);
 
+            runAction().callAtBegin(&m_userData, &DRCaloTubesSDData::beginRun);
+            runAction().callAtEnd(&m_userData, &DRCaloTubesSDData::endRun);
 
-        //runAction().callAtEnd();
-        //steppingAction().
-
-        m_userData.sensitive = this;
+            m_userData.sensitive = this;
 
         }
 
         /// Define collections created by this sensitivie action object
         template <> void Geant4SensitiveAction<DRCaloTubesSDData>::defineCollections() {
-        m_collectionID = defineCollection<Geant4Tracker::Hit>(m_sensitive.readout().name());
+            m_collectionID = defineCollection<Geant4Tracker::Hit>(m_sensitive.readout().name());
         }
 
         /// Method for clear
@@ -239,7 +254,7 @@ namespace dd4hep {
         /// Method for generating hit(s) using the information of G4Step object.
         template <> G4bool
         Geant4SensitiveAction<DRCaloTubesSDData>::process(G4Step GEANT4_CONST_STEP * step, G4TouchableHistory* history) {
-        return m_userData.process(step, history);
+            return m_userData.process(step, history);
         }
 
         typedef Geant4SensitiveAction<DRCaloTubesSDData>  DRCaloTubesSDAction;

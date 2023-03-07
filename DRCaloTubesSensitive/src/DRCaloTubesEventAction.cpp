@@ -4,19 +4,23 @@
 
 namespace dd4hep {
     namespace sim {
-        DRCaloTubesEventAction::DRCaloTubesEventAction(): G4UserEventAction() {}
+        DRCaloTubesEventAction::DRCaloTubesEventAction(DRCaloTubesRunAction* runAction): G4UserEventAction(),
+            fRunAction(runAction) {}
 
         DRCaloTubesEventAction::~DRCaloTubesEventAction() {}
 
         void DRCaloTubesEventAction::BeginOfEventAction(const G4Event*) {
-            NofScinDetEA = 0;
-            NofCherDetEA = 0;
+            NofScinDet = 0;
+            NofCherDet = 0;
+            fRunAction->Reset();
         }
 
         void DRCaloTubesEventAction::EndOfEventAction(const G4Event*) {
             std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
-            std::cout<<"NofScinDetEA = "<<NofScinDetEA<<std::endl;
-            std::cout<<"NofCherDetEA = "<<NofCherDetEA<<std::endl;
+            std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
+            std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
+
+            fRunAction->Fill(NofCherDet, NofScinDet);
         }
     } // namespace sim
 } // namespace drc
