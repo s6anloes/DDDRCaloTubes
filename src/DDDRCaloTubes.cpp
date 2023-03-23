@@ -18,7 +18,10 @@ static Ref_t create_detector(Detector& description,
     Material    brass       = description.material("Brass");
 
     xml_dim_t   x_dim       = x_det.dimensions();
-    double      z_half      = x_dim.zmax();
+    double      z_half      = x_dim.zhalf();
+    double      rotation    = x_dim.angle();
+    int         num_rows    = x_dim.number();
+    int         num_cols    = x_dim.count();
 
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
@@ -29,8 +32,6 @@ static Ref_t create_detector(Detector& description,
 
     // Get parameters for tube construction
     xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
-    int         num_rows    = x_tube.number();
-    int         num_cols    = x_tube.count();
 
     xml_comp_t  x_capillary          = x_tube.child(_Unicode(capillary));
     Material    capillary_material   = description.material(x_capillary.materialStr()); 
@@ -116,6 +117,8 @@ static Ref_t create_detector(Detector& description,
 
 
     int tube_id = 0;
+    double x_avg = 0.0*mm;
+    double y_avg = 0.0*mm;
 
     for (int row=0; row<num_rows; row++)
     {
@@ -137,11 +140,17 @@ static Ref_t create_detector(Detector& description,
             //std::cout<<"(row, col) -> (r, q) : (" <<row<<", "<<col<<") -> (" << r<<", " <<q<<")" <<std::endl;
             tube_placed.addPhysVolID("fibre", 0).addPhysVolID("q", q).addPhysVolID("r", r);
 
+            x_avg += x;
+            y_avg += y;
             tube_id++;
         }
     }
 
-    PlacedVolume module_placed = mother_volume.placeVolume(module_volume);
+    x_avg /= tube_id;
+    y_avg /= tube_id;
+
+    Transform3D tr(RotationZYX(0,rotation,0),Position(-x_avg,-y_avg,0));
+    PlacedVolume module_placed = mother_volume.placeVolume(module_volume, tr);
     module_placed.addPhysVolID("system", det_id);
     s_detElement.setPlacement(module_placed);
 

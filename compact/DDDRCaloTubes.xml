@@ -73,6 +73,7 @@
         <constant name="CladOuterRadius"  value="0.5*mm"   />
         <constant name="TubeOuterRadius"  value="1.0*mm"   />
         <constant name="TowerHalfLength"  value="50*cm"    />
+        <constant name="RotationAngle"    value="1*deg"    />
 
         <constant name="NumRows" value="20" />
         <constant name="NumCols" value="16" />
@@ -312,9 +313,12 @@
             <type_flags type=" DetType_CALORIMETER + DetType_ELECTROMAGNETIC + DetType_BARREL"/>
 
             <dimensions
-                zmax="TowerHalfLength" />
+                zhalf="TowerHalfLength"
+                number="NumRows" 
+                count="NumCols"
+                angle="RotationAngle" />
 
-            <tube number="NumRows" count="NumCols">
+            <tube>
                 <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="false" vis="capillary_vis"  />
                 <scin_clad  material="PMMA"                outer_r="CladOuterRadius"  sensitive="true"  vis="scin_clad_vis"  />
                 <scin_fibre material="DR_Polystyrene"      outer_r="FibreOuterRadius" sensitive="true"  vis="scin_fibre_vis" />
