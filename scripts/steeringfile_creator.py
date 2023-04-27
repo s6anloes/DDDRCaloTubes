@@ -9,9 +9,11 @@ import time
 timestr = time.strftime("%Y%m%d-%H%M%S")
 pdg_code_to_geant4_D = {"11":"e-",
                         "-11":"e+",
+                        "12":"nu_e",
                         "13":"mu-",
                         "211":"pi+",
-                        "-211":"pi-",}
+                        "-211":"pi-",
+                        "0":"geantino",}
 
 
 def create_points(xstart=-4.5, npoints=19):
@@ -100,7 +102,7 @@ def create_file(pdg, momentum, x, y, outdir='runcards_dump/', prefix='runcard'):
 
         #f.write(f'/gps/energy {energy} GeV\n')
 
-        f.write('SIM.numberOfEvents = 5000\n')
+        f.write('SIM.numberOfEvents = 10000\n')
     
     f.close()
 
@@ -108,12 +110,13 @@ def create_file(pdg, momentum, x, y, outdir='runcards_dump/', prefix='runcard'):
 #    create_file(i)
 #    print(i)
 
-#pointlist = [(-1.5, -0.86666666)]
+#pointlist = [(x, -1.25) for x in np.linspace(35, 50, 31)]
+#print(pointlist)
 pointlist = create_points()
 pdgcodelist = [-11]
 momentumlist = [20]
-category = 'dremtubes_comparison'
-outdir = '/eos/user/a/aloeschc/DD4hep/'+category+'/'+timestr+'/' # format '/absolute/path/'
+category = 'impact_comparison'
+outdir = '/its/home/al723/dualrocalo/simulation/DD4hep/dremtubes_comparison/'+category+'/'+timestr+'/' # format '/absolute/path/'
 id = 0
 for point in pointlist:
     for m in momentumlist:
@@ -123,5 +126,6 @@ for point in pointlist:
             # conversion from mm to cm
             newpoint = tuple([x/10.0 for x in point])
             print(newpoint[0], newpoint[1])
-            create_file(str(pdg), m, newpoint[0], newpoint[1], outdir=outdir+f'steering_{id:02}/', prefix=prefix)
+            create_file(str(pdg), m, newpoint[0], newpoint[1], outdir=outdir+f'steering_{id:05d}/', prefix=prefix)
             id += 1
+""" """
