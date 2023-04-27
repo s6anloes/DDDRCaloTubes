@@ -44,6 +44,7 @@ namespace dd4hep {
             analysisManager->CreateNtuple("DRCaloTubesout", "DRCaloTubesoutput");
             analysisManager->CreateNtupleDColumn("NofCherDet");                     //0
             analysisManager->CreateNtupleDColumn("NofScinDet");                     //1
+            analysisManager->CreateNtupleDColumn("IntegratedRadiationLength");
             analysisManager->FinishNtuple();
             
         }
@@ -80,6 +81,7 @@ namespace dd4hep {
             fTree = new TTree("DRCaloTubesData", "Tree with DRCaloTubes data");
             fTree->Branch("NofCherDet", &NofCherDet);
             fTree->Branch("NofScinDet", &NofScinDet);
+            fTree->Branch("IntegratedRadiationLength", &IntegratedRadiationLength);
 
         }
 
@@ -98,6 +100,16 @@ namespace dd4hep {
         void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin) {
             NofCherDet = cher;
             NofScinDet = scin;
+
+            fTree->Fill();
+
+
+        }
+
+        void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin, const G4double radlen) {
+            NofCherDet = cher;
+            NofScinDet = scin;
+            IntegratedRadiationLength = radlen;
 
             fTree->Fill();
 

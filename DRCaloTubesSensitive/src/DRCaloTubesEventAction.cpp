@@ -12,6 +12,7 @@ namespace dd4hep {
         void DRCaloTubesEventAction::BeginOfEventAction(const G4Event*) {
             NofScinDet = 0;
             NofCherDet = 0;
+            IntegratedRadiationLength = 0.;
             fRunAction->Reset();
         }
 
@@ -20,7 +21,7 @@ namespace dd4hep {
             std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
             std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
 
-            fRunAction->Fill(NofCherDet, NofScinDet);
+            fRunAction->Fill(NofCherDet, NofScinDet, IntegratedRadiationLength);
         }
     } // namespace sim
 } // namespace drc

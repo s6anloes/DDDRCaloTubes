@@ -18,6 +18,7 @@ namespace dd4hep {
                 virtual void EndOfEventAction(const G4Event*) final;
                 inline void AddCher(G4int n) { NofCherDet += n; }
                 inline void AddScin(G4int n) { NofScinDet += n; }
+                inline void AddIntegratedRadiationLength (G4double n) { IntegratedRadiationLength += n; }
 
 
             private:
@@ -26,6 +27,7 @@ namespace dd4hep {
 
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
+                G4double  IntegratedRadiationLength;
 
         };
     }

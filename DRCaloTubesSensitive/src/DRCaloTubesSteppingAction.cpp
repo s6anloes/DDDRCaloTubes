@@ -3,6 +3,9 @@
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
 #include "G4VProcess.hh"
+#include "G4Geantino.hh"
+#include "G4MuonMinus.hh"
+#include "G4NeutrinoE.hh"
 
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "DD4hep/DD4hepUnits.h"
@@ -65,6 +68,12 @@ namespace dd4hep {
             std::string cher_clad_name  = "cher_clad_0";
             fibre_name = volume->GetName(); 
             G4int signalhit = 0;
+            //std::cout << "Particle Definition = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
+            if (step->GetTrack()->GetParticleDefinition() == G4MuonMinus::Definition() || step->GetTrack()->GetParticleDefinition() == G4NeutrinoE::Definition() ) {
+                G4double radlen = step->GetStepLength()/step->GetTrack()->GetMaterial()->GetRadlen();
+                fEventAction->AddIntegratedRadiationLength(radlen);
+                return;
+            }
 
             
             if ( fibre_name==scin_fibre_name || fibre_name==scin_clad_name ) //scintillating fiber/tube

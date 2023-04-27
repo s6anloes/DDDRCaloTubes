@@ -30,8 +30,9 @@ namespace dd4hep {
                 //
                 virtual void BeginOfRunAction(const G4Run*);
                 virtual void EndOfRunAction(const G4Run*);
-                inline void Reset() { NofCherDet=0; NofScinDet=0; }
+                inline void Reset() { NofCherDet=0; NofScinDet=0; IntegratedRadiationLength=0.; }
                 void Fill(const G4int cher, const G4int scin);
+                void Fill(const G4int cher, const G4int scin, const G4double radlen);
 
             private:
                 //DRCaloTubesEventAction* fEventAction;
@@ -42,6 +43,7 @@ namespace dd4hep {
 
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
+                G4double  IntegratedRadiationLength;
 
 
 
