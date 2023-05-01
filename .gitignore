@@ -6,6 +6,8 @@ examples/DDDRCaloTubes/scripts/
 examples/DDDRCaloTubes/data/
 examples/DDDRCaloTubes/eve/README.md
 
+job_submission/
+
 include/*.h
 
 *root
