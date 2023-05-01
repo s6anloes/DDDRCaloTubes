@@ -31,64 +31,58 @@ static Ref_t create_detector(Detector& description,
 
 
     // Get parameters for tube construction
-    xml_comp_t  x_scin_tube      = x_det.child(_Unicode(scin_tube));
+    xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
 
-    xml_comp_t  x_scin_capillary          = x_scin_tube.child(_Unicode(capillary));
-    Material    scin_capillary_material   = description.material(x_scin_capillary.materialStr()); 
-    double      scin_capillary_outer_r    = x_scin_capillary.outer_r();
+    xml_comp_t  x_capillary          = x_tube.child(_Unicode(capillary));
+    Material    capillary_material   = description.material(x_capillary.materialStr()); 
+    double      capillary_outer_r    = x_capillary.outer_r();
 
-    xml_comp_t  x_scin_clad          = x_scin_tube.child(_Unicode(scin_clad));
+    xml_comp_t  x_scin_clad          = x_tube.child(_Unicode(scin_clad));
     Material    scin_clad_material   = description.material(x_scin_clad.materialStr()); 
     double      scin_clad_outer_r    = x_scin_clad.outer_r();
 
-    xml_comp_t  x_scin_fibre         = x_scin_tube.child(_Unicode(scin_fibre));
+    xml_comp_t  x_scin_fibre         = x_tube.child(_Unicode(scin_fibre));
     Material    scin_fibre_material  = description.material(x_scin_fibre.materialStr()); 
     double      scin_fibre_outer_r   = x_scin_fibre.outer_r();
 
-    xml_comp_t  x_cher_tube          = x_det.child(_Unicode(cher_tube));
-
-    xml_comp_t  x_cher_capillary          = x_cher_tube.child(_Unicode(capillary));
-    Material    cher_capillary_material   = description.material(x_cher_capillary.materialStr()); 
-    double      cher_capillary_outer_r    = x_cher_capillary.outer_r();
-
-    xml_comp_t  x_cher_clad          = x_cher_tube.child(_Unicode(cher_clad));
+    xml_comp_t  x_cher_clad          = x_tube.child(_Unicode(cher_clad));
     Material    cher_clad_material   = description.material(x_cher_clad.materialStr()); 
     double      cher_clad_outer_r    = x_cher_clad.outer_r();
 
-    xml_comp_t  x_cher_fibre         = x_cher_tube.child(_Unicode(cher_fibre));
+    xml_comp_t  x_cher_fibre         = x_tube.child(_Unicode(cher_fibre));
     Material    cher_fibre_material  = description.material(x_cher_fibre.materialStr()); 
     double      cher_fibre_outer_r   = x_cher_fibre.outer_r();
 
 
     // Workaround for sensitive tubes:
-    Tube        air_solid(0.0*mm, scin_capillary_outer_r, z_half);
+    Tube        air_solid(0.0*mm, capillary_outer_r, z_half);
     std::string air_name = "air";
     Volume      scin_air_volume("scin_"+air_name, air_solid, air);
     Volume      cher_air_volume("cher_"+air_name, air_solid, air);
-    scin_air_volume.setVisAttributes(description, x_scin_capillary.visStr());
-    cher_air_volume.setVisAttributes(description, x_cher_capillary.visStr()); 
+    scin_air_volume.setVisAttributes(description, x_capillary.visStr());
+    cher_air_volume.setVisAttributes(description, x_capillary.visStr()); 
 
     // Scintillation capillary
-    Tube        scin_tube_solid(0.0*mm, scin_capillary_outer_r, z_half);
+    Tube        scin_tube_solid(0.0*mm, capillary_outer_r, z_half);
     std::string scin_tube_name = "scin_tube";
-    Volume      scin_tube_volume(scin_tube_name, scin_tube_solid, scin_capillary_material);
-    if (x_scin_capillary.isSensitive())
+    Volume      scin_tube_volume(scin_tube_name, scin_tube_solid, capillary_material);
+    if (x_capillary.isSensitive())
     {
         scin_tube_volume.setSensitiveDetector(sens);
     }
     PlacedVolume scin_tube_placed = scin_air_volume.placeVolume(scin_tube_volume);    
-    scin_tube_volume.setVisAttributes(description, x_scin_capillary.visStr());
+    scin_tube_volume.setVisAttributes(description, x_capillary.visStr());
 
     // Cherenkov capillary
-    Tube        cher_tube_solid(0.0*mm, cher_capillary_outer_r, z_half);
+    Tube        cher_tube_solid(0.0*mm, capillary_outer_r, z_half);
     std::string cher_tube_name = "cher_tube";
-    Volume      cher_tube_volume(cher_tube_name, cher_tube_solid, cher_capillary_material);
-    if (x_cher_capillary.isSensitive())
+    Volume      cher_tube_volume(cher_tube_name, cher_tube_solid, capillary_material);
+    if (x_capillary.isSensitive())
     {
         cher_tube_volume.setSensitiveDetector(sens);
     }
     PlacedVolume cher_tube_placed = cher_air_volume.placeVolume(cher_tube_volume); 
-    cher_tube_volume.setVisAttributes(description, x_cher_capillary.visStr());    
+    cher_tube_volume.setVisAttributes(description, x_capillary.visStr());    
 
     /* Code for tube construction before workaround for sensitive tubes
     // Construct volumes for tubes
@@ -164,9 +158,9 @@ static Ref_t create_detector(Detector& description,
     {
         for (int col=0; col<num_cols; col++)
         {
-            double offset = (row & 1) ? -scin_capillary_outer_r : 0.0*mm;
-            double x = col*2*scin_capillary_outer_r + offset;
-            double D = 4.0*scin_capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+            double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
+            double x = col*2*capillary_outer_r + offset;
+            double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
             double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
             auto position = Position(x, y, 0.0*mm);
 

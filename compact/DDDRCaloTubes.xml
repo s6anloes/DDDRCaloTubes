@@ -332,14 +332,6 @@
                 <cher_fibre material="PMMA"                outer_r="FibreOuterRadius" sensitive="true"  vis="cher_fibre_vis" />
             </tube>
 
-            <cher_tube>
-                <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="true" vis="capillary_vis"  />
-                <scin_clad  material="PMMA"                outer_r="CladOuterRadius"  sensitive="true"  vis="scin_clad_vis"  />
-                <scin_fibre material="DR_Polystyrene"      outer_r="FibreOuterRadius" sensitive="true"  vis="scin_fibre_vis" />
-                <cher_clad  material="Fluorinated_Polymer" outer_r="CladOuterRadius"  sensitive="true"  vis="cher_clad_vis"  />
-                <cher_fibre material="PMMA"                outer_r="FibreOuterRadius" sensitive="true"  vis="cher_fibre_vis" />
-            </cher_tube>
-
         </detector>
     </detectors>
 
