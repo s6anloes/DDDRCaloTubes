@@ -53,7 +53,39 @@ static Ref_t create_detector(Detector& description,
     Material    cher_fibre_material  = description.material(x_cher_fibre.materialStr()); 
     double      cher_fibre_outer_r   = x_cher_fibre.outer_r();
 
+    /*
+    // Workaround for sensitive tubes:
+    Tube        air_solid(0.0*mm, capillary_outer_r, z_half);
+    std::string air_name = "air";
+    Volume      scin_air_volume("scin_"+air_name, air_solid, air);
+    Volume      cher_air_volume("cher_"+air_name, air_solid, air);
+    scin_air_volume.setVisAttributes(description, x_capillary.visStr());
+    cher_air_volume.setVisAttributes(description, x_capillary.visStr()); 
 
+    // Scintillation capillary
+    Tube        scin_tube_solid(0.0*mm, capillary_outer_r, z_half);
+    std::string scin_tube_name = "scin_tube";
+    Volume      scin_tube_volume(scin_tube_name, scin_tube_solid, capillary_material);
+    if (x_capillary.isSensitive())
+    {
+        scin_tube_volume.setSensitiveDetector(sens);
+    }
+    //PlacedVolume scin_tube_placed = scin_air_volume.placeVolume(scin_tube_volume);    
+    scin_tube_volume.setVisAttributes(description, x_capillary.visStr());
+
+    // Cherenkov capillary
+    Tube        cher_tube_solid(0.0*mm, capillary_outer_r, z_half);
+    std::string cher_tube_name = "cher_tube";
+    Volume      cher_tube_volume(cher_tube_name, cher_tube_solid, capillary_material);
+    if (x_capillary.isSensitive())
+    {
+        cher_tube_volume.setSensitiveDetector(sens);
+    }
+    //PlacedVolume cher_tube_placed = cher_air_volume.placeVolume(cher_tube_volume); 
+    cher_tube_volume.setVisAttributes(description, x_capillary.visStr()); 
+    */   
+
+    /* Code for tube construction before workaround for sensitive tubes
     // Construct volumes for tubes
     Tube        capillary_solid(0.0*mm, capillary_outer_r, z_half);
     std::string capillary_name = "capillary";//_"+std::to_string(row)+"_"+std::to_string(col);
@@ -67,8 +99,8 @@ static Ref_t create_detector(Detector& description,
     }
     scin_tube_volume.setVisAttributes(description, x_capillary.visStr());
     cher_tube_volume.setVisAttributes(description, x_capillary.visStr());    
-
-
+    */
+    /*
     // Scintillation cladding
     Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, z_half);
     std::string scin_clad_name = "scin_clad";
@@ -77,8 +109,9 @@ static Ref_t create_detector(Detector& description,
     {
         scin_clad_volume.setSensitiveDetector(sens);
     }
-    PlacedVolume scin_clad_placed = scin_tube_volume.placeVolume(scin_clad_volume);
+    //PlacedVolume scin_clad_placed = scin_tube_volume.placeVolume(scin_clad_volume);
     scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
+    //scin_clad_placed.addPhysVolID("clad", 1);
 
     // Scintillation fibre
     Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, z_half);
@@ -88,9 +121,9 @@ static Ref_t create_detector(Detector& description,
     {
         scin_fibre_volume.setSensitiveDetector(sens);
     }
-    PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume);
+    //PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume);
     scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
-    scin_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 0);
+    //scin_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 0);
 
     // Cherenkov cladding
     Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, z_half);
@@ -100,8 +133,9 @@ static Ref_t create_detector(Detector& description,
     {
         cher_clad_volume.setSensitiveDetector(sens);
     }
-    PlacedVolume cher_clad_placed = cher_tube_volume.placeVolume(cher_clad_volume);
+    //PlacedVolume cher_clad_placed = cher_tube_volume.placeVolume(cher_clad_volume);
     cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
+    //cher_clad_placed.addPhysVolID("clad", 1);
 
     // Chrerenkov fibre
     Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, z_half);
@@ -111,10 +145,10 @@ static Ref_t create_detector(Detector& description,
     {
         cher_fibre_volume.setSensitiveDetector(sens);
     }
-    PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume);
+    //PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume);
     cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
-    cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
-
+    //cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
+    */
 
     int tube_id = 0;
     double x_avg = 0.0*mm;
@@ -124,15 +158,73 @@ static Ref_t create_detector(Detector& description,
     {
         for (int col=0; col<num_cols; col++)
         {
+            // Definition of Air Volume which is created newly in each loop such that daughters can be 
+            // repeatedly placed with identical copy numbers
+            // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
+
+            // Capillary tube
+            Tube        capillary_solid(0.0*mm, capillary_outer_r, z_half);
+            std::string capillary_name = "capillary";
+            Volume      capillary_volume(capillary_name, capillary_solid, capillary_material);
+            if (x_capillary.isSensitive()) capillary_volume.setSensitiveDetector(sens);
+            capillary_volume.setVisAttributes(description, x_capillary.visStr()); 
+
+            if (row & 1) // Cherenkov row
+            {
+                // Cherenkov cladding
+                Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, z_half);
+                std::string cher_clad_name = "cher_clad";
+                Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
+                if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
+                PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
+                cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
+                cher_clad_placed.addPhysVolID("clad", 1);
+
+                // Chrerenkov fibre
+                Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, z_half);
+                std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_fibre_material);
+                if (x_cher_fibre.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
+                PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
+                cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
+                cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
+            }
+            else // Scintillation row
+            {
+                // Scintillation cladding
+                Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, z_half);
+                std::string scin_clad_name = "scin_clad";
+                Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
+                if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
+                PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
+                scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
+                scin_clad_placed.addPhysVolID("clad", 1);
+
+                // Scintillation fibre
+                Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, z_half);
+                std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_fibre_material);
+                if (x_scin_fibre.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
+                PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
+                scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
+                scin_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 0);
+            }
+            //auto tube_to_be_placed = (row & 1) ? &cher_air_volume : &scin_air_volume;
+
+            
+            // Configuration for placing the tube
             double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
             double x = col*2*capillary_outer_r + offset;
             double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
             double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
             auto position = Position(x, y, 0.0*mm);
 
-            auto tube_to_be_placed = (row & 1) ? &cher_tube_volume : &scin_tube_volume;
+            //auto sensitive_to_be_placed = (row & 1) ? Volume(cher_tube_volume) : Volume(scin_tube_volume);
 
-            PlacedVolume    tube_placed = module_volume.placeVolume(*tube_to_be_placed, tube_id, position);
+            //sensitive_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
+
+
+            PlacedVolume    tube_placed = module_volume.placeVolume(capillary_volume, tube_id, position);
             // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
             // Slighty changed to fit my q and r directions
             int q = col + (row - (row&1))/2;
