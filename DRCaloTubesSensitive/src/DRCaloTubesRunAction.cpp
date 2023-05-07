@@ -44,6 +44,9 @@ namespace dd4hep {
             analysisManager->CreateNtuple("DRCaloTubesout", "DRCaloTubesoutput");
             analysisManager->CreateNtupleDColumn("NofCherDet");                     //0
             analysisManager->CreateNtupleDColumn("NofScinDet");                     //1
+            std::cout<<"???????????????????????????? IS THE PROBLEM IN THE RUNACTION CONSTRUCTOR????????????????????????????????????/"<<std::endl;
+            analysisManager->CreateNtupleDColumn("FibreSignalsCher");
+            analysisManager->CreateNtupleDColumn("FibreSignalsScin");
             analysisManager->FinishNtuple();
             
         }
@@ -80,6 +83,8 @@ namespace dd4hep {
             fTree = new TTree("DRCaloTubesData", "Tree with DRCaloTubes data");
             fTree->Branch("NofCherDet", &NofCherDet);
             fTree->Branch("NofScinDet", &NofScinDet);
+            fTree->Branch("FibreSignalsCher", &FibreSignalsCher);
+            fTree->Branch("FibreSignalsScin", &FibreSignalsScin);
 
         }
 
@@ -95,9 +100,20 @@ namespace dd4hep {
 
         }
 
-        void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin) {
+        void DRCaloTubesRunAction::Reset() {
+            NofCherDet=0; 
+            NofScinDet=0; 
+            FibreSignalsCher.clear(); 
+            FibreSignalsScin.clear();
+        }
+
+        void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin, 
+                                        const std::vector<G4int> fibrecher, 
+                                        const std::vector<G4int> fibrescin) {
             NofCherDet = cher;
             NofScinDet = scin;
+            FibreSignalsCher = fibrecher;
+            FibreSignalsScin = fibrescin;
 
             fTree->Fill();
 

@@ -11,6 +11,8 @@
 #include "TFile.h"
 #include "TTree.h"
 
+#include <unordered_map>
+
 class G4Run;
 
 
@@ -30,8 +32,8 @@ namespace dd4hep {
                 //
                 virtual void BeginOfRunAction(const G4Run*);
                 virtual void EndOfRunAction(const G4Run*);
-                inline void Reset() { NofCherDet=0; NofScinDet=0; }
-                void Fill(const G4int cher, const G4int scin);
+                void Reset(); 
+                void Fill(const G4int cher, const G4int scin, const std::vector<G4int> fibrecher, const std::vector<G4int> fibrescin);
 
             private:
                 //DRCaloTubesEventAction* fEventAction;
@@ -43,6 +45,9 @@ namespace dd4hep {
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
 
+                int nfibres = 48*60;
+                std::vector<G4int> FibreSignalsCher{std::vector<G4int>(nfibres,0)};  // Cherenkov signal in each fibre
+                std::vector<G4int> FibreSignalsScin{std::vector<G4int>(nfibres,0)};  // Scinitillation signal in each fibre
 
 
 

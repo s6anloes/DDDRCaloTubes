@@ -49,6 +49,8 @@ namespace dd4hep {
             //        std::cout<<"Track only one STEP" << std::endl;
             //    }
             //}
+            std::cout<<"SteppingAction:: Starting step!!!!!!!!" <<std::endl;
+            std::cout<<"Length of vectors. Cher: "<< std::to_string(fEventAction->GetFibreSignalsCher().size()) <<std::endl;
             G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
             G4double edep = step->GetTotalEnergyDeposit();
             G4double steplength = step->GetStepLength();
@@ -78,11 +80,10 @@ namespace dd4hep {
 
                 if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return; } //not ionizing particle
 
-
-                
-                            
                 signalhit = DRCaloTubesSteppingAction::SmearSSignal( DRCaloTubesSteppingAction::ApplyBirks( edep, steplength ) );
-                fEventAction->AddScin(signalhit); 
+                fEventAction->AddScin(signalhit);
+                unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
+                fEventAction->AddFibreScin(fibre_id, signalhit); 
             }
 
             if ( fibre_name.substr(0, 4) == "cher" ) //Cherenkov fiber/tube
@@ -113,6 +114,8 @@ namespace dd4hep {
                             //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
                             fEventAction->AddCher(c_signal);
+                            unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
+                            fEventAction->AddFibreCher(fibre_id, signalhit); 
                             step->GetTrack()->SetTrackStatus( fStopAndKill );
                             break;
                         }
@@ -123,6 +126,8 @@ namespace dd4hep {
                 } //end of optical photon
 
             } //end of Cherenkov fiber
+
+            std::cout<<"SteppingAction:: Finishing step!!!!!!!!" <<std::endl;
 
             return;
         }
