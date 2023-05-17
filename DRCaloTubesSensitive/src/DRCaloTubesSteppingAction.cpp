@@ -49,8 +49,8 @@ namespace dd4hep {
             //        std::cout<<"Track only one STEP" << std::endl;
             //    }
             //}
-            std::cout<<"SteppingAction:: Starting step!!!!!!!!" <<std::endl;
-            std::cout<<"Length of vectors. Cher: "<< std::to_string(fEventAction->GetFibreSignalsCher().size()) <<std::endl;
+            //std::cout<<"SteppingAction:: Starting step!!!!!!!!" <<std::endl;
+            //std::cout<<"Length of vectors. Cher: "<< std::to_string(fEventAction->GetFibreSignalsCher().size()) <<std::endl;
             G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
             G4double edep = step->GetTotalEnergyDeposit();
             G4double steplength = step->GetStepLength();
@@ -115,7 +115,7 @@ namespace dd4hep {
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
                             fEventAction->AddCher(c_signal);
                             unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
-                            fEventAction->AddFibreCher(fibre_id, signalhit); 
+                            fEventAction->AddFibreCher(fibre_id, c_signal); 
                             step->GetTrack()->SetTrackStatus( fStopAndKill );
                             break;
                         }
@@ -127,7 +127,7 @@ namespace dd4hep {
 
             } //end of Cherenkov fiber
 
-            std::cout<<"SteppingAction:: Finishing step!!!!!!!!" <<std::endl;
+            //std::cout<<"SteppingAction:: Finishing step!!!!!!!!" <<std::endl;
 
             return;
         }
