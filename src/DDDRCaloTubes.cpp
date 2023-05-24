@@ -19,7 +19,9 @@ static Ref_t create_detector(Detector& description,
 
     xml_dim_t   x_dim       = x_det.dimensions();
     double      z_half      = x_dim.zhalf();
-    double      rotation    = x_dim.angle();
+    double      phi         = x_dim.phi();
+    double      theta       = x_dim.theta();
+    double      psi         = x_dim.psi();
     int         num_rows    = x_dim.number();
     int         num_cols    = x_dim.count();
 
@@ -241,7 +243,7 @@ static Ref_t create_detector(Detector& description,
     x_avg /= tube_id;
     y_avg /= tube_id;
 
-    Transform3D tr(RotationZYX(0,rotation,0),Position(-x_avg,-y_avg,0));
+    Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
     PlacedVolume module_placed = mother_volume.placeVolume(module_volume, tr);
     module_placed.addPhysVolID("system", det_id);
     s_detElement.setPlacement(module_placed);

@@ -73,7 +73,10 @@
         <constant name="CladOuterRadius"  value="0.5*mm"   />
         <constant name="TubeOuterRadius"  value="1.0*mm"   />
         <constant name="TowerHalfLength"  value="50*cm"    />
-        <constant name="RotationAngle"    value="1*deg"    />
+
+        <constant name="RotationZ" value="0.0*deg" />
+        <constant name="RotationY" value="1.0*deg" />
+        <constant name="RotationX" value="0.0*deg" />
 
         <constant name="NumRows" value="60" />
         <constant name="NumCols" value="48" />
@@ -316,7 +319,9 @@
                 zhalf="TowerHalfLength"
                 number="NumRows" 
                 count="NumCols"
-                angle="RotationAngle" />
+                phi="RotationZ"
+                theta="RotationY"
+                psi="RotationX" />
 
             <tube>
                 <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="false" vis="capillary_vis"  />
