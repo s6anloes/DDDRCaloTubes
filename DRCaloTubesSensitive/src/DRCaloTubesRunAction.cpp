@@ -108,13 +108,15 @@ namespace dd4hep {
         }
 
         void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin, 
-                                        std::map<int, G4int> fibrecher, 
-                                        std::map<int, G4int> fibrescin) {
+                                        std::map<unsigned int, G4int> fibrecher, 
+                                        std::map<unsigned int, G4int> fibrescin) {
             NofCherDet = cher;
             NofScinDet = scin;
-            int cher_map_size = fibrecher.size();
-            int scin_map_size = fibrescin.size();
-            for (int i=0; i<nfibres; i++) 
+
+            unsigned int cher_max = fibrecher.empty() ? 0 : fibrecher.rbegin()->first;
+            unsigned int scin_max = fibrescin.empty() ? 0 : fibrescin.rbegin()->first;
+            unsigned int nfibres = cher_max > scin_max ? cher_max : scin_max;
+            for (unsigned int i=0; i<=nfibres; i++) 
             {
                 if (fibrecher.count(i)) {
                     FibreSignalsCher.push_back(fibrecher.at(i));

@@ -19,11 +19,11 @@ namespace dd4hep {
                 virtual void EndOfEventAction(const G4Event*) final;
                 inline void AddCher(G4int n) { NofCherDet += n; }
                 inline void AddScin(G4int n) { NofScinDet += n; }
-                void AddFibreCher(int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
-                void AddFibreScin(int fibre_id, G4int n) { FibreSignalsScin[fibre_id] += n; }
+                void AddFibreCher(unsigned int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
+                void AddFibreScin(unsigned int fibre_id, G4int n) { FibreSignalsScin[fibre_id] += n; }
 
-                inline std::map<int, G4int> GetFibreSignalsCher() { return FibreSignalsCher; }
-                inline std::map<int, G4int> GetFibreSignalsScin() { return FibreSignalsScin; }
+                inline std::map<unsigned int, G4int> GetFibreSignalsCher() { return FibreSignalsCher; }
+                inline std::map<unsigned int, G4int> GetFibreSignalsScin() { return FibreSignalsScin; }
 
 
 
@@ -33,9 +33,9 @@ namespace dd4hep {
 
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
-                int nfibres = 48*60;
-                std::map<int, G4int> FibreSignalsCher;
-                std::map<int, G4int> FibreSignalsScin;
+                
+                std::map<unsigned int, G4int> FibreSignalsCher;
+                std::map<unsigned int, G4int> FibreSignalsScin;
                 //std::vector<G4int> FibreSignalsCher;
                 //std::vector<G4int> FibreSignalsScin;
 
