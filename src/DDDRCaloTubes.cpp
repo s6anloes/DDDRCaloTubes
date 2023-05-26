@@ -152,7 +152,6 @@ static Ref_t create_detector(Detector& description,
     //cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
     */
 
-    int tube_id = 0;
     double x_avg = 0.0*mm;
     double y_avg = 0.0*mm;
 
@@ -163,6 +162,27 @@ static Ref_t create_detector(Detector& description,
             // Definition of Air Volume which is created newly in each loop such that daughters can be 
             // repeatedly placed with identical copy numbers
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
+
+            // Configuration for placing the tube
+            double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
+            double x = col*2*capillary_outer_r + offset;
+            double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+            double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
+            auto position = Position(x, y, 0.0*mm);
+
+            // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
+            // Slighty changed to fit my q and r directions
+            unsigned short int q = col + (row - (row&1))/2;
+            unsigned short int r = row;
+            //std::cout<<"(row, col) -> (r, q) : (" <<row<<", "<<col<<") -> (" << r<<", " <<q<<")" <<std::endl;
+
+            x_avg += x;
+            y_avg += y;
+            // TubeID composed of q in first 16 bits, r in last 16 bits
+            unsigned int tube_id = (q << 16) | r;
+            
+            std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
+
 
             // Capillary tube
             Tube        capillary_solid(0.0*mm, capillary_outer_r, z_half);
@@ -213,35 +233,21 @@ static Ref_t create_detector(Detector& description,
             }
             //auto tube_to_be_placed = (row & 1) ? &cher_air_volume : &scin_air_volume;
 
-            
-            // Configuration for placing the tube
-            double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
-            double x = col*2*capillary_outer_r + offset;
-            double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
-            double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
-            auto position = Position(x, y, 0.0*mm);
-
             //auto sensitive_to_be_placed = (row & 1) ? Volume(cher_tube_volume) : Volume(scin_tube_volume);
 
             //sensitive_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
 
 
             PlacedVolume    tube_placed = module_volume.placeVolume(capillary_volume, tube_id, position);
-            // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
-            // Slighty changed to fit my q and r directions
-            int q = col + (row - (row&1))/2;
-            int r = row;
-            //std::cout<<"(row, col) -> (r, q) : (" <<row<<", "<<col<<") -> (" << r<<", " <<q<<")" <<std::endl;
+            
             tube_placed.addPhysVolID("fibre", 0).addPhysVolID("q", q).addPhysVolID("r", r);
 
-            x_avg += x;
-            y_avg += y;
-            tube_id++;
+            
         }
     }
 
-    x_avg /= tube_id;
-    y_avg /= tube_id;
+    x_avg /= (num_rows*num_cols);
+    y_avg /= (num_rows*num_cols);
 
     Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
     PlacedVolume module_placed = mother_volume.placeVolume(module_volume, tr);

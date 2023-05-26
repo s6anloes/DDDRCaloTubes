@@ -48,6 +48,9 @@ namespace dd4hep {
                 std::vector<G4int> FibreSignalsCher;//{std::vector<G4int>(nfibres,0)};  // Cherenkov signal in each fibre
                 std::vector<G4int> FibreSignalsScin;//{std::vector<G4int>(nfibres,0)};  // Scinitillation signal in each fibre
 
+                std::vector<unsigned int> FibreIDsCher; // TubeIDs corresponding to signals (same order)
+                std::vector<unsigned int> FibreIDsScin;
+
 
 
         };

@@ -44,8 +44,9 @@ namespace dd4hep {
             analysisManager->CreateNtuple("DRCaloTubesout", "DRCaloTubesoutput");
             analysisManager->CreateNtupleDColumn("NofCherDet");                     //0
             analysisManager->CreateNtupleDColumn("NofScinDet");                     //1
-            std::cout<<"???????????????????????????? IS THE PROBLEM IN THE RUNACTION CONSTRUCTOR????????????????????????????????????/"<<std::endl;
+            analysisManager->CreateNtupleDColumn("FibreIDsCher");
             analysisManager->CreateNtupleDColumn("FibreSignalsCher");
+            analysisManager->CreateNtupleDColumn("FibreIDsScin");
             analysisManager->CreateNtupleDColumn("FibreSignalsScin");
             analysisManager->FinishNtuple();
             
@@ -74,16 +75,16 @@ namespace dd4hep {
             auto analysisManager = G4RootAnalysisManager::Instance();
             std::string runnumber = std::to_string( Run->GetRunID() );
             G4String outputfile = "DRCaloTubesout_Run"+runnumber;
-            std::cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DRCaloTubesout_Run"+runnumber<<std::endl;
             analysisManager->OpenFile( outputfile );
-            std::cout<<"RunAction::BeginOfRunAction after analysisManager"<<std::endl;
 
             std::string rootfile_name = "DRCaloTubesout_Run"+runnumber+".root";
             fFile = new TFile(rootfile_name.c_str(), "RECREATE");
             fTree = new TTree("DRCaloTubesData", "Tree with DRCaloTubes data");
             fTree->Branch("NofCherDet", &NofCherDet);
             fTree->Branch("NofScinDet", &NofScinDet);
+            fTree->Branch("FibreIDsCher", &FibreIDsCher);
             fTree->Branch("FibreSignalsCher", &FibreSignalsCher);
+            fTree->Branch("FibreIDsScin", &FibreIDsScin);
             fTree->Branch("FibreSignalsScin", &FibreSignalsScin);
 
         }
@@ -110,10 +111,16 @@ namespace dd4hep {
         void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin, 
                                         std::map<unsigned int, G4int> fibrecher, 
                                         std::map<unsigned int, G4int> fibrescin) {
+
+            FibreSignalsCher.clear();
+            FibreSignalsScin.clear();
+            FibreIDsCher.clear();
+            FibreIDsScin.clear();
+            
             NofCherDet = cher;
             NofScinDet = scin;
 
-            unsigned int cher_max = fibrecher.empty() ? 0 : fibrecher.rbegin()->first;
+            /* unsigned int cher_max = fibrecher.empty() ? 0 : fibrecher.rbegin()->first;
             unsigned int scin_max = fibrescin.empty() ? 0 : fibrescin.rbegin()->first;
             unsigned int nfibres = cher_max > scin_max ? cher_max : scin_max;
             for (unsigned int i=0; i<=nfibres; i++) 
@@ -129,13 +136,25 @@ namespace dd4hep {
                 } else {
                     FibreSignalsScin.push_back(0);
                 }
+            } */
+            for (auto const& [key, val]: fibrecher)
+            {
+                FibreIDsCher.push_back(key);
+                FibreSignalsCher.push_back(val);
+            }
+
+            for (auto const& [key, val]: fibrescin)
+            {
+                FibreIDsScin.push_back(key);
+                FibreSignalsScin.push_back(val);
             }
 
             fTree->Fill();
 
             FibreSignalsCher.clear();
             FibreSignalsScin.clear();
-
+            FibreIDsCher.clear();
+            FibreIDsScin.clear();
         }
 
     }
