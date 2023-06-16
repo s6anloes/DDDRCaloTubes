@@ -121,7 +121,7 @@ id = 0
 for point in pointlist:
     for m in momentumlist:
         for pdg in pdgcodelist:
-            prefix = category+f"_{id:02}"
+            prefix = category+f"_{id:05}"
             print(point)
             # conversion from mm to cm
             newpoint = tuple([x/10.0 for x in point])
