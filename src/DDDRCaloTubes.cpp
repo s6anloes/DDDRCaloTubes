@@ -181,7 +181,7 @@ static Ref_t create_detector(Detector& description,
             // TubeID composed of q in first 16 bits, r in last 16 bits
             unsigned int tube_id = (q << 16) | r;
             
-            std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
+            //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
 
 
             // Capillary tube
@@ -250,9 +250,31 @@ static Ref_t create_detector(Detector& description,
     y_avg /= (num_rows*num_cols);
 
     Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
-    PlacedVolume module_placed = mother_volume.placeVolume(module_volume, tr);
+
+    // Get module volume to define surrounding box for truth information
+    const Box assembly_box = module_volume.boundingBox();
+
+    // Get size of assembly box to deinfre slightly increased size of truth box
+    double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+    double vertical_spacing = 3*D/4;                // Vertical spacing of fibres (pointy top)
+    double margin = 0.1*mm;                         // Margin for the truth box
+    double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
+    double truth_y = ((num_rows-1)*vertical_spacing+2*capillary_outer_r+2*margin) / 2;
+    double truth_z = z_half + margin;
+    Box truth_box = Box(truth_x, truth_y, truth_z);
+    Volume truth_volume("truth_volume", truth_box, air);
+    truth_volume.setSensitiveDetector(sens);
+    truth_volume.setVisAttributes(description, "MyVis");
+
+    Transform3D module_tr(RotationZYX(0, 0, 0), Position(-truth_x+margin+2*capillary_outer_r, -truth_y+margin+capillary_outer_r, 0));
+    PlacedVolume module_placed = truth_volume.placeVolume(module_volume, module_tr);
     module_placed.addPhysVolID("system", det_id);
-    s_detElement.setPlacement(module_placed);
+
+    PlacedVolume truth_placed = mother_volume.placeVolume(truth_volume, tr);
+    truth_placed.addPhysVolID("system", 1);
+
+
+    s_detElement.setPlacement(truth_placed);
 
 /*    
     //Make a Cylinder
