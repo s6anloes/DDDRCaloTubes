@@ -60,16 +60,48 @@ namespace dd4hep {
             //signals
             //--------------------------------------------------
 
-            std::string fibre_name;
+            std::string volume_name;
             std::string scin_fibre_name = "scin_fibre_0";
             std::string scin_clad_name  = "scin_clad_0";
             std::string cher_fibre_name = "cher_fibre_0";
             std::string cher_clad_name  = "cher_clad_0";
-            fibre_name = volume->GetName(); 
+            volume_name = volume->GetName(); 
             G4int signalhit = 0;
+            
+            // truth information from truth box
+            if ( volume_name=="truth_volume_0" ) 
+            {  
+                unsigned int step_number = step->GetTrack()->GetCurrentStepNumber();
+                if (step->IsFirstStepInVolume() && step->GetTrack()->GetParentID()==0 && step_number<fEventAction->GetFirstStepNumber())
+                {
+                    //std::cout<<"I WANT THE TRUTH"<<std::endl;
+                    fEventAction->SetFirstStepNumber(step_number);
+                    G4ThreeVector position  = step->GetPreStepPoint()->GetPosition();
+                    G4ThreeVector direction = step->GetPreStepPoint()->GetMomentumDirection().unit();
+
+                    G4double truth_margin = 100.0*CLHEP::um;
+                    G4double z = direction.getZ(); 
+                    G4double count = (z!=0) ? truth_margin/z : 0;
+                    position += G4ThreeVector(count*direction.getX(), count*direction.getY(), truth_margin);
+
+                    fEventAction->SetX(position.getX()/CLHEP::mm);
+                    fEventAction->SetY(position.getY()/CLHEP::mm);
+                    fEventAction->SetZ(position.getZ()/CLHEP::mm);
+
+                } // end of first step in volume
+
+                else if (step->IsLastStepInVolume() && step->GetTrack()->GetNextVolume()->GetName()=="world_volume_1")
+                {
+                    //std::cout<<"YOU CANT HANDLE THE TRUTH"<<std::endl;
+                    G4double leakage = step->GetPreStepPoint()->GetTotalEnergy();
+                    fEventAction->AddLeakage(leakage/CLHEP::MeV);
+
+                } // end of last step in volume
+
+            } // end of truth box            
 
             
-            if ( fibre_name.substr(0, 4) == "scin" ) //scintillating fiber/tube
+            else if ( volume_name.substr(0, 4) == "scin" ) //scintillating fiber/tube
             { 
                 //G4VPhysicalVolume* step_vol  = step->GetTrack()->GetVolume();
                 //std::cout<<"Step Volume in Geant4: " << step_vol->GetName() <<" : " << std::to_string(step_vol->GetCopyNo())<<std::endl; 
@@ -84,9 +116,9 @@ namespace dd4hep {
                 fEventAction->AddScin(signalhit);
                 unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
                 fEventAction->AddFibreScin(fibre_id, signalhit); 
-            }
+            } // end of scintillating fibre
 
-            if ( fibre_name.substr(0, 4) == "cher" ) //Cherenkov fiber/tube
+            else if ( volume_name.substr(0, 4) == "cher" ) //Cherenkov fiber/tube
             {
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                 {

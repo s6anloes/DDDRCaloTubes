@@ -270,7 +270,8 @@ static Ref_t create_detector(Detector& description,
     PlacedVolume module_placed = truth_volume.placeVolume(module_volume, module_tr);
     module_placed.addPhysVolID("system", det_id);
 
-    PlacedVolume truth_placed = mother_volume.placeVolume(truth_volume, tr);
+    Transform3D truth_tr(RotationZYX(phi, theta, psi), Position(0, 0, 0));
+    PlacedVolume truth_placed = mother_volume.placeVolume(truth_volume, truth_tr);
     truth_placed.addPhysVolID("system", 1);
 
 

@@ -78,8 +78,8 @@
         <constant name="RotationY" value="1.0*deg" />
         <constant name="RotationX" value="0.0*deg" />
 
-        <constant name="NumRows" value="60" />
-        <constant name="NumCols" value="48" />
+        <constant name="NumRows" value="30" />
+        <constant name="NumCols" value="24" />
         
     </define>
     <properties>
@@ -284,7 +284,7 @@
             <composite n="8" ref="C" />
             <composite n="8" ref="H" />
             <property name="RINDEX" ref="RI_DR_Polystyrene"/>
-            <!-- <property name="ABSLENGTH" ref="AbsLen_DR_Polystyrene"/> -->
+            <property name="ABSLENGTH" ref="AbsLen_DR_Polystyrene"/>
         </material>
 
         <material name="PMMA" >
@@ -293,7 +293,7 @@
             <composite n="2" ref="O" />
             <composite n="8" ref="H" />
             <property name="RINDEX" ref="RI_PMMA"/>
-            <!-- <property name="ABSLENGTH" ref="AbsLen_PMMA"/> -->
+            <property name="ABSLENGTH" ref="AbsLen_PMMA"/>
         </material>
 
         <material name="Fluorinated_Polymer">
@@ -339,6 +339,10 @@
             <segmentation type="DRCaloTubeGrid" 
                 grid_size="2*mm" />
             <id>system:5,side:2,module:9,stave:1,layer:9,clad:1,fibre:1,cherenkov:1,q:32:16,r:16</id>
+            <!-- <segmentation type="CartesianGridXY" 
+                grid_size_x="1*mm" 
+                grid_size_y="1*mm"/>
+            <id>system:5,side:2,module:9,stave:1,layer:9,submodule:4,x:32:-16,y:-16</id> -->
         </readout>
     </readouts>
 

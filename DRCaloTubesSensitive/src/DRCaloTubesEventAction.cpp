@@ -1,4 +1,5 @@
 #include "DRCaloTubesEventAction.h"
+#include "G4SystemOfUnits.hh"
 
 //#include "G4RunManager.hh"
 
@@ -21,6 +22,14 @@ namespace dd4hep {
             NofCherDet = 0;
             FibreSignalsCher.clear();
             FibreSignalsScin.clear();
+
+            
+            x_truth = -999999999*m;
+            y_truth = -999999999*m;
+            z_truth = -999999999*m;
+            leakage = 0*eV; 
+            first_step_number = -1;
+
             fRunAction->Reset();
         }
 
@@ -29,7 +38,7 @@ namespace dd4hep {
             std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
             std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
 
-            fRunAction->Fill(NofCherDet, NofScinDet, FibreSignalsCher, FibreSignalsScin);
+            fRunAction->Fill(NofCherDet, NofScinDet, FibreSignalsCher, FibreSignalsScin, x_truth, y_truth, z_truth, leakage);
         }
     } // namespace sim
 } // namespace drc

@@ -48,6 +48,10 @@ namespace dd4hep {
             analysisManager->CreateNtupleDColumn("FibreSignalsCher");
             analysisManager->CreateNtupleDColumn("FibreIDsScin");
             analysisManager->CreateNtupleDColumn("FibreSignalsScin");
+            analysisManager->CreateNtupleDColumn("x_truth");
+            analysisManager->CreateNtupleDColumn("y_truth");
+            analysisManager->CreateNtupleDColumn("z_truth");
+            analysisManager->CreateNtupleDColumn("leakage");
             analysisManager->FinishNtuple();
             
         }
@@ -86,6 +90,11 @@ namespace dd4hep {
             fTree->Branch("FibreSignalsCher", &FibreSignalsCher);
             fTree->Branch("FibreIDsScin", &FibreIDsScin);
             fTree->Branch("FibreSignalsScin", &FibreSignalsScin);
+            fTruth = new TTree("MCTruth", "Tree with MC truth information");
+            fTruth->Branch("x_truth", &x_truth);
+            fTruth->Branch("y_truth", &y_truth);
+            fTruth->Branch("z_truth", &z_truth);
+            fTruth->Branch("leakage", &leakage);
 
         }
 
@@ -97,6 +106,7 @@ namespace dd4hep {
             analysisManager->CloseFile();
 
             fTree->Write();
+            fTruth->Write();
             fFile->Close();
 
         }
@@ -106,11 +116,17 @@ namespace dd4hep {
             NofScinDet=0; 
             FibreSignalsCher.clear(); 
             FibreSignalsScin.clear();
+            x_truth = -999999999*m;
+            y_truth = -999999999*m;
+            z_truth = -999999999*m;
+            leakage = 0*eV;
         }
 
         void DRCaloTubesRunAction::Fill(const G4int cher, const G4int scin, 
                                         std::map<unsigned int, G4int> fibrecher, 
-                                        std::map<unsigned int, G4int> fibrescin) {
+                                        std::map<unsigned int, G4int> fibrescin,
+                                        const G4double x, const G4double y, const G4double z,
+                                        const G4double l) {
 
             FibreSignalsCher.clear();
             FibreSignalsScin.clear();
@@ -120,23 +136,6 @@ namespace dd4hep {
             NofCherDet = cher;
             NofScinDet = scin;
 
-            /* unsigned int cher_max = fibrecher.empty() ? 0 : fibrecher.rbegin()->first;
-            unsigned int scin_max = fibrescin.empty() ? 0 : fibrescin.rbegin()->first;
-            unsigned int nfibres = cher_max > scin_max ? cher_max : scin_max;
-            for (unsigned int i=0; i<=nfibres; i++) 
-            {
-                if (fibrecher.count(i)) {
-                    FibreSignalsCher.push_back(fibrecher.at(i));
-                } else {
-                    FibreSignalsCher.push_back(0);
-                }
-
-                if (fibrescin.count(i)) {
-                    FibreSignalsScin.push_back(fibrescin.at(i));
-                } else {
-                    FibreSignalsScin.push_back(0);
-                }
-            } */
             for (auto const& [key, val]: fibrecher)
             {
                 FibreIDsCher.push_back(key);
@@ -150,6 +149,15 @@ namespace dd4hep {
             }
 
             fTree->Fill();
+
+            x_truth = x;
+            y_truth = y;
+            z_truth = z;
+            leakage = l;
+
+            fTruth->Fill();
+
+
 
             FibreSignalsCher.clear();
             FibreSignalsScin.clear();
