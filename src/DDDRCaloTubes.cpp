@@ -8,7 +8,9 @@ using namespace dd4hep;
 void construct_tower(Detector& description,
                      xml_h& entities,
                      SensitiveDetector& sens,
-                     DetElement& s_detElement);
+                     DetElement& s_detElement,
+                     Volume& calorimeter_volume,
+                     const unsigned int& module_id);
 
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
@@ -18,20 +20,40 @@ static Ref_t create_detector(Detector& description,
     int         det_id      = x_det.id();
     std::string det_name    = x_det.nameStr();
 
+    Material    air         = description.air();
+
     sens.setType("calorimeter");
 
+    // Cylinder encompassing entire calorimeter
+    xml_dim_t   x_dim        = x_det.dimensions();
+    double      calo_inner_r = x_dim.inner_radius();
+    double      tower_length = 2*x_dim.zhalf();
+    Tube        calorimeter_solid(calo_inner_r, calo_inner_r+tower_length, calo_inner_r+tower_length); // Per design a "square" cylinder
+    std::string calorimeter_name = "calorimeter";
+    Volume      calorimeter_volume(calorimeter_name, calorimeter_solid, air);
+    calorimeter_volume.setVisAttributes(description, "MyVis");
+
     DetElement    s_detElement(det_name, det_id);
-    construct_tower(description, entities, sens, s_detElement);
+    Volume        mother_volume = description.pickMotherVolume(s_detElement);
+
+    construct_tower(description, entities, sens, s_detElement, calorimeter_volume, 0);
+
+    Transform3D calorimeter_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
+    PlacedVolume calorimeter_placed = mother_volume.placeVolume(calorimeter_volume, calorimeter_tr);
+    calorimeter_placed.addPhysVolID("system", det_id);
+
+    s_detElement.setPlacement(calorimeter_placed);
 
     return s_detElement;
 }
 
 void construct_tower(Detector& description,
-                             xml_h& entities,
-                             SensitiveDetector& sens,
-                             DetElement& s_detElement) 
+                     xml_h& entities,
+                     SensitiveDetector& sens,
+                     DetElement& s_detElement,
+                     Volume& calorimeter_volume,
+                     const unsigned int& module_id) 
 {
-    std::cout<< " FINISHED PASSING s_detElement TO CONSTRUCT_TOWER" << std::endl;
 
     xml_det_t   x_det       = entities;    
     int         det_id      = x_det.id();
@@ -52,7 +74,6 @@ void construct_tower(Detector& description,
 
 
     
-    Volume        mother_volume = description.pickMotherVolume(s_detElement);
     Assembly      module_volume(det_name+"_module");
 
     // Get parameters for tube construction
@@ -119,7 +140,7 @@ void construct_tower(Detector& description,
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
 
             // Configuration for placing the tube
-            double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
+            double offset = (row & 1) ? capillary_outer_r : 0.0*mm;
             double x = col*2*capillary_outer_r + offset;
             // double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
             double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
@@ -208,7 +229,7 @@ void construct_tower(Detector& description,
     x_avg /= (num_rows*num_cols);
     y_avg /= (num_rows*num_cols);
 
-    Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
+    // Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
 
     // Get module volume to define surrounding box for truth information
     const Box assembly_box = module_volume.boundingBox();
@@ -216,7 +237,7 @@ void construct_tower(Detector& description,
     // Get size of assembly box to deinfre slightly increased size of truth box
     // double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
     double vertical_spacing = 3*D/4;                // Vertical spacing of fibres (pointy top)
-    double margin = 0.1*mm;                         // Margin for the truth box
+    double margin = 0.0*mm;                         // Margin for the truth box
     double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
     double truth_y = ((num_rows-1)*vertical_spacing+2*capillary_outer_r+2*margin) / 2;
     double truth_z = z_half + margin;
@@ -225,16 +246,18 @@ void construct_tower(Detector& description,
     truth_volume.setSensitiveDetector(sens);
     truth_volume.setVisAttributes(description, "MyVis");
 
-    Transform3D module_tr(RotationZYX(0, 0, 0), Position(-truth_x+margin+2*capillary_outer_r, -truth_y+margin+capillary_outer_r, 0));
-    PlacedVolume module_placed = truth_volume.placeVolume(module_volume, module_tr);
-    module_placed.addPhysVolID("system", det_id);
+    // Transform3D module_tr(RotationZYX(0, 0, 0), Position(-truth_x+margin+2*capillary_outer_r, -truth_y+margin+capillary_outer_r, 0));
+    // PlacedVolume module_placed = truth_volume.placeVolume(module_volume, module_tr);
+    // module_placed.addPhysVolID("system", det_id);
 
-    Transform3D truth_tr(RotationZYX(phi, theta, psi), Position(0, 0, 0));
-    PlacedVolume truth_placed = mother_volume.placeVolume(truth_volume, truth_tr);
-    truth_placed.addPhysVolID("system", 1);
+    // Transform3D truth_tr(RotationZYX(phi, theta, psi), Position(0, 0, 0));
+    // PlacedVolume truth_placed = mother_volume.placeVolume(truth_volume, truth_tr);
+    // truth_placed.addPhysVolID("system", 1);
 
+    Transform3D module_tr(RotationZYX(0, 0, -90*deg), Position(-x_avg, calo_inner_r+z_half, -capillary_outer_r));
+    PlacedVolume module_placed = calorimeter_volume.placeVolume(module_volume, module_tr);
+    module_placed.addPhysVolID("module", module_id);
 
-    s_detElement.setPlacement(truth_placed);
 }
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)
