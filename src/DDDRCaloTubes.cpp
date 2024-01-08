@@ -5,17 +5,39 @@
 
 using namespace dd4hep;
 
+void construct_tower(Detector& description,
+                     xml_h& entities,
+                     SensitiveDetector& sens,
+                     DetElement& s_detElement);
+
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
                              SensitiveDetector sens) 
 {
+    xml_det_t   x_det       = entities;    
+    int         det_id      = x_det.id();
+    std::string det_name    = x_det.nameStr();
+
+    sens.setType("calorimeter");
+
+    DetElement    s_detElement(det_name, det_id);
+    construct_tower(description, entities, sens, s_detElement);
+
+    return s_detElement;
+}
+
+void construct_tower(Detector& description,
+                             xml_h& entities,
+                             SensitiveDetector& sens,
+                             DetElement& s_detElement) 
+{
+    std::cout<< " FINISHED PASSING s_detElement TO CONSTRUCT_TOWER" << std::endl;
 
     xml_det_t   x_det       = entities;    
     int         det_id      = x_det.id();
     std::string det_name    = x_det.nameStr();
 
     Material    air         = description.air();
-    Material    brass       = description.material("Brass");
 
     xml_dim_t   x_dim       = x_det.dimensions();
     double      z_half      = x_dim.zhalf();
@@ -24,13 +46,14 @@ static Ref_t create_detector(Detector& description,
     double      psi         = x_dim.psi();
     int         num_rows    = x_dim.number();
     int         num_cols    = x_dim.count();
+    double      calo_inner_r= x_dim.inner_radius();
+    double      tower_theta = x_dim.deltatheta();
+    double      tower_phi   = x_dim.deltaphi();
 
-    DetElement    s_detElement(det_name, det_id);
+
+    
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
     Assembly      module_volume(det_name+"_module");
-
-    sens.setType("calorimeter");
-
 
     // Get parameters for tube construction
     xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
@@ -55,105 +78,37 @@ static Ref_t create_detector(Detector& description,
     Material    cher_fibre_material  = description.material(x_cher_fibre.materialStr()); 
     double      cher_fibre_outer_r   = x_cher_fibre.outer_r();
 
-    /*
-    // Workaround for sensitive tubes:
-    Tube        air_solid(0.0*mm, capillary_outer_r, z_half);
-    std::string air_name = "air";
-    Volume      scin_air_volume("scin_"+air_name, air_solid, air);
-    Volume      cher_air_volume("cher_"+air_name, air_solid, air);
-    scin_air_volume.setVisAttributes(description, x_capillary.visStr());
-    cher_air_volume.setVisAttributes(description, x_capillary.visStr()); 
 
-    // Scintillation capillary
-    Tube        scin_tube_solid(0.0*mm, capillary_outer_r, z_half);
-    std::string scin_tube_name = "scin_tube";
-    Volume      scin_tube_volume(scin_tube_name, scin_tube_solid, capillary_material);
-    if (x_capillary.isSensitive())
-    {
-        scin_tube_volume.setSensitiveDetector(sens);
-    }
-    //PlacedVolume scin_tube_placed = scin_air_volume.placeVolume(scin_tube_volume);    
-    scin_tube_volume.setVisAttributes(description, x_capillary.visStr());
+    // Calculate tower dimensions
+    double tan_theta = std::tan(tower_theta); 
+    double tower_max_inner_height = calo_inner_r * tan_theta; // Tower height (in theta direction) without regarding how many tubes actually fit
 
-    // Cherenkov capillary
-    Tube        cher_tube_solid(0.0*mm, capillary_outer_r, z_half);
-    std::string cher_tube_name = "cher_tube";
-    Volume      cher_tube_volume(cher_tube_name, cher_tube_solid, capillary_material);
-    if (x_capillary.isSensitive())
+    if (tower_max_inner_height < 2*capillary_outer_r)
     {
-        cher_tube_volume.setSensitiveDetector(sens);
+        throw std::runtime_error("Can't construct tower with given tower_theta and calo_inner_radius");
     }
-    //PlacedVolume cher_tube_placed = cher_air_volume.placeVolume(cher_tube_volume); 
-    cher_tube_volume.setVisAttributes(description, x_capillary.visStr()); 
-    */   
 
-    /* Code for tube construction before workaround for sensitive tubes
-    // Construct volumes for tubes
-    Tube        capillary_solid(0.0*mm, capillary_outer_r, z_half);
-    std::string capillary_name = "capillary";//_"+std::to_string(row)+"_"+std::to_string(col);
-    // Need two volumes for scintillation and Cherenkov channels
-    Volume      scin_tube_volume("scin_"+capillary_name, capillary_solid, capillary_material);
-    Volume      cher_tube_volume("cher_"+capillary_name, capillary_solid, capillary_material);
-    if (x_capillary.isSensitive())
-    {
-        scin_tube_volume.setSensitiveDetector(sens);
-        cher_tube_volume.setSensitiveDetector(sens);
-    }
-    scin_tube_volume.setVisAttributes(description, x_capillary.visStr());
-    cher_tube_volume.setVisAttributes(description, x_capillary.visStr());    
-    */
-    /*
-    // Scintillation cladding
-    Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, z_half);
-    std::string scin_clad_name = "scin_clad";
-    Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
-    if (x_scin_clad.isSensitive())
-    {
-        scin_clad_volume.setSensitiveDetector(sens);
-    }
-    //PlacedVolume scin_clad_placed = scin_tube_volume.placeVolume(scin_clad_volume);
-    scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
-    //scin_clad_placed.addPhysVolID("clad", 1);
 
-    // Scintillation fibre
-    Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, z_half);
-    std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-    Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_fibre_material);
-    if (x_scin_fibre.isSensitive())
-    {
-        scin_fibre_volume.setSensitiveDetector(sens);
-    }
-    //PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume);
-    scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
-    //scin_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 0);
+    const double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+    
+    // Calculate how many tubes fit at the front face for the given tower theta coverage.
+    // This number will serve as the new covered theta since it is important to not have any gaps in the front face
+    int num_front_rows = 1 + floor((tower_max_inner_height-2*capillary_outer_r) / D);
+    double tower_inner_height = 2*capillary_outer_r + num_front_rows*D;
+    double covered_theta = std::atan2(tower_inner_height, calo_inner_r);
+    tan_theta = std::tan(covered_theta);
+    double missing_theta = tower_theta - covered_theta;
 
-    // Cherenkov cladding
-    Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, z_half);
-    std::string cher_clad_name = "cher_clad";
-    Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
-    if (x_cher_clad.isSensitive())
-    {
-        cher_clad_volume.setSensitiveDetector(sens);
-    }
-    //PlacedVolume cher_clad_placed = cher_tube_volume.placeVolume(cher_clad_volume);
-    cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
-    //cher_clad_placed.addPhysVolID("clad", 1);
+    // Calculate how many tubes there are in the back face
+    double calo_outer_r = calo_inner_r + 2*z_half;
+    double tower_max_outer_height = calo_outer_r * tan_theta;
+    int num_back_rows = num_front_rows + floor((tower_max_outer_height-tower_inner_height)/D);
+    double tube_shortening_per_stagger = D/tan_theta;
 
-    // Chrerenkov fibre
-    Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, z_half);
-    std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-    Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_fibre_material);
-    if (x_cher_fibre.isSensitive())
-    {
-        cher_fibre_volume.setSensitiveDetector(sens);
-    }
-    //PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume);
-    cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
-    //cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
-    */
 
     double x_avg = 0.0*mm;
     double y_avg = 0.0*mm;
+    num_rows = num_back_rows;
 
     for (int row=0; row<num_rows; row++)
     {
@@ -166,9 +121,13 @@ static Ref_t create_detector(Detector& description,
             // Configuration for placing the tube
             double offset = (row & 1) ? -capillary_outer_r : 0.0*mm;
             double x = col*2*capillary_outer_r + offset;
-            double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+            // double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
             double y = row*D*3.0/4.0;                       // Vertical spacing for hexagonal grid (pointy-top)
-            auto position = Position(x, y, 0.0*mm);
+
+            int staggered_row = (row>= num_front_rows) ? row-num_front_rows+1 : 0 ;
+            double z = staggered_row * tube_shortening_per_stagger/2;
+
+            auto position = Position(x, y, z);
 
             // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
             // Slighty changed to fit my q and r directions
@@ -183,9 +142,9 @@ static Ref_t create_detector(Detector& description,
             
             //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
 
-
+            double tube_half_length = z_half - z;
             // Capillary tube
-            Tube        capillary_solid(0.0*mm, capillary_outer_r, z_half);
+            Tube        capillary_solid(0.0*mm, capillary_outer_r, tube_half_length);
             std::string capillary_name = "capillary";
             Volume      capillary_volume(capillary_name, capillary_solid, capillary_material);
             if (x_capillary.isSensitive()) capillary_volume.setSensitiveDetector(sens);
@@ -194,7 +153,7 @@ static Ref_t create_detector(Detector& description,
             if (row & 1) // Cherenkov row
             {
                 // Cherenkov cladding
-                Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, z_half);
+                Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, tube_half_length);
                 std::string cher_clad_name = "cher_clad";
                 Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
                 if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
@@ -203,7 +162,7 @@ static Ref_t create_detector(Detector& description,
                 cher_clad_placed.addPhysVolID("clad", 1);
 
                 // Chrerenkov fibre
-                Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, z_half);
+                Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, tube_half_length);
                 std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
                 Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_fibre_material);
                 if (x_cher_fibre.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
@@ -214,7 +173,7 @@ static Ref_t create_detector(Detector& description,
             else // Scintillation row
             {
                 // Scintillation cladding
-                Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, z_half);
+                Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, tube_half_length);
                 std::string scin_clad_name = "scin_clad";
                 Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
                 if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
@@ -223,7 +182,7 @@ static Ref_t create_detector(Detector& description,
                 scin_clad_placed.addPhysVolID("clad", 1);
 
                 // Scintillation fibre
-                Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, z_half);
+                Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, tube_half_length);
                 std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
                 Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_fibre_material);
                 if (x_scin_fibre.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
@@ -233,9 +192,9 @@ static Ref_t create_detector(Detector& description,
             }
             //auto tube_to_be_placed = (row & 1) ? &cher_air_volume : &scin_air_volume;
 
-            //auto sensitive_to_be_placed = (row & 1) ? Volume(cher_tube_volume) : Volume(scin_tube_volume);
+            // auto sensitive_to_be_placed = (row & 1) ? Volume(cher_tube_volume) : Volume(scin_tube_volume);
 
-            //sensitive_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
+            // sensitive_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
 
 
             PlacedVolume    tube_placed = module_volume.placeVolume(capillary_volume, tube_id, position);
@@ -255,7 +214,7 @@ static Ref_t create_detector(Detector& description,
     const Box assembly_box = module_volume.boundingBox();
 
     // Get size of assembly box to deinfre slightly increased size of truth box
-    double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
+    // double D = 4.0*capillary_outer_r/sqrt(3.0);     // Long diagonal of hexagaon with capillary_outer_r as inradius
     double vertical_spacing = 3*D/4;                // Vertical spacing of fibres (pointy top)
     double margin = 0.1*mm;                         // Margin for the truth box
     double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
@@ -276,67 +235,6 @@ static Ref_t create_detector(Detector& description,
 
 
     s_detElement.setPlacement(truth_placed);
-
-/*    
-    //Make a Cylinder
-    Tube envelope(rmin, rmax, z_half);
-    Volume envelopeVol(det_name+"_envelope", envelope, air);
-    PlacedVolume physvol = description.pickMotherVolume(s_detElement).placeVolume(envelopeVol);
-
-    // add system ID and identify as barrel (as opposed to endcap +/-1)
-    physvol.addPhysVolID("system", s_detElement.id()).addPhysVolID(_U(side),0);
-    s_detElement.setPlacement(physvol);
-
-    double currentInnerRadius = 0.0*mm; // running inner radius
-    Layering layering(x_det); // convenience class
-    int layerNum = 0;
-
-    for(xml_coll_t c(x_det,_U(layer)); c; ++c, ++layerNum) {
-        xml_comp_t x_layer = c;
-        const Layer* lay = layering.layer(layerNum); // Get the layer from the layering engine.
-        const double layerThickness = lay->thickness();
-
-        //loop over the number of repetitions
-        for(int i=0, repeat=x_layer.repeat(); i<repeat; ++i, ++layerNum) {
-            std::string layerName = det_name + _toString(layerNum,"_layer%d");
-            
-            //make a volume for the layer
-            Tube layerTube(currentInnerRadius, currentInnerRadius + layerThickness, z_half);
-            Volume layerVol(layerName, layerTube, air);
-            DetElement layerElement(s_detElement, layerName, layerNum);
-            PlacedVolume layerVolPlaced = envelopeVol.placeVolume(layerVol);
-            layerVolPlaced.addPhysVolID("layer",layerNum);
-
-            //loop over slices
-            int sliceNum = 0;
-            for(xml_coll_t slice(x_layer,_U(slice)); slice; ++slice, ++sliceNum) {
-                xml_comp_t x_slice = slice;
-                double sliceThickness = x_slice.thickness();
-                Material sliceMat = description.material(x_slice.materialStr());
-                std::string sliceName = layerName + _toString(sliceNum,"slice%d");
-
-                Tube sliceTube(currentInnerRadius,
-                currentInnerRadius + sliceThickness, z_half);
-                Volume sliceVol(sliceName, sliceTube, sliceMat);
-                
-                if ( x_slice.isSensitive() ) {
-                    sliceVol.setSensitiveDetector(sens);
-                }
-
-                //place the slice in the layer
-                layerVol.placeVolume(sliceVol);
-                currentInnerRadius += sliceThickness;
-
-            } // slices
-
-        } //repetitions
-
-    }//layers
- */    
-   
-
-
-    return s_detElement;
 }
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)
