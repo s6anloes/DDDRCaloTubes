@@ -11,7 +11,8 @@ void construct_tower(Detector& description,
                      Volume& calorimeter_volume,
                      const unsigned int& module_id,
                      double& covered_theta,
-                     double& covered_z);
+                     double& covered_z,
+                     double& previous_tower_theta);
 
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
@@ -40,10 +41,18 @@ static Ref_t create_detector(Detector& description,
 
     double covered_theta = 0*deg;
     double covered_z = 0*cm;
+    double previous_tower_theta = 0*deg;
 
-    construct_tower(description, entities, sens, calorimeter_volume, 0, covered_theta, covered_z);
-    construct_tower(description, entities, sens, calorimeter_volume, 1, covered_theta, covered_z);
-    // construct_tower(description, entities, sens, calorimeter_volume, 2, covered_theta, covered_z);
+    construct_tower(description, entities, sens, calorimeter_volume, 0, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 1, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 2, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 3, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 4, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 5, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 6, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 7, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 8, covered_theta, covered_z, previous_tower_theta);
+    construct_tower(description, entities, sens, calorimeter_volume, 9, covered_theta, covered_z, previous_tower_theta);
 
     Transform3D calorimeter_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
     PlacedVolume calorimeter_placed = mother_volume.placeVolume(calorimeter_volume, calorimeter_tr);
@@ -60,7 +69,8 @@ void construct_tower(Detector& description,
                      Volume& calorimeter_volume,
                      const unsigned int& module_id,
                      double& covered_theta,
-                     double& covered_z) 
+                     double& covered_z,
+                     double& previous_tower_theta) 
 {
     xml_det_t   x_det       = entities;    
     int         det_id      = x_det.id();
@@ -278,13 +288,19 @@ void construct_tower(Detector& description,
     
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(covered_theta)*(z_half+back_shift); // How much the tower volume reference points moves in z wrt to previous tower
-    double z_fine_shift = overlap/std::cos(covered_theta);        // Fine shift in z explointing that we can place the first row of this tower in the gaps of the previous towers final row
+    
+    // Fine shift in z explointing that we can place the first row of this tower in the gaps of the previous towers final row
+    // Theta covered before previous tower
+    double previous_covered_theta = covered_theta - previous_tower_theta;
+    double z_fine_shift = overlap*(std::cos(previous_covered_theta) + std::tan(covered_theta)*std::sin(previous_covered_theta));
+    if (previous_tower_theta == 0*deg) {z_fine_shift=overlap/2;} // First tower only shifted by half to allow for opposite site 
+    else {z_fine_shift+=overlap/2;}                             // To account for shift of first tower
     std::cout << "z_fine_shift = " <<z_fine_shift<<std::endl;
     std::cout << "overlap      = " <<overlap<<std::endl;
 
     double module_x = -x_avg;
     double module_y = y_shift + calo_inner_r;
-    double module_z = -(z_shift + covered_z - z_fine_shift);
+    double module_z = -(z_shift + covered_z);
     // module_z = 0*cm;
 
     Transform3D module_tr(RotationZYX(0, 0, -90*deg-covered_theta), Position(module_x, module_y, module_z));
@@ -313,6 +329,7 @@ void construct_tower(Detector& description,
 
     covered_theta += this_tower_theta;
     covered_z     += this_tower_z;
+    previous_tower_theta = this_tower_theta;
 }
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)
