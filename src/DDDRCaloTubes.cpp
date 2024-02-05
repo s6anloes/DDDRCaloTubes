@@ -25,10 +25,13 @@ static Ref_t create_detector(Detector& description,
     sens.setType("calorimeter");
 
     // Cylinder encompassing entire calorimeter
-    xml_dim_t   x_dim        = x_det.dimensions();
-    double      calo_inner_r = x_dim.inner_radius();
-    double      tower_length = 2*x_dim.zhalf();
-    // Tube        calorimeter_solid(calo_inner_r, calo_inner_r+tower_length, calo_inner_r+tower_length); // Per design a "square" cylinder
+    xml_dim_t   x_dim                  = x_det.dimensions();
+    double      calo_inner_r           = x_dim.inner_radius();
+    double      calo_inner_half_length = x_dim.z_length();
+    double      tower_length           = 2*x_dim.zhalf();
+
+    double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
+    // Tube        calorimeter_solid(calo_inner_r, calo_inner_r+tower_length, calo_inner_half_length+tower_length); // Per design a "square" cylinder
     Tube        calorimeter_solid(0, calo_inner_r+tower_length, 0); // Per design a "square" cylinder
     std::string calorimeter_name = "calorimeter";
     Volume      calorimeter_volume(calorimeter_name, calorimeter_solid, air);
@@ -40,7 +43,7 @@ static Ref_t create_detector(Detector& description,
     double covered_theta = 0*deg;
     unsigned int tower_id = 0;
 
-    while (covered_theta<45*deg) {
+    while (covered_theta<barrel_endcap_angle) {
 
         double new_theta = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta);
         covered_theta += new_theta;
@@ -69,17 +72,20 @@ double construct_tower(Detector& description,
 
     Material    air         = description.air();
 
-    xml_dim_t   x_dim       = x_det.dimensions();
-    double      z_half      = x_dim.zhalf();
-    double      phi         = x_dim.phi();
-    double      theta       = x_dim.theta();
-    double      psi         = x_dim.psi();
-    int         num_rows    = x_dim.number();
-    int         num_cols    = x_dim.count();
-    double      calo_inner_r= x_dim.inner_radius();
-    double      tower_theta = x_dim.deltatheta();
-    double      tower_phi   = x_dim.deltaphi();
+    xml_dim_t   x_dim                  = x_det.dimensions();
+    double      z_half                 = x_dim.zhalf();
+    double      phi                    = x_dim.phi();
+    double      theta                  = x_dim.theta();
+    double      psi                    = x_dim.psi();
+    int         num_rows               = x_dim.number();
+    int         num_cols               = x_dim.count();
+    double      calo_inner_r           = x_dim.inner_radius();
+    double      calo_inner_half_length = x_dim.z_length();
+    double      tower_theta            = x_dim.deltatheta();
+    double      tower_phi              = x_dim.deltaphi();
 
+
+    double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
 
     
     Assembly      module_volume(det_name+"_module");
@@ -117,7 +123,12 @@ double construct_tower(Detector& description,
 
 
     // Calculate tower dimensions
-    double tower_max_z = std::tan(covered_theta+tower_theta)*calo_inner_r - std::tan(covered_theta)*calo_inner_r; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
+    double covered_z = std::tan(covered_theta)*calo_inner_r;
+
+    bool last_tower = (covered_theta+tower_theta>barrel_endcap_angle) ? true : false ;
+    double tower_max_theta = (last_tower) ? barrel_endcap_angle : covered_theta+tower_theta;
+    double tower_max_z = std::tan(tower_max_theta)*calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
+    if (last_tower) tower_max_z += overlap/2; // to account for fine shift of the first tower
     double tower_max_frontface_height = std::cos(covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
 
     if (tower_max_frontface_height < 2*capillary_outer_r)
@@ -128,21 +139,35 @@ double construct_tower(Detector& description,
     // Calculate how many tubes fit at the front face for the given tower theta coverage.
     // This number will serve as the new covered theta since it is important to not have any gaps in the front face
     int num_front_rows = 1 + floor((tower_max_frontface_height-2*capillary_outer_r) / V);
-    if (num_front_rows&1) num_front_rows++; // Make sure that front face ends on row with offset (i.e. even number of rows)
-    double tower_frontface_height = 2*capillary_outer_r + (num_front_rows-1)*V;
+    if (num_front_rows&1 && !last_tower) num_front_rows++; // Make sure that front face ends on row with offset (i.e. even number of rows)
+
+    double tower_frontface_height;
+    double back_shift;
+    double rad_distance;
+    double this_tower_theta;
+    // GOTO label
+REDUCTION_REQUIRED:
+
+    tower_frontface_height = 2*capillary_outer_r + (num_front_rows-1)*V;
     
     // Distance by which straight edge of this tower is shifted backwards to ensure inner radius of calorimeter
-    double back_shift = std::tan(covered_theta)*tower_frontface_height;                      
+    back_shift = std::tan(covered_theta)*tower_frontface_height;                      
 
     // Radial distance to exceed 2.5m inner radius of calorimeter for this tower
-    double rad_distance = calo_inner_r/std::cos(covered_theta);
+    rad_distance = calo_inner_r/std::cos(covered_theta);
 
-    double this_tower_theta = std::atan2(tower_frontface_height-overlap, rad_distance+back_shift); 
+    this_tower_theta = std::atan2(tower_frontface_height-overlap, rad_distance+back_shift);
+    // This catches cases where covered_theta+tower_theta does not exceed barrel_endcap_angle, but covered_theta+this_tower_theta does
+    // since it can happen that this_tower_theta is larger than tower_theta
+    if (covered_theta+this_tower_theta > barrel_endcap_angle) {
+        num_front_rows--;
+        goto REDUCTION_REQUIRED;
+    }
+
     double tan_theta = std::tan(this_tower_theta);
     double missing_theta = tower_theta - this_tower_theta;
 
     // Distance the front face of this tower covers in z
-    double covered_z = std::tan(covered_theta)*calo_inner_r;
     double this_tower_z = std::tan(covered_theta+this_tower_theta)*calo_inner_r - covered_z; 
 
     // Calculate how many tubes there are in the back face
@@ -311,8 +336,12 @@ double construct_tower(Detector& description,
     std::cout << "module_x         = " << module_x         << std::endl;
     std::cout << "module_y         = " << module_y         << std::endl;
     std::cout << "module_z         = " << module_z         << std::endl;
+    std::cout << "num_front_rows   = " << num_front_rows   << std::endl;
+    std::cout << "tower_id         = " << module_id        << std::endl;
 
-    return this_tower_theta;
+    double return_value = (last_tower) ? barrel_endcap_angle : this_tower_theta ; // For last tower just return barrel_endcap_angle to make sure we cross boundary
+
+    return return_value;
 }
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)
