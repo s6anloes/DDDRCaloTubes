@@ -277,17 +277,6 @@ REDUCTION_REQUIRED:
             
         }
     }
-
-    // Get size of assembly box to deinfre slightly increased size of truth box
-    // double margin = 0.0*mm;                         // Margin for the truth box
-    // double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
-    // double truth_y = ((num_rows-1)*V+2*capillary_outer_r+2*margin) / 2;
-    // double truth_z = z_half + margin;
-    // Box truth_box = Box(truth_x, truth_y, truth_z);
-    // Volume truth_volume("truth_volume", truth_box, air);
-    // truth_volume.setSensitiveDetector(sens);
-    // truth_volume.setVisAttributes(description, "MyVis");
-
     
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(covered_theta)*(z_half+back_shift); // How much the tower volume reference points moves in z wrt to previous tower
@@ -301,14 +290,6 @@ REDUCTION_REQUIRED:
     // // Transform3D module_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
     PlacedVolume module_placed = calorimeter_volume.placeVolume(module_volume, module_tr);
     module_placed.addPhysVolID("module", module_id);
-
-    // Transform3D module_tr2(RotationZYX(0, 0, 0), Position(-truth_x+margin+2*capillary_outer_r, -truth_y+margin+capillary_outer_r, 0));
-    // PlacedVolume module_placed = truth_volume.placeVolume(module_volume, module_tr2);
-    // module_placed.addPhysVolID("module", module_id);
-
-    // // Transform3D truth_tr(RotationZYX(phi, theta, psi), Position(0, 0, 0));
-    // PlacedVolume truth_placed = calorimeter_volume.placeVolume(truth_volume, module_tr);
-    // truth_placed.addPhysVolID("system", module_id);
 
     std::cout << "--------------------------------------------------------" << std::endl;
     std::cout << "this_tower_theta = " << this_tower_theta/deg << std::endl;
