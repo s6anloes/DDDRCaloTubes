@@ -74,12 +74,13 @@
         <constant name="RotationX" value="0.0*deg" />
 
         <constant name="NumRows" value="1" />
-        <constant name="NumCols" value="10" />
+        <constant name="NumCols" value="4" />
 
-        <constant name="InnerCaloRadius" value="2.0*m"   />
-        <constant name="TowerHalfLength" value="1*m"     />
-        <constant name="ThetaCoverage"   value="1.0*deg" />
-        <constant name="PhiCoverage"     value="10*deg"  />
+        <constant name="InnerCaloRadius"     value="2.0*m"   />
+        <constant name="InnerCaloHalfLength" value="2.0*m"   />
+        <constant name="TowerHalfLength"     value="1*m"     />
+        <constant name="ThetaCoverage"       value="1.0*deg" />
+        <constant name="PhiCoverage"         value="10*deg"  />
         
     </define>
     <properties>
@@ -323,6 +324,7 @@
                 theta="RotationY"
                 psi="RotationX"
                 inner_radius="InnerCaloRadius"
+                z_length="InnerCaloHalfLength"
                 deltatheta="ThetaCoverage"
                 deltaphi="PhiCoverage" />
 

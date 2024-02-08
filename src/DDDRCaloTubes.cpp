@@ -10,7 +10,8 @@ double construct_tower(Detector& description,
                      SensitiveDetector& sens,
                      Volume& calorimeter_volume,
                      const unsigned int& module_id,
-                     double& covered_theta);
+                     double& covered_theta,
+                     double& covered_phi);
 
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
@@ -40,13 +41,13 @@ static Ref_t create_detector(Detector& description,
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
 
-    double covered_theta = 0*deg;
+    double covered_phi   = 0*deg;
     unsigned int tower_id = 0;
 
-    while (covered_theta<barrel_endcap_angle) {
-
-        double new_theta = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta);
-        covered_theta += new_theta;
+    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; ) {
+        double theta = 90*deg - covered_theta;
+        double delta_theta = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta, covered_phi);
+        covered_theta += delta_theta;
         tower_id++;
     }
 
@@ -64,19 +65,14 @@ double construct_tower(Detector& description,
                      SensitiveDetector& sens,
                      Volume& calorimeter_volume,
                      const unsigned int& module_id,
-                     double& covered_theta) 
+                     double& covered_theta,
+                     double& covered_phi) 
 {
     xml_det_t   x_det       = entities;    
-    int         det_id      = x_det.id();
     std::string det_name    = x_det.nameStr();
-
-    Material    air         = description.air();
 
     xml_dim_t   x_dim                  = x_det.dimensions();
     double      z_half                 = x_dim.zhalf();
-    double      phi                    = x_dim.phi();
-    double      theta                  = x_dim.theta();
-    double      psi                    = x_dim.psi();
     int         num_rows               = x_dim.number();
     int         num_cols               = x_dim.count();
     double      calo_inner_r           = x_dim.inner_radius();
@@ -125,6 +121,8 @@ double construct_tower(Detector& description,
     // Calculate tower dimensions
     double covered_z = std::tan(covered_theta)*calo_inner_r;
 
+
+
     bool last_tower = (covered_theta+tower_theta>barrel_endcap_angle) ? true : false ;
     double tower_max_theta = (last_tower) ? barrel_endcap_angle : covered_theta+tower_theta;
     double tower_max_z = std::tan(tower_max_theta)*calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
@@ -165,7 +163,7 @@ REDUCTION_REQUIRED:
     }
 
     double tan_theta = std::tan(this_tower_theta);
-    double missing_theta = tower_theta - this_tower_theta;
+    // double missing_theta = tower_theta - this_tower_theta;
 
     // Distance the front face of this tower covers in z
     double this_tower_z = std::tan(covered_theta+this_tower_theta)*calo_inner_r - covered_z; 
@@ -175,9 +173,6 @@ REDUCTION_REQUIRED:
     double tower_max_backface_height = tower_outer_r * tan_theta;
     int num_back_rows = num_front_rows + floor((tower_max_backface_height-(tower_frontface_height-overlap))/V);
 
-
-    double x_avg = 0.0*mm;
-    double y_avg = 0.0*mm;
     num_rows = num_back_rows;
 
     // Placement and shortening of tube depends on whether the rows have an offset or not
@@ -215,8 +210,6 @@ REDUCTION_REQUIRED:
             unsigned short int r = row;
             //std::cout<<"(row, col) -> (r, q) : (" <<row<<", "<<col<<") -> (" << r<<", " <<q<<")" <<std::endl;
 
-            x_avg += x;
-            y_avg += y;
             // TubeID composed of q in first 16 bits, r in last 16 bits
             unsigned int tube_id = (q << 16) | r;
             
@@ -285,29 +278,21 @@ REDUCTION_REQUIRED:
         }
     }
 
-    x_avg /= (num_rows*num_cols);
-    y_avg /= (num_rows*num_cols);
-
-    // Transform3D tr(RotationZYX(phi,theta,psi),Position(-x_avg,-y_avg,0));
-
-    // Get module volume to define surrounding box for truth information
-    const Box assembly_box = module_volume.boundingBox();
-
     // Get size of assembly box to deinfre slightly increased size of truth box
-    double margin = 0.0*mm;                         // Margin for the truth box
-    double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
-    double truth_y = ((num_rows-1)*V+2*capillary_outer_r+2*margin) / 2;
-    double truth_z = z_half + margin;
-    Box truth_box = Box(truth_x, truth_y, truth_z);
-    Volume truth_volume("truth_volume", truth_box, air);
-    truth_volume.setSensitiveDetector(sens);
-    truth_volume.setVisAttributes(description, "MyVis");
+    // double margin = 0.0*mm;                         // Margin for the truth box
+    // double truth_x = ((num_cols+0.5)*2*capillary_outer_r+2*margin) / 2;
+    // double truth_y = ((num_rows-1)*V+2*capillary_outer_r+2*margin) / 2;
+    // double truth_z = z_half + margin;
+    // Box truth_box = Box(truth_x, truth_y, truth_z);
+    // Volume truth_volume("truth_volume", truth_box, air);
+    // truth_volume.setSensitiveDetector(sens);
+    // truth_volume.setVisAttributes(description, "MyVis");
 
     
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(covered_theta)*(z_half+back_shift); // How much the tower volume reference points moves in z wrt to previous tower
 
-    double module_x = -x_avg;
+    double module_x = 0*cm;
     double module_y = y_shift + calo_inner_r;
     double module_z = -(z_shift + covered_z - overlap/2);
     // module_z = 0*cm;
