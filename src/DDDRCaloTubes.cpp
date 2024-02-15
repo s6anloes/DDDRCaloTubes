@@ -11,18 +11,20 @@ Assembly construct_tower(Detector& description,
                          Volume& calorimeter_volume,
                          const unsigned int& module_id,
                          double covered_theta,
-                         double covered_phi,
                          double& delta_theta,
+                         int num_cols,
+                         double phi_back_shift,
                          Position& tower_position);
 
 void place_tower(Detector& description,
                  xml_h& entities,
                  SensitiveDetector& sens,
                  Volume& calorimeter_volume,
-                 Assembly tower_volume,
-                 const unsigned int& tower_id,
+                 Assembly& tower_volume,
+                 unsigned int& tower_id,
                  Position tower_position,
-                 double covered_theta);
+                 double covered_theta,
+                 double phi);
 
 int fast_floor(double x);
 int fast_ceil(double x);
@@ -42,13 +44,20 @@ static Ref_t create_detector(Detector& description,
 
     // Cylinder encompassing entire calorimeter
     xml_dim_t   x_dim                  = x_det.dimensions();
+    double      z_half                 = x_dim.zhalf();
     double      calo_inner_r           = x_dim.inner_radius();
     double      calo_inner_half_length = x_dim.z_length();
     double      tower_length           = 2*x_dim.zhalf();
+    double      tower_phi              = x_dim.deltaphi();
+
+    xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
+    xml_comp_t  x_capillary          = x_tube.child(_Unicode(capillary));
+    Material    capillary_material   = description.material(x_capillary.materialStr()); 
+    double      capillary_outer_r    = x_capillary.outer_r();
 
     double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
-    // Tube        calorimeter_solid(calo_inner_r, calo_inner_r+tower_length, calo_inner_half_length+tower_length); // Per design a "square" cylinder
-    Tube        calorimeter_solid(0, calo_inner_r+2*tower_length, 0); // Per design a "square" cylinder
+    Tube        calorimeter_solid(calo_inner_r, calo_inner_r+2*tower_length, calo_inner_half_length+2*tower_length); // Per design a "square" cylinder
+    // Tube        calorimeter_solid(0, calo_inner_r+2*tower_length, 0); // Per design a "square" cylinder
     std::string calorimeter_name = "calorimeter";
     Volume      calorimeter_volume(calorimeter_name, calorimeter_solid, air);
     calorimeter_volume.setVisAttributes(description, "MyVis");
@@ -56,18 +65,53 @@ static Ref_t create_detector(Detector& description,
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
 
-    double covered_phi   = 0*deg;
     unsigned int tower_id = 0;
 
-    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; covered_theta+=barrel_endcap_angle) {
+    /*****************************************
+     *Calculation of required phi parameters *
+     *****************************************/
+    // ---------------------------------------------------------------------------------------------------
+    int num_cols;
+    double tan_phi = std::tan(tower_phi);
+    unsigned int num_phi_towers;
+    double num_phi_towers_d = 360.0*deg/tower_phi;
+    // Check if num_phi_towers is a whole number
+    if (check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<int>(num_phi_towers_d);
+    else throw std::runtime_error("Not an integer number of towers in phi direction");
+
+    /* (Minimal) tower width with given inner calorimeter radius and tower_phi
+       Might need to increase width to ensure integer number of tubes in phi direction
+       at the cost of having to place the tower further back (calo_inner_r + epsilon) */
+    double tower_min_frontface_width = calo_inner_r*tan_phi;
+    int num_front_cols = fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
+    double tower_frontface_width = num_front_cols*2*capillary_outer_r;
+    
+    double phi_back_shift = tower_frontface_width/tan_phi - calo_inner_r;
+    calo_inner_r = tower_frontface_width/tan_phi;
+
+    // Calculate how many tubes there are in the back face
+    double tower_outer_r_phi = calo_inner_r + 2*z_half; 
+    double tower_max_backface_width = tower_outer_r_phi * tan_phi;
+    int num_back_cols = fast_floor(tower_max_backface_width/(2*capillary_outer_r));
+
+    num_cols = num_back_cols;
+
+    // ---------------------------------------------------------------------------------------------------
+
+    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; ) 
+    {
         double theta = 90*deg - covered_theta;
         double delta_theta;
         Position tower_position;
-        Assembly tower_volume = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta, covered_phi, delta_theta, tower_position);
-        place_tower(description, entities, sens, calorimeter_volume, tower_volume, tower_id, tower_position, covered_theta);
+        Assembly tower_volume = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
+        for (double phi=0*deg; phi<360*deg; phi+=tower_phi)
+        {
+            place_tower(description, entities, sens, calorimeter_volume, tower_volume, tower_id, tower_position, covered_theta, phi);
+            tower_id++;
+        }
 
         covered_theta += delta_theta;
-        tower_id++;
+        if (tower_id >= 1) break;
     }
 
     Transform3D calorimeter_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
@@ -85,8 +129,9 @@ Assembly construct_tower(Detector& description,
                      Volume& calorimeter_volume,
                      const unsigned int& module_id,
                      double covered_theta,
-                     double covered_phi,
                      double& delta_theta,
+                     int num_cols,
+                     double phi_back_shift,
                      Position& tower_position) 
 {
     xml_det_t   x_det       = entities;    
@@ -95,7 +140,7 @@ Assembly construct_tower(Detector& description,
     xml_dim_t   x_dim                  = x_det.dimensions();
     double      z_half                 = x_dim.zhalf();
     int         num_rows               = x_dim.number();
-    int         num_cols               = x_dim.count();
+    // int         num_cols               = x_dim.count();
     double      calo_inner_r           = x_dim.inner_radius();
     double      calo_inner_half_length = x_dim.z_length();
     double      tower_theta            = x_dim.deltatheta();
@@ -106,7 +151,7 @@ Assembly construct_tower(Detector& description,
     double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
 
     
-    Assembly      module_volume(det_name+"_module");
+    Assembly      module_volume("tower");
 
     // Get parameters for tube construction
     xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
@@ -150,8 +195,9 @@ Assembly construct_tower(Detector& description,
     int num_front_cols = fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
     double tower_frontface_width = num_front_cols*2*capillary_outer_r;
     
-    double phi_back_shift = tower_frontface_width/tan_phi - calo_inner_r;
-    calo_inner_r = tower_frontface_width/tan_phi;
+    // double phi_back_shift = tower_frontface_width/tan_phi - calo_inner_r;
+    // calo_inner_r = tower_frontface_width/tan_phi;
+    calo_inner_r += phi_back_shift;
 
     // Calculate how many tubes there are in the back face
     double tower_outer_r_phi = calo_inner_r + 2*z_half; 
@@ -173,7 +219,7 @@ Assembly construct_tower(Detector& description,
     bool last_tower = (covered_theta+tower_theta>barrel_endcap_angle) ? true : false ;
     double tower_max_theta = (last_tower) ? barrel_endcap_angle : covered_theta+tower_theta;
     double tower_max_z = std::tan(tower_max_theta)*calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
-    if (last_tower) tower_max_z += overlap/2; // to account for fine shift of the first tower
+    // if (last_tower) tower_max_z += capillary_outer_r; // to account for fine shift of the first tower
     double tower_max_frontface_height = std::cos(covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
 
     if (tower_max_frontface_height < 2*capillary_outer_r)
@@ -320,6 +366,7 @@ REDUCTION_REQUIRED:
 
             // sensitive_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
 
+            // if (col >= num_front_cols || row >= num_front_rows) continue;
 
             PlacedVolume    tube_placed = module_volume.placeVolume(capillary_volume, tube_id, position);
             
@@ -334,7 +381,7 @@ REDUCTION_REQUIRED:
 
     double module_x = 0*cm;
     double module_y = y_shift + calo_inner_r;
-    double module_z = -(z_shift + covered_z - overlap/2);
+    double module_z = -(z_shift + covered_z); // - capillary_outer_r);
     // module_z = 0*cm;
 
 
@@ -357,6 +404,9 @@ REDUCTION_REQUIRED:
     std::cout << "phi_back_shift   = " << phi_back_shift/mm<< std::endl;
     std::cout << "num_front_cols   = " << num_front_cols   << std::endl;
     std::cout << "num_back_cols    = " << num_back_cols    << std::endl;
+    std::cout << "num_back_rows    = " << num_back_rows    << std::endl;
+    // std::cout << "weightA          = " << module_volume->WeightA() << std::endl;
+    // std::cout << "weight           = " << module_volume->Weight() << std::endl;
 
 
 
@@ -368,15 +418,23 @@ void place_tower(Detector& description,
                  xml_h& entities,
                  SensitiveDetector& sens,
                  Volume& calorimeter_volume,
-                 Assembly tower_volume,
-                 const unsigned int& tower_id,
+                 Assembly& tower_volume,
+                 unsigned int& tower_id,
                  Position tower_position,
-                 double covered_theta)
+                 double covered_theta,
+                 double phi)
 {
-
-    Transform3D tower_tr(RotationZYX(0, 0, -90*deg-covered_theta), tower_position);
+    double tower_x = std::sin(phi)*tower_position.Y();
+    double tower_y = std::cos(phi)*tower_position.Y();
+    double tower_z = tower_position.Z();
+    Transform3D tower_tr(RotationZYX(0, phi, -90*deg-covered_theta), Position(tower_x, tower_y, tower_z));
     PlacedVolume module_placed = calorimeter_volume.placeVolume(tower_volume, tower_tr);
     module_placed.addPhysVolID("module", tower_id);
+    tower_id++;
+    Transform3D tower_tr2(RotationZYX(180*deg, phi, -90*deg+covered_theta), Position(tower_x, tower_y, -tower_z));
+    PlacedVolume module_placed2 = calorimeter_volume.placeVolume(tower_volume, tower_tr2);
+    module_placed2.addPhysVolID("module", tower_id);
+
 }
 
 int fast_floor(double x)

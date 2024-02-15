@@ -65,22 +65,22 @@
         <constant name="world_y" value="world_side"/>
         <constant name="world_z" value="world_side"/>
 
-        <constant name="FibreOuterRadius" value="0.485*mm" />
-        <constant name="CladOuterRadius"  value="0.5*mm"   />
-        <constant name="TubeOuterRadius"  value="1.0*mm"   />
-
         <constant name="RotationZ" value="0.0*deg" />
         <constant name="RotationY" value="1.0*deg" />
         <constant name="RotationX" value="0.0*deg" />
 
-        <constant name="NumRows" value="1" />
+        <constant name="NumRows" value="2" />
         <constant name="NumCols" value="4" />
 
-        <constant name="InnerCaloRadius"     value="2.0*m"   />
-        <constant name="InnerCaloHalfLength" value="2.0*m"   />
-        <constant name="TowerHalfLength"     value="1*m"     />
-        <constant name="ThetaCoverage"       value="1.0*deg" />
-        <constant name="PhiCoverage"         value="10*deg"  />
+        <constant name="FibreOuterRadius" value="0.485*mm"/>
+        <constant name="CladOuterRadius"  value="0.5*mm"  />
+        <constant name="TubeOuterRadius"  value="1.0*mm"  />
+
+        <constant name="InnerCaloRadius"     value="2.0*m"  />
+        <constant name="InnerCaloHalfLength" value="2.0*m"  />
+        <constant name="TowerHalfLength"     value="1*m"    />
+        <constant name="TowerThetaCoverage"  value="1.0*deg"/>
+        <constant name="TowerPhiCoverage"    value="10*deg"  />
         
     </define>
     <properties>
@@ -325,8 +325,8 @@
                 psi="RotationX"
                 inner_radius="InnerCaloRadius"
                 z_length="InnerCaloHalfLength"
-                deltatheta="ThetaCoverage"
-                deltaphi="PhiCoverage" />
+                deltatheta="TowerThetaCoverage"
+                deltaphi="TowerPhiCoverage" />
 
             <tube>
                 <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="false" vis="capillary_vis"  />
