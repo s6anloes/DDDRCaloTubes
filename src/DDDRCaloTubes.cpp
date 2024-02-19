@@ -44,18 +44,20 @@ static Ref_t create_detector(Detector& description,
 
     // Cylinder encompassing entire calorimeter
     xml_dim_t   x_dim                  = x_det.dimensions();
-    double      z_half                 = x_dim.zhalf();
     double      calo_inner_r           = x_dim.inner_radius();
+    double      calo_outer_r           = x_dim.outer_radius();
     double      calo_inner_half_length = x_dim.z_length();
-    double      tower_length           = 2*x_dim.zhalf();
     double      tower_phi              = x_dim.deltaphi();
+
+    double tower_length = calo_outer_r - calo_inner_r;
+    if (tower_length<=0*mm) throw std::runtime_error("Outer calorimeter radius needs to be larger than inner radius");
 
     xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
     xml_comp_t  x_capillary          = x_tube.child(_Unicode(capillary));
     Material    capillary_material   = description.material(x_capillary.materialStr()); 
     double      capillary_outer_r    = x_capillary.outer_r();
 
-    double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
+    double barrel_endcap_angle = std::atan2(calo_inner_half_length, calo_inner_r);
     Tube        calorimeter_solid(calo_inner_r, calo_inner_r+2*tower_length, calo_inner_half_length+2*tower_length); // Per design a "square" cylinder
     // Tube        calorimeter_solid(0, calo_inner_r+2*tower_length, 0); // Per design a "square" cylinder
     std::string calorimeter_name = "calorimeter";
@@ -90,7 +92,7 @@ static Ref_t create_detector(Detector& description,
     calo_inner_r = tower_frontface_width/tan_phi;
 
     // Calculate how many tubes there are in the back face
-    double tower_outer_r_phi = calo_inner_r + 2*z_half; 
+    double tower_outer_r_phi = calo_inner_r + tower_length; 
     double tower_max_backface_width = tower_outer_r_phi * tan_phi;
     int num_back_cols = fast_floor(tower_max_backface_width/(2*capillary_outer_r));
 
@@ -98,13 +100,13 @@ static Ref_t create_detector(Detector& description,
 
     // ---------------------------------------------------------------------------------------------------
 
-    for (double covered_theta=0*deg; covered_theta<0.1*deg; ) 
+    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; ) 
     {
         double theta = 90*deg - covered_theta;
         double delta_theta;
         Position tower_position;
         Assembly tower_volume = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
-        for (double phi=0*deg; phi<360*deg; phi+=tower_phi)
+        for (double phi=0*deg; phi<3*deg; phi+=tower_phi)
         {
             place_tower(description, entities, sens, calorimeter_volume, tower_volume, tower_id, tower_position, covered_theta, phi);
             tower_id++;
@@ -138,17 +140,17 @@ Assembly construct_tower(Detector& description,
     std::string det_name    = x_det.nameStr();
 
     xml_dim_t   x_dim                  = x_det.dimensions();
-    double      z_half                 = x_dim.zhalf();
-    int         num_rows               = x_dim.number();
-    // int         num_cols               = x_dim.count();
     double      calo_inner_r           = x_dim.inner_radius();
+    double      calo_outer_r           = x_dim.outer_radius();
     double      calo_inner_half_length = x_dim.z_length();
     double      tower_theta            = x_dim.deltatheta();
     double      tower_phi              = x_dim.deltaphi();
 
+    double z_half = (calo_outer_r - calo_inner_r)/2;
+
     double tan_phi = std::tan(tower_phi);
 
-    double barrel_endcap_angle = std::atan2(calo_inner_r, calo_inner_half_length);
+    double barrel_endcap_angle = std::atan2(calo_inner_half_length, calo_inner_r);
 
     
     Assembly      module_volume("tower");
@@ -245,7 +247,7 @@ Assembly construct_tower(Detector& description,
     double tower_max_backface_height = tower_outer_r * tan_theta;
     int num_back_rows = num_front_rows + fast_floor((tower_max_backface_height-(tower_frontface_height-overlap))/V);
 
-    num_rows = num_back_rows;
+    int num_rows = num_back_rows;
 
     // Placement and shortening of tube depends on whether the rows have an offset or not
     // The below method of calculating assumes that the final row at the front face before the staggering begins has an offset 

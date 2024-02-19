@@ -77,8 +77,8 @@
         <constant name="TubeOuterRadius"  value="1.0*mm"  />
 
         <constant name="InnerCaloRadius"     value="2.0*m"  />
+        <constant name="OuterCaloRadius"     value="4.0*m"  />
         <constant name="InnerCaloHalfLength" value="2.0*m"  />
-        <constant name="TowerHalfLength"     value="1*m"    />
         <constant name="TowerThetaCoverage"  value="1.0*deg"/>
         <constant name="TowerPhiCoverage"    value="10*deg"  />
         
@@ -317,13 +317,13 @@
             <type_flags type=" DetType_CALORIMETER + DetType_ELECTROMAGNETIC + DetType_BARREL"/>
 
             <dimensions
-                zhalf="TowerHalfLength"
                 number="NumRows" 
                 count="NumCols"
                 phi="RotationZ"
                 theta="RotationY"
                 psi="RotationX"
                 inner_radius="InnerCaloRadius"
+                outer_radius="OuterCaloRadius"
                 z_length="InnerCaloHalfLength"
                 deltatheta="TowerThetaCoverage"
                 deltaphi="TowerPhiCoverage" />
