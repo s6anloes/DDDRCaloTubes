@@ -1,4 +1,5 @@
 #include "DD4hep/DetFactoryHelper.h"
+#include "DD4hep/Objects.h"
 #include "XML/Layering.h"
 #include "XML/Utilities.h"
 #include "DDRec/DetectorData.h"
@@ -9,19 +10,17 @@ Assembly construct_tower(Detector& description,
                          xml_h& entities,
                          SensitiveDetector& sens,
                          Volume& calorimeter_volume,
-                         const int& module_id,
                          double covered_theta,
                          double& delta_theta,
                          int num_cols,
                          double phi_back_shift,
                          Position& tower_position);
 
-void place_tower(Detector& description,
-                 xml_h& entities,
-                 SensitiveDetector& sens,
-                 Volume& calorimeter_volume,
+void place_tower(Volume& calorimeter_volume,
                  Assembly& tower_volume,
-                 int& tower_id,
+                 unsigned int stave, 
+                 unsigned int layer,
+                 unsigned int tower_id,
                  Position tower_position,
                  double covered_theta,
                  double phi);
@@ -67,8 +66,6 @@ static Ref_t create_detector(Detector& description,
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
 
-    int tower_id = 1;
-
     /*****************************************
      *Calculation of required phi parameters *
      *****************************************/
@@ -78,7 +75,7 @@ static Ref_t create_detector(Detector& description,
     unsigned int num_phi_towers;
     double num_phi_towers_d = 360.0*deg/tower_phi;
     // Check if num_phi_towers is a whole number
-    if (check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<int>(num_phi_towers_d);
+    if (check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<unsigned int>(num_phi_towers_d);
     else throw std::runtime_error("Not an integer number of towers in phi direction");
 
     /* (Minimal) tower width with given inner calorimeter radius and tower_phi
@@ -99,22 +96,29 @@ static Ref_t create_detector(Detector& description,
     num_cols = num_back_cols;
 
     // ---------------------------------------------------------------------------------------------------
-
-    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; ) 
+    unsigned int layer = 0;
+    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; layer++) 
     {
         double theta = 90*deg - covered_theta;
         double delta_theta;
         Position tower_position;
-        Assembly tower_volume = construct_tower(description, entities, sens, calorimeter_volume, tower_id, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
-        for (double phi=0*deg; phi<3*deg; phi+=tower_phi)
+        Assembly tower_volume = construct_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
+        double phi = 0*deg;
+        for (unsigned int stave=1; stave<=num_phi_towers; stave++, phi+=tower_phi)
         {
-            place_tower(description, entities, sens, calorimeter_volume, tower_volume, tower_id, tower_position, covered_theta, phi);
-            tower_id++;
+            unsigned int tower_id = stave + layer*num_phi_towers;
+            /* std::cout<<"tower_id = "<<tower_id<<std::endl;
+            std::cout<<"stave    = "<<stave<<std::endl;
+            std::cout<<"layer    = "<<layer<<std::endl;
+            std::cout<<"phi      = "<<phi/deg<<std::endl;
+            std::cout<<"----------------------------------------" << std::endl; */
+            place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
         }
 
         covered_theta += delta_theta;
         // if (tower_id >= 4) break;
     }
+
 
     Transform3D calorimeter_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
     PlacedVolume calorimeter_placed = mother_volume.placeVolume(calorimeter_volume, calorimeter_tr);
@@ -129,7 +133,6 @@ Assembly construct_tower(Detector& description,
                      xml_h& entities,
                      SensitiveDetector& sens,
                      Volume& calorimeter_volume,
-                     const int& module_id,
                      double covered_theta,
                      double& delta_theta,
                      int num_cols,
@@ -153,7 +156,7 @@ Assembly construct_tower(Detector& description,
     double barrel_endcap_angle = std::atan2(calo_inner_half_length, calo_inner_r);
 
     
-    Assembly      module_volume("tower");
+    Assembly      tower_volume("tower");
 
     // Get parameters for tube construction
     xml_comp_t  x_tube      = x_det.child(_Unicode(tube));
@@ -289,13 +292,13 @@ Assembly construct_tower(Detector& description,
             // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a fibre
             auto position = Position(x+capillary_outer_r, y+capillary_outer_r, z);
 
-            // Axial coordinate conversion following https://www.redblobgames.com/grids/hexagons/#conversions-offset
-            // Slighty changed to fit my q and r directions
-            unsigned short int q = col + (row - (row&1))/2;
+            // Offset coordinates following https://www.redblobgames.com/grids/hexagons/#coordinates-offset
+            unsigned short int q = col;
             unsigned short int r = row;
 
             // TubeID composed of q in first 16 bits, r in last 16 bits
-            unsigned int tube_id = (q << 16) | r;
+            // unsigned int tube_id = (q << 16) | r;
+            unsigned int tube_id = q + r*num_cols;
             
             //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
 
@@ -317,7 +320,7 @@ Assembly construct_tower(Detector& description,
                 if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
                 PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
                 cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
-                cher_clad_placed.addPhysVolID("clad", 1);
+                cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
 
                 // Chrerenkov fibre
                 Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, tube_half_length);
@@ -326,7 +329,7 @@ Assembly construct_tower(Detector& description,
                 if (x_cher_fibre.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
                 PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
                 cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
-                cher_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 1);
+                cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
             else // Scintillation row
             {
@@ -337,7 +340,7 @@ Assembly construct_tower(Detector& description,
                 if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
                 PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
                 scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
-                scin_clad_placed.addPhysVolID("clad", 1);
+                scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
 
                 // Scintillation fibre
                 Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, tube_half_length);
@@ -346,12 +349,12 @@ Assembly construct_tower(Detector& description,
                 if (x_scin_fibre.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
                 PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
                 scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
-                scin_fibre_placed.addPhysVolID("fibre", 1).addPhysVolID("cherenkov", 0);
+                scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
 
-            PlacedVolume    tube_placed = module_volume.placeVolume(capillary_volume, tube_id, position);
+            PlacedVolume    tube_placed = tower_volume.placeVolume(capillary_volume, tube_id, position);
             
-            tube_placed.addPhysVolID("fibre", 0).addPhysVolID("q", q).addPhysVolID("r", r);
+            tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r);
 
             
         }
@@ -360,12 +363,12 @@ Assembly construct_tower(Detector& description,
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(covered_theta)*(z_half+back_shift); // How much the tower volume reference points moves in z wrt to previous tower
 
-    double module_x = 0*cm;
-    double module_y = y_shift + calo_inner_r;
-    double module_z = -(z_shift + covered_z);
+    double tower_x = 0*cm;
+    double tower_y = y_shift + calo_inner_r;
+    double tower_z = -(z_shift + covered_z);
 
 
-    tower_position = Position(module_x, module_y, module_z);
+    tower_position = Position(tower_x, tower_y, tower_z);
     delta_theta = (last_tower) ? barrel_endcap_angle : this_tower_theta ; // For last tower just return barrel_endcap_angle to make sure we cross boundary
 
     /* std::cout << "--------------------------------------------------------" << std::endl;
@@ -375,45 +378,46 @@ Assembly construct_tower(Detector& description,
     std::cout << "y_shift          = " << y_shift          << std::endl;
     std::cout << "z_shift          = " << z_shift          << std::endl;
     std::cout << "covered_theta    = " << covered_theta/deg    << std::endl;
-    std::cout << "module_x         = " << module_x         << std::endl;
-    std::cout << "module_y         = " << module_y         << std::endl;
-    std::cout << "module_z         = " << module_z         << std::endl;
+    std::cout << "tower_x         = " << tower_x         << std::endl;
+    std::cout << "tower_y         = " << tower_y         << std::endl;
+    std::cout << "tower_z         = " << tower_z         << std::endl;
     std::cout << "num_front_rows   = " << num_front_rows   << std::endl;
     std::cout << "num_front_cols   = " << num_front_cols   << std::endl;
-    std::cout << "tower_id         = " << module_id        << std::endl;
     std::cout << "phi_back_shift   = " << phi_back_shift/mm<< std::endl;
     std::cout << "num_back_cols    = " << num_back_cols    << std::endl;
     std::cout << "num_back_rows    = " << num_back_rows    << std::endl;
     std::cout << "num_bad_rows     = " << num_bad_rows     << std::endl; 
-    std::cout << "weightA          = " << module_volume->WeightA() << std::endl;
-    std::cout << "weight           = " << module_volume->Weight() << std::endl; */
+    std::cout << "weightA          = " << tower_volume->WeightA() << std::endl;
+    std::cout << "weight           = " << tower_volume->Weight() << std::endl; */
 
 
 
-    return module_volume;
+    return tower_volume;
 }
 
 
-void place_tower(Detector& description,
-                 xml_h& entities,
-                 SensitiveDetector& sens,
-                 Volume& calorimeter_volume,
+void place_tower(Volume& calorimeter_volume,
                  Assembly& tower_volume,
-                 int& tower_id,
+                 unsigned int stave, 
+                 unsigned int layer,
+                 unsigned int tower_id,
                  Position tower_position,
                  double covered_theta,
                  double phi)
 {
+
     double tower_x = std::sin(phi)*tower_position.Y();
     double tower_y = std::cos(phi)*tower_position.Y();
     double tower_z = tower_position.Z();
-    Transform3D tower_tr(RotationZYX(0, phi, -90*deg-covered_theta), Position(tower_x, tower_y, tower_z));
-    PlacedVolume module_placed = calorimeter_volume.placeVolume(tower_volume, tower_tr);
-    module_placed.addPhysVolID("module", -tower_id);
+    // Backward barrel region
+    Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-covered_theta), Position(tower_x, tower_y, tower_z));
+    PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
+    tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
     
-    Transform3D tower_tr2(RotationZYX(180*deg, phi, -90*deg+covered_theta), Position(tower_x, tower_y, -tower_z));
-    PlacedVolume module_placed2 = calorimeter_volume.placeVolume(tower_volume, tower_tr2);
-    module_placed2.addPhysVolID("module", tower_id);
+    // Forward barrel region
+    Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+covered_theta), Position(tower_x, tower_y, -tower_z));
+    PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
+    tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
 }
 
