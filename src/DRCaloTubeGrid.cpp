@@ -47,7 +47,7 @@ Vector3D DRCaloTubeGrid::position(const CellID& cID) const {
   double x = fGridSize * (1*q - 1/2*r);
   double y = fGridSize * sqrt(3)/2*r;
 
-  return Position(x, y, 0.0*mm);
+  return Vector3D(x, y, 0.0*mm);
 
 }
 
