@@ -342,8 +342,10 @@
     <readouts>
         <readout name="MyReadout">
             <segmentation type="DRCaloTubeGrid" 
-                grid_size="2*mm" />
-            <id>system:5,stave:-10,layer:-8,q:32:10,r:7,clad:1,core:1,cherenkov:1</id>
+                grid_size="2*TubeOuterRadius"
+                tower_theta="TowerThetaCoverage"
+                tower_phi="TowerPhiCoverage" />
+            <id>system:5,stave:-10,layer:-8,degrees:-8,decimal:10,col:10,row:7,cherenkov:1</id>
             <!-- <segmentation type="CartesianGridXY" 
                 grid_size_x="1*mm" 
                 grid_size_y="1*mm"/>

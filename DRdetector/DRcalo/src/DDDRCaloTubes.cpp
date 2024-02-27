@@ -116,7 +116,7 @@ static Ref_t create_detector(Detector& description,
         }
 
         covered_theta += delta_theta;
-        // if (tower_id >= 4) break;
+        if (layer >= 1) break;
     }
 
 
@@ -320,7 +320,7 @@ Assembly construct_tower(Detector& description,
                 if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
                 PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
                 cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
-                cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
+                // cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
 
                 // Chrerenkov fibre
                 Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, tube_half_length);
@@ -329,7 +329,7 @@ Assembly construct_tower(Detector& description,
                 if (x_cher_fibre.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
                 PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
                 cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
-                cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+                // cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
             else // Scintillation row
             {
@@ -340,7 +340,7 @@ Assembly construct_tower(Detector& description,
                 if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
                 PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
                 scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
-                scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
+                // scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
 
                 // Scintillation fibre
                 Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, tube_half_length);
@@ -349,12 +349,12 @@ Assembly construct_tower(Detector& description,
                 if (x_scin_fibre.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
                 PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
                 scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
-                scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+                // scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
 
             PlacedVolume    tube_placed = tower_volume.placeVolume(capillary_volume, tube_id, position);
             
-            tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r);
+            // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r);
 
             
         }
@@ -395,6 +395,10 @@ Assembly construct_tower(Detector& description,
     return tower_volume;
 }
 
+void splitDouble(double value, int &wholePart, int &decimalPart) {
+    wholePart = static_cast<int>(value);
+    decimalPart = static_cast<int>(round((value - wholePart) * 1000));
+}
 
 void place_tower(Volume& calorimeter_volume,
                  Assembly& tower_volume,
@@ -409,15 +413,19 @@ void place_tower(Volume& calorimeter_volume,
     double tower_x = std::sin(phi)*tower_position.Y();
     double tower_y = std::cos(phi)*tower_position.Y();
     double tower_z = tower_position.Z();
+
+    int thetaDegrees, thetaDecimal;
+    splitDouble(covered_theta/deg, thetaDegrees, thetaDecimal);
+
     // Backward barrel region
     Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-covered_theta), Position(tower_x, tower_y, tower_z));
     PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
-    tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
+    tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer).addPhysVolID("degrees", -thetaDegrees).addPhysVolID("decimal", -thetaDecimal);
     
     // Forward barrel region
     Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+covered_theta), Position(tower_x, tower_y, -tower_z));
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
-    tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
+    tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer).addPhysVolID("degrees", thetaDegrees).addPhysVolID("decimal", thetaDecimal);
 
 }
 
