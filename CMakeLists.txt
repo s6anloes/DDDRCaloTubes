@@ -1,18 +1,34 @@
-##==========================================================================
-#  AIDA Detector description implementation 
-#--------------------------------------------------------------------------
-# Copyright (C) Organisation europeenne pour la Recherche nucleaire (CERN)
-# All rights reserved.
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
+cmake_policy(SET CMP0074 NEW)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(DDDRCaloTubes)
+
+set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# Use GNU-style hierarchy for installing build products
+include(GNUInstallDirs)
+
+find_package(ROOT REQUIRED)
+find_package(podio REQUIRED HINTS $ENV{PODIO})
+find_package(Gaudi REQUIRED)
+find_package(EDM4HEP)
+find_package(k4FWCore REQUIRED)
+find_package(sipm REQUIRED)
+
+#----------------------------------------------------------------------------
+# Find Geant4 package, activating all available UI and Vis drivers by default
+# You can set WITH_GEANT4_UIVIS to OFF via the command line or ccmake/cmake-gui
+# to build a batch mode only executable
 #
-# For the licensing terms see $DD4hepINSTALL/LICENSE.
-# For the list of contributors see $DD4hepINSTALL/doc/CREDITS.
-#
-#==========================================================================
-#
-# DDDRCaloTubes is a detector description of a homogeneous dualreadout calorimeter
-#
-#==========================================================================
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" OFF)
+if(WITH_GEANT4_UIVIS)
+  find_package(Geant4 REQUIRED ui_all vis_all)
+else()
+  find_package(Geant4 REQUIRED)
+endif()
 
 IF(NOT TARGET DD4hep::DDCore)
   find_package ( DD4hep REQUIRED )
@@ -22,82 +38,12 @@ IF(NOT TARGET DD4hep::DDCore)
 ENDIF()
 
 dd4hep_set_compiler_flags()
-#
-#==========================================================================
-# CLHEP dependent stuff
-if(NOT TARGET CLHEP::CLHEP)
-  # ensure we only look for CLHEP once
-  find_package(CLHEP QUIET)
-endif()
-if (TARGET CLHEP::CLHEP)
-  dd4hep_print("|++> CLHEP PRESENT. Building DDDRCaloTubes examples.")
-else()
-  dd4hep_print("|++> CLHEP is not present. NOT building DDDRCaloTubes examples.")
-  return()
-endif()
-#==========================================================================
-if(NOT TARGET Geant4::Interface)
-  dd4hep_print("Not creating DDDRCaloTubes tests [No Geant4 found]")
-  return()
-endif()
+dd4hep_configure_output()
 
-if (DD4HEP_USE_GEANT4)
-  #---------------------------  Plugin library for the simulation framework  ---------
-  dd4hep_add_dictionary(G__DDDRCaloTubes
-    SOURCES ${DD4hep_DIR}/include/ROOT/Warnings.h src/DualCrystalCalorimeterHit.h 
-    LINKDEF ${DD4hep_DIR}/include/ROOT/LinkDef.h
-    OUTPUT  ${LIBRARY_OUTPUT_PATH}
-    USES    DD4hep::DDCore DD4hep::DDG4 Geant4::Interface
-    )
+set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 
-
-#  dd4hep_add_dictionary(G__DRcaloSiPM
-#    SOURCES ${DD4hep_DIR}/include/ROOT/Warnings.h src/DRcaloSiPMHit.h 
-#    LINKDEF ${DD4hep_DIR}/include/ROOT/LinkDef.h
-#    OUTPUT  ${LIBRARY_OUTPUT_PATH}
-#    USES    DD4hep::DDCore DD4hep::DDG4 Geant4::Interface
-#    )
-
-
-
-endif()
-
-
-#==========================================================================
-#
-dd4hep_configure_output ()
-dd4hep_configure_scripts(DDDRCaloTubes DEFAULT_SETUP WITH_TESTS)
-
-
-add_subdirectory(DRCaloTubesSensitive)
-#
-#-------------------------------------------------------------------------------
-# we only create only library for DDDRCaloTubes. The whole package is a single component
-# library. A priory there is no need to seperate the implementation from the
-# plugins....
-#
-# If need arises, this can be changed easily.
-#
-#---DDDRCaloTubes plugin library -------------------------------------------------------
-dd4hep_add_plugin ( DDDRCaloTubes
-    GENERATED G__DDDRCaloTubes.cxx 
-  SOURCES src/*.cpp src/plugins/*.cpp 
-  USES    DD4hep::DDCore DD4hep::DDAlign DD4hep::DDCond DD4hep::DDG4 DDDetectors
-          ROOT::Core ROOT::Geom ROOT::GenVector CLHEP::CLHEP Geant4::Interface
-)
-
-
-
-target_include_directories(DDDRCaloTubes PUBLIC include)
-target_link_options(DDDRCaloTubes PRIVATE -L${Geant4_DIR}/..)
-#message (STATUS "CLHEP: ${CLHEP}")
-#
-#
-install(TARGETS DDDRCaloTubes LIBRARY DESTINATION lib)
-install(DIRECTORY include/DDDRCaloTubes DESTINATION include)
-#
-#---Package installation procedure(s) -----------------------------------------
-install(DIRECTORY data eve scripts DESTINATION ${CMAKE_INSTALL_PREFIX}/examples/DDDRCaloTubes )
-#
-#
-#
+add_subdirectory(DRdetector)
+# add_subdirectory(DRsim)
+# add_subdirectory(DRdigi)
+# add_subdirectory(DRreco)
+# add_subdirectory(analysis)
