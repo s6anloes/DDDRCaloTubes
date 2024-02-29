@@ -330,9 +330,9 @@
 
             <tube>
                 <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="false" vis="capillary_vis"  />
-                <scin_clad  material="PMMA"                outer_r="CladOuterRadius"  sensitive="true"  vis="scin_clad_vis"  />
+                <scin_clad  material="PMMA"                outer_r="CladOuterRadius"  sensitive="false" vis="scin_clad_vis"  />
                 <scin_fibre material="DR_Polystyrene"      outer_r="FibreOuterRadius" sensitive="true"  vis="scin_fibre_vis" />
-                <cher_clad  material="Fluorinated_Polymer" outer_r="CladOuterRadius"  sensitive="true"  vis="cher_clad_vis"  />
+                <cher_clad  material="Fluorinated_Polymer" outer_r="CladOuterRadius"  sensitive="false" vis="cher_clad_vis"  />
                 <cher_fibre material="PMMA"                outer_r="FibreOuterRadius" sensitive="true"  vis="cher_fibre_vis" />
             </tube>
 
@@ -341,11 +341,11 @@
 
     <readouts>
         <readout name="MyReadout">
-            <segmentation type="DRCaloTubeGrid" 
+            <segmentation type="DRCaloTubesGrid" 
                 grid_size="2*TubeOuterRadius"
                 tower_theta="TowerThetaCoverage"
                 tower_phi="TowerPhiCoverage" />
-            <id>system:5,stave:-10,layer:-8,degrees:-8,decimal:10,col:10,row:7,cherenkov:1</id>
+            <id>system:5,stave:-10,layer:-8,col:10,row:7,clad:1,core:1,cherenkov:1</id>
             <!-- <segmentation type="CartesianGridXY" 
                 grid_size_x="1*mm" 
                 grid_size_y="1*mm"/>

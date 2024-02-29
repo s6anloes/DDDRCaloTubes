@@ -8,5 +8,5 @@ dd4hep::SegmentationObject* create_segmentation(const dd4hep::BitFieldCoder* dec
 }
 }
 
-#include "DRCaloTubeGrid.h"
-DECLARE_SEGMENTATION(DRCaloTubeGrid, create_segmentation<dd4hep::DDSegmentation::DRCaloTubeGrid>)
+#include "DRCaloTubesGrid.h"
+DECLARE_SEGMENTATION(DRCaloTubesGrid, create_segmentation<dd4hep::DDSegmentation::DRCaloTubesGrid>)

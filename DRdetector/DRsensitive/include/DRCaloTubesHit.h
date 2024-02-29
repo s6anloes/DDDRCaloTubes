@@ -1,3 +1,6 @@
+#ifndef DRCaloTubesHit_h
+#define DRCaloTubesHit_h 1
+
 /// Framework include files
 #include "DDG4/Geant4Data.h"
 // #include "DD4hep/Objects.h"
@@ -16,7 +19,7 @@ class DRCaloTubesHit : public dd4hep::sim::Geant4Calorimeter::Hit {
         /// Default constructor
         DRCaloTubesHit() = default;
         /// Initializing constructor
-        DRCaloTubesHit(const Position& cell_pos) : dd4hep::sim::Geant4Calorimeter::Hit(cell_pos),NofCherDet(0),NofScinDet(0) {
+        DRCaloTubesHit(const dd4hep::Position& cell_pos) : dd4hep::sim::Geant4Calorimeter::Hit(cell_pos),NofCherDet(0),NofScinDet(0) {
         }
 
         /// Default destructor
@@ -24,15 +27,4 @@ class DRCaloTubesHit : public dd4hep::sim::Geant4Calorimeter::Hit {
 
 };
 
-
-// CINT configuration
-#if defined(__CINT__) || defined(__MAKECINT__) || defined(__CLING__) || defined(__ROOTCLING__)
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
-
-/// Define namespaces
-#pragma link C++ namespace dd4hep;
-#pragma link C++ namespace dd4hep::sim;
-#pragma link C++ class     DRCaloTubesHit+;
 #endif

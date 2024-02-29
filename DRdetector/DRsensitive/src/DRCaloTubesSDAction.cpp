@@ -14,7 +14,7 @@
 #include "G4OpBoundaryProcess.hh"
 
 
-//#include "DRCaloTubesHit.h"
+#include "DRCaloTubesHit.h"
 #include "DRCaloTubesRunAction.h"
 #include "DRCaloTubesEventAction.h"
 #include "DRCaloTubesSteppingAction.h"
@@ -96,98 +96,6 @@ namespace dd4hep {
             {
                 fSteppingAction->UserSteppingAction(step);
                 return true;
-                
-                /*
-                // Get step info
-                //
-                //std::cout<<"SDAction::process() call"<<std::endl;
-                G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
-                G4double edep = step->GetTotalEnergyDeposit();
-                G4double steplength = step->GetStepLength();
-                
-                //--------------------------------------------------
-                //Store information from Scintillation and Cherenkov
-                //signals
-                //--------------------------------------------------
-            
-                std::string fibre_name;
-                std::string scin_name = "scin_fibre_0";
-                std::string cher_name = "cher_fibre_0";
-                fibre_name = volume->GetName(); 
-                //std::cout<<"SDAction::process: fibre_name = " <<fibre_name<<std::endl;
-                G4int signalhit = 0;
-
-                if ( fibre_name==scin_name ) //scintillating fiber/tube
-                { 
-                    if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() ) 
-                    {
-                        //std::cout<<"SCINTILLATION:: PostStep Position = "<<step->GetPostStepPoint()->GetPosition()<<std::endl;
-                        step->GetTrack()->SetTrackStatus( fStopAndKill ); 
-                    }
-
-                    if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return true; } //not ionizing particle
-
-
-                    
-                                
-                    signalhit = SmearSSignal( ApplyBirks( edep, steplength ) );
-                    NofScinDet += signalhit; 
-                }
-
-                if ( fibre_name==cher_name ) //Cherenkov fiber/tube
-                {
-                    //std::cout<<"SteppingAction:: Cherenkov Fibre"<<std::endl;
-                    //std::cout<<"SteppingAction:: Particle name = " <<step->GetTrack()->GetParticleDefinition()->GetParticleName()<<std::endl;
-                    //std::cout<<"SteppingAction Optical Photon name = " <<G4OpticalPhoton::Definition()->GetParticleName()<<std::endl;
-                    if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
-                    {
-                        //std::cout<<"SteppingAction:: Optical Photon"<<std::endl;
-                        //std::cout<<"CHERENKOV:: PreStep Position = "<<step->GetPreStepPoint()->GetPosition()<<std::endl;
-                        //std::cout<<"OpticalPhoton IsLastStepInVolume = "<<step->IsLastStepInVolume()<<std::endl;
-                        //std::cout<<"Corresponding TrackID = "<<step->GetTrack()->GetTrackID()<<std::endl;    
-                        G4OpBoundaryProcessStatus theStatus = Undefined;
-
-                        G4ProcessManager* OpManager = G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
-
-                        if (OpManager) 
-                        {
-                            //std::cout<<"SteppingAction:: OpManager"<<std::endl;
-                            G4int MAXofPostStepLoops = OpManager->GetPostStepProcessVector()->entries();
-                            G4ProcessVector* fPostStepDoItVector = OpManager->GetPostStepProcessVector(typeDoIt);
-
-                            for ( G4int i=0; i<MAXofPostStepLoops; i++) 
-                            {
-                                G4VProcess* fCurrentProcess = (*fPostStepDoItVector)[i];
-                                fOpProcess = dynamic_cast<G4OpBoundaryProcess*>(fCurrentProcess);
-                                if (fOpProcess) { theStatus = fOpProcess->GetStatus(); break; }
-                            }
-                        }
-
-                        //std::cout<<"SteppingAction:: theStatus = " <<theStatus<<std::endl;
-                        
-
-                        //G4int c_signal = SmearCSignal( );
-                        //NofCherDet += c_signal;
-
-                        switch ( theStatus ){
-                                                
-                            case TotalInternalReflection: 
-                            {
-                                //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
-                                G4int c_signal = SmearCSignal( );
-                                NofCherDet += c_signal;
-                                step->GetTrack()->SetTrackStatus( fStopAndKill );
-                            }
-                            default:
-                                step->GetTrack()->SetTrackStatus( fStopAndKill );
-                        } //end of swich cases
-
-                    } //end of optical photon
-
-                } //end of Cherenkov fiber
-
-
-                return true;*/
             } // end of process()
 
 

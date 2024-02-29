@@ -1,4 +1,4 @@
-#include "DRCaloTubeGrid.h"
+#include "DRCaloTubesGrid.h"
 
 #include <climits>
 #include <cmath>
@@ -8,9 +8,9 @@ namespace dd4hep {
 namespace DDSegmentation {
 
 /// default constructor using an encoding string
-DRCaloTubeGrid::DRCaloTubeGrid(const std::string& cellEncoding) : Segmentation(cellEncoding) {
+DRCaloTubesGrid::DRCaloTubesGrid(const std::string& cellEncoding) : Segmentation(cellEncoding) {
   // define type and description
-  _type = "DRCaloTubeGrid";
+  _type = "DRCaloTubesGrid";
   _description = "DRcalo segmentation based on the tower / (Cherenkov or Scintillation) fiber / SiPM hierarchy";
 
   // register all necessary parameters
@@ -19,17 +19,17 @@ DRCaloTubeGrid::DRCaloTubeGrid(const std::string& cellEncoding) : Segmentation(c
   registerIdentifier("identifier_col", "Cell ID identifier for numCol", fCol, "col");
   registerIdentifier("identifier_row", "Cell ID identifier for numRow", fRow, "row");
   registerIdentifier("identifier_IsCherenkov", "Cell ID identifier for IsCherenkov", fIsCherenkov, "cherenkov");
-  // registerIdentifier("identifier_clad", "Cell ID identifier for clad", fClad, "clad");
-  // registerIdentifier("identifier_core", "Cell ID identifier for core", fCore, "core");
+  registerIdentifier("identifier_clad", "Cell ID identifier for clad", fClad, "clad");
+  registerIdentifier("identifier_core", "Cell ID identifier for core", fCore, "core");
 
   registerParameter("grid_size", "Cell size", fGridSize, 2.0*mm, SegmentationParameter::LengthUnit);
   registerParameter("tower_theta", "Tower theta", fTheta, 1.0*deg, SegmentationParameter::AngleUnit);
   registerParameter("tower_phi", "Tower phi", fPhi, 1.0*deg, SegmentationParameter::AngleUnit);
 }
 
-DRCaloTubeGrid::DRCaloTubeGrid(const BitFieldCoder* decoder) : Segmentation(decoder) {
+DRCaloTubesGrid::DRCaloTubesGrid(const BitFieldCoder* decoder) : Segmentation(decoder) {
   // define type and description
-  _type = "DRCaloTubeGrid";
+  _type = "DRCaloTubesGrid";
   _description = "DRcalo segmentation based on the tower / (Cherenkov or Scintillation) fiber / SiPM hierarchy";
 
   // register all necessary parameters
@@ -38,18 +38,18 @@ DRCaloTubeGrid::DRCaloTubeGrid(const BitFieldCoder* decoder) : Segmentation(deco
   registerIdentifier("identifier_col", "Cell ID identifier for numCol", fCol, "col");
   registerIdentifier("identifier_row", "Cell ID identifier for numRow", fRow, "row");
   registerIdentifier("identifier_IsCherenkov", "Cell ID identifier for IsCherenkov", fIsCherenkov, "cherenkov");
-  // registerIdentifier("identifier_clad", "Cell ID identifier for clad", fClad, "clad");
-  // registerIdentifier("identifier_core", "Cell ID identifier for core", fCore, "core");
+  registerIdentifier("identifier_clad", "Cell ID identifier for clad", fClad, "clad");
+  registerIdentifier("identifier_core", "Cell ID identifier for core", fCore, "core");
   
   registerParameter("grid_size", "Cell size", fGridSize, 2.0*mm, SegmentationParameter::LengthUnit);
   registerParameter("tower_theta", "Tower theta", fTheta, 1.0*deg, SegmentationParameter::AngleUnit);
   registerParameter("tower_phi", "Tower phi", fPhi, 1.0*deg, SegmentationParameter::AngleUnit);
 }
 
-DRCaloTubeGrid::~DRCaloTubeGrid() {
+DRCaloTubesGrid::~DRCaloTubesGrid() {
 }
 
-Vector3D DRCaloTubeGrid::position(const CellID& cID) const {
+Vector3D DRCaloTubesGrid::position(const CellID& cID) const {
   
   int col = Col(cID);
   int row = Row(cID);
@@ -61,7 +61,7 @@ Vector3D DRCaloTubeGrid::position(const CellID& cID) const {
 
 }
 
-Vector3D DRCaloTubeGrid::localPosition(const CellID& cID) const {
+Vector3D DRCaloTubesGrid::localPosition(const CellID& cID) const {
   int col = Col(cID);
   int row = Row(cID);
 
@@ -73,7 +73,7 @@ Vector3D DRCaloTubeGrid::localPosition(const CellID& cID) const {
 
 
 /// determine the cell ID based on the position
-CellID DRCaloTubeGrid::cellID(const Vector3D& localPosition, const Vector3D& /* globalPosition */, const VolumeID& vID) const {
+CellID DRCaloTubesGrid::cellID(const Vector3D& localPosition, const Vector3D& /* globalPosition */, const VolumeID& vID) const {
   // Following https://www.redblobgames.com/grids/hexagons/more-pixel-to-hex.html#charles-chambers
   double x = localPosition.X;
   double y = localPosition.Y;
@@ -99,7 +99,7 @@ CellID DRCaloTubeGrid::cellID(const Vector3D& localPosition, const Vector3D& /* 
   return cellID(stave, layer, col, row);
 }
 
-CellID DRCaloTubeGrid::cellID(int stave, int layer, int col, int row) const {
+CellID DRCaloTubesGrid::cellID(int stave, int layer, int col, int row) const {
   CellID stave_cID = static_cast<CellID>(stave);
   CellID layer_cID = static_cast<CellID>(layer);
   CellID col_cId = static_cast<CellID>(col);
@@ -121,51 +121,51 @@ CellID DRCaloTubeGrid::cellID(int stave, int layer, int col, int row) const {
 }
 
 
-bool DRCaloTubeGrid::IsCherenkov(const CellID& aCellID) const {
+bool DRCaloTubesGrid::IsCherenkov(const CellID& aCellID) const {
   VolumeID isCeren = static_cast<VolumeID>(_decoder->get(aCellID, fIsCherenkov));
   return static_cast<bool>(isCeren);
 }
 
 
-bool DRCaloTubeGrid::IsCherenkov(int col, int row) const {
+bool DRCaloTubesGrid::IsCherenkov(int col, int row) const {
   return (row&1) ? true : false;
 }
 
-// int DRCaloTubeGrid::getLast32bits(const CellID& aCellID) const {
+// int DRCaloTubesGrid::getLast32bits(const CellID& aCellID) const {
 //   CellID aId64 = aCellID >> sizeof(int)*CHAR_BIT;
 //   int aId32 = (int)aId64;
 
 //   return aId32;
 // }
 
-// CellID DRCaloTubeGrid::convertLast32to64(const int aId32) const {
+// CellID DRCaloTubesGrid::convertLast32to64(const int aId32) const {
 //   CellID aId64 = (CellID)aId32;
 //   aId64 <<= sizeof(int)*CHAR_BIT;
 
 //   return aId64;
 // }
 
-int DRCaloTubeGrid::Row(const CellID& aCellID) const { 
+int DRCaloTubesGrid::Row(const CellID& aCellID) const { 
   VolumeID row = static_cast<VolumeID>(_decoder->get(aCellID, fRow));
   return static_cast<int>(row);
 }
 
-int DRCaloTubeGrid::Col(const CellID& aCellID) const { 
+int DRCaloTubesGrid::Col(const CellID& aCellID) const { 
   VolumeID col = static_cast<VolumeID>(_decoder->get(aCellID, fCol));
   return static_cast<int>(col);
 }
 
-int DRCaloTubeGrid::Stave(const VolumeID& volID) const { 
+int DRCaloTubesGrid::Stave(const VolumeID& volID) const { 
   VolumeID stave = static_cast<VolumeID>(_decoder->get(volID, fStave));
   return static_cast<int>(stave);
 }
 
-int DRCaloTubeGrid::Layer(const VolumeID& volID) const { 
+int DRCaloTubesGrid::Layer(const VolumeID& volID) const { 
   VolumeID layer = static_cast<VolumeID>(_decoder->get(volID, fLayer));
   return static_cast<int>(layer);
 }
 
-std::pair<int, int> DRCaloTubeGrid::axial_round(double q_float, double r_float) const {
+std::pair<int, int> DRCaloTubesGrid::axial_round(double q_float, double r_float) const {
   // Rounding to nearest hex according to https://www.redblobgames.com/grids/hexagons/#rounding
 
   double s_float = -q_float - r_float;
@@ -185,7 +185,7 @@ std::pair<int, int> DRCaloTubeGrid::axial_round(double q_float, double r_float) 
   return std::make_pair(q_reco, r_reco);
 }
 
-std::pair<int, int> DRCaloTubeGrid::axial2offset(int q, int r) const {
+std::pair<int, int> DRCaloTubesGrid::axial2offset(int q, int r) const {
   int row = -r;
   int col = q - (row + (row&1))/2;
   return std::make_pair(col, row);

@@ -6,14 +6,14 @@
 
 namespace dd4hep {
 namespace DDSegmentation {
-class DRCaloTubeGrid : public Segmentation {
+class DRCaloTubesGrid : public Segmentation {
 public:
   /// default constructor using an arbitrary type
-  DRCaloTubeGrid(const std::string& aCellEncoding);
+  DRCaloTubesGrid(const std::string& aCellEncoding);
   /// Default constructor used by derived classes passing an existing decoder
-  DRCaloTubeGrid(const BitFieldCoder* decoder);
+  DRCaloTubesGrid(const BitFieldCoder* decoder);
   /// destructor
-  virtual ~DRCaloTubeGrid() override;
+  virtual ~DRCaloTubesGrid() override;
 
   //  Determine the global(local) position based on the cell ID.
   virtual Vector3D position(const CellID& aCellID) const;
