@@ -19,6 +19,9 @@ target_include_directories(DDDRCaloTubes PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
+# Link the Utils library
+target_link_libraries(DDDRCaloTubes PRIVATE DRutils)
+
 set_target_properties(DDDRCaloTubes PROPERTIES PUBLIC_HEADER "${headers}")
 
 install(TARGETS DDDRCaloTubes

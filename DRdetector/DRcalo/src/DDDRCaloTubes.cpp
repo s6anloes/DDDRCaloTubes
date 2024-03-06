@@ -4,6 +4,8 @@
 #include "XML/Utilities.h"
 #include "DDRec/DetectorData.h"
 
+#include "DRutils.h"
+
 using namespace dd4hep;
 
 Assembly construct_barrel_tower(Detector& description,
@@ -35,9 +37,9 @@ Assembly construct_endcap_tower(Detector& description,
                          double phi_back_shift,
                          Position& tower_position);
 
-int fast_floor(double x);
-int fast_ceil(double x);
-bool check_for_integer(double x);
+// int fast_floor(double x);
+// int fast_ceil(double x);
+// bool check_for_integer(double x);
 
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
@@ -85,14 +87,14 @@ static Ref_t create_detector(Detector& description,
     unsigned int num_phi_towers;
     double num_phi_towers_d = 360.0*deg/tower_phi;
     // Check if num_phi_towers is a whole number
-    if (check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<unsigned int>(num_phi_towers_d);
+    if (DDDRCaloTubes::check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<unsigned int>(num_phi_towers_d);
     else throw std::runtime_error("Not an integer number of towers in phi direction");
 
     /* (Minimal) tower width with given inner calorimeter radius and tower_phi
        Might need to increase width to ensure integer number of tubes in phi direction
        at the cost of having to place the tower further back (calo_inner_r + epsilon) */
     double tower_min_frontface_width = calo_inner_r*tan_phi;
-    int num_front_cols = fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
+    int num_front_cols = DDDRCaloTubes::fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
     double tower_frontface_width = num_front_cols*2*capillary_outer_r;
     
     double phi_back_shift = tower_frontface_width/tan_phi - calo_inner_r;
@@ -101,7 +103,7 @@ static Ref_t create_detector(Detector& description,
     // Calculate how many tubes there are in the back face
     double tower_outer_r_phi = calo_inner_r + tower_length; 
     double tower_max_backface_width = tower_outer_r_phi * tan_phi;
-    int num_back_cols = fast_floor(tower_max_backface_width/(2*capillary_outer_r));
+    int num_back_cols = DDDRCaloTubes::fast_floor(tower_max_backface_width/(2*capillary_outer_r));
 
     num_cols = num_back_cols;
 
@@ -114,7 +116,7 @@ static Ref_t create_detector(Detector& description,
         Position tower_position;
         Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=num_phi_towers; stave++, phi+=tower_phi)
+        for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
         {
             unsigned int tower_id = stave + layer*num_phi_towers;
             place_barrel_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
@@ -195,7 +197,7 @@ Assembly construct_barrel_tower(Detector& description,
        Might need to increase width to ensure integer number of tubes in phi direction
        at the cost of having to place the tower further back (calo_inner_r + epsilon) */
     double tower_min_frontface_width = calo_inner_r*tan_phi;
-    int num_front_cols = fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
+    int num_front_cols = DDDRCaloTubes::fast_ceil(tower_min_frontface_width/(2*capillary_outer_r));
     double tower_frontface_width = num_front_cols*2*capillary_outer_r;
     
     calo_inner_r += phi_back_shift;
@@ -203,7 +205,7 @@ Assembly construct_barrel_tower(Detector& description,
     // Calculate how many tubes there are in the back face
     double tower_outer_r_phi = calo_inner_r + 2*z_half; 
     double tower_max_backface_width = tower_outer_r_phi * tan_phi;
-    int num_back_cols = fast_floor(tower_max_backface_width/(2*capillary_outer_r));
+    int num_back_cols = DDDRCaloTubes::fast_floor(tower_max_backface_width/(2*capillary_outer_r));
 
     num_cols = num_back_cols;
 
@@ -227,7 +229,7 @@ Assembly construct_barrel_tower(Detector& description,
     
     // Calculate how many tubes fit at the front face for the given tower theta coverage.
     // This number will serve as the new covered theta since it is important to not have any gaps in the front face
-    int num_front_rows = 1 + fast_floor((tower_max_frontface_height-2*capillary_outer_r) / V);
+    int num_front_rows = 1 + DDDRCaloTubes::fast_floor((tower_max_frontface_height-2*capillary_outer_r) / V);
     if (num_front_rows&1 ) num_front_rows++; // Make sure that front face ends on row with offset (i.e. even number of rows)
 
     double tower_frontface_height;
@@ -253,7 +255,7 @@ Assembly construct_barrel_tower(Detector& description,
     // Calculate how many tubes there are in the back face
     double tower_outer_r = rad_distance + back_shift + 2*z_half; 
     double tower_max_backface_height = tower_outer_r * tan_theta;
-    int num_back_rows = num_front_rows + fast_floor((tower_max_backface_height-(tower_frontface_height-overlap))/V);
+    int num_back_rows = num_front_rows + DDDRCaloTubes::fast_floor((tower_max_backface_height-(tower_frontface_height-overlap))/V);
 
     int num_rows = num_back_rows;
 
@@ -279,7 +281,7 @@ Assembly construct_barrel_tower(Detector& description,
             continue;
         }
 
-        for (int col=0; col<num_cols; col++)
+        for (int col=0; col<1; col++)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
 
@@ -435,20 +437,20 @@ void place_barrel_tower(Volume& calorimeter_volume,
 
 }
 
-int fast_floor(double x)
-{
-    return (int) x - (x < (int) x);
-}
+// int fast_floor(double x)
+// {
+//     return (int) x - (x < (int) x);
+// }
 
-int fast_ceil(double x)
-{
-    return (int) x + (x > (int) x);
-}
+// int fast_ceil(double x)
+// {
+//     return (int) x + (x > (int) x);
+// }
 
-bool check_for_integer(double x)
-{
-    return (std::abs(x - std::round(x)) < 1e-10);
-}
+// bool check_for_integer(double x)
+// {
+//     return (std::abs(x - std::round(x)) < 1e-10);
+// }
 
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)

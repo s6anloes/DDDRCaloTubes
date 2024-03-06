@@ -43,6 +43,7 @@ dd4hep_configure_output()
 set(BOOST_ROOT "$ENV{BOOST_ROOT}")
 
 add_subdirectory(DRdetector)
+add_subdirectory(DRutils)
 # add_subdirectory(DRsim)
 # add_subdirectory(DRdigi)
 # add_subdirectory(DRreco)
