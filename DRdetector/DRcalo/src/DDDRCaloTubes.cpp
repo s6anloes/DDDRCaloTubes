@@ -176,17 +176,17 @@ Assembly construct_barrel_tower(Detector& description,
     Material    scin_clad_material   = description.material(x_scin_clad.materialStr()); 
     double      scin_clad_outer_r    = x_scin_clad.outer_r();
 
-    xml_comp_t  x_scin_fibre         = x_tube.child(_Unicode(scin_fibre));
-    Material    scin_fibre_material  = description.material(x_scin_fibre.materialStr()); 
-    double      scin_fibre_outer_r   = x_scin_fibre.outer_r();
+    xml_comp_t  x_scin_core         = x_tube.child(_Unicode(scin_core));
+    Material    scin_core_material  = description.material(x_scin_core.materialStr()); 
+    double      scin_core_outer_r   = x_scin_core.outer_r();
 
     xml_comp_t  x_cher_clad          = x_tube.child(_Unicode(cher_clad));
     Material    cher_clad_material   = description.material(x_cher_clad.materialStr()); 
     double      cher_clad_outer_r    = x_cher_clad.outer_r();
 
-    xml_comp_t  x_cher_fibre         = x_tube.child(_Unicode(cher_fibre));
-    Material    cher_fibre_material  = description.material(x_cher_fibre.materialStr()); 
-    double      cher_fibre_outer_r   = x_cher_fibre.outer_r();
+    xml_comp_t  x_cher_core         = x_tube.child(_Unicode(cher_core));
+    Material    cher_core_material  = description.material(x_cher_core.materialStr()); 
+    double      cher_core_outer_r   = x_cher_core.outer_r();
 
 
     // Constants used through the function
@@ -219,7 +219,7 @@ Assembly construct_barrel_tower(Detector& description,
 
     bool last_tower = (covered_theta+tower_theta>barrel_endcap_angle) ? true : false ;
     double tower_max_theta = covered_theta+tower_theta;
-    double tower_max_z = std::tan(tower_max_theta)*calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
+    double tower_max_z = std::tan(tower_max_theta)*calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many cores actually fit)
     double tower_max_frontface_height = std::cos(covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
 
     if (tower_max_frontface_height < 2*capillary_outer_r)
@@ -296,7 +296,7 @@ Assembly construct_barrel_tower(Detector& description,
 
             double z = (row_staggered_z > col_staggered_z) ? row_staggered_z : col_staggered_z ;
 
-            // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a fibre
+            // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a core
             auto position = Position(x+capillary_outer_r, y+capillary_outer_r, z);
 
             // Offset coordinates following https://www.redblobgames.com/grids/hexagons/#coordinates-offset
@@ -329,14 +329,14 @@ Assembly construct_barrel_tower(Detector& description,
                 cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
                 cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
 
-                // Chrerenkov fibre
-                Tube        cher_fibre_solid(0.0*mm, cher_fibre_outer_r, tube_half_length);
-                std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_fibre_material);
-                if (x_cher_fibre.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
-                PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
-                cher_fibre_volume.setVisAttributes(description, x_cher_fibre.visStr());
-                cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+                // Chrerenkov core
+                Tube        cher_core_solid(0.0*mm, cher_core_outer_r, tube_half_length);
+                std::string cher_core_name = "cher_core";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      cher_core_volume(cher_core_name, cher_core_solid, cher_core_material);
+                if (x_cher_core.isSensitive()) cher_core_volume.setSensitiveDetector(sens);
+                PlacedVolume    cher_core_placed = cher_clad_volume.placeVolume(cher_core_volume, tube_id);
+                cher_core_volume.setVisAttributes(description, x_cher_core.visStr());
+                cher_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
             else // Scintillation row
             {
@@ -349,14 +349,14 @@ Assembly construct_barrel_tower(Detector& description,
                 scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
                 scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
 
-                // Scintillation fibre
-                Tube        scin_fibre_solid(0.0*mm, scin_fibre_outer_r, tube_half_length);
-                std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_fibre_material);
-                if (x_scin_fibre.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
-                PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
-                scin_fibre_volume.setVisAttributes(description, x_scin_fibre.visStr());
-                scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+                // Scintillation core
+                Tube        scin_core_solid(0.0*mm, scin_core_outer_r, tube_half_length);
+                std::string scin_core_name = "scin_core";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      scin_core_volume(scin_core_name, scin_core_solid, scin_core_material);
+                if (x_scin_core.isSensitive()) scin_core_volume.setSensitiveDetector(sens);
+                PlacedVolume    scin_core_placed = scin_clad_volume.placeVolume(scin_core_volume, tube_id);
+                scin_core_volume.setVisAttributes(description, x_scin_core.visStr());
+                scin_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
 
             PlacedVolume    tube_placed = tower_volume.placeVolume(capillary_volume, tube_id, position);
