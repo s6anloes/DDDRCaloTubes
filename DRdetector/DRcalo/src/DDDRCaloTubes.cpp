@@ -5,6 +5,7 @@
 #include "DDRec/DetectorData.h"
 
 #include "DRutils.h"
+#include "DRconstructor.h"
 
 using namespace dd4hep;
 
@@ -45,6 +46,7 @@ static Ref_t create_detector(Detector& description,
                              xml_h entities,
                              SensitiveDetector sens) 
 {
+    DDDRCaloTubes::DRconstructor constructor(description, entities, sens);
     xml_det_t   x_det       = entities;    
     int         det_id      = x_det.id();
     std::string det_name    = x_det.nameStr();
