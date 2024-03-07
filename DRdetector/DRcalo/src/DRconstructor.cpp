@@ -154,6 +154,136 @@ void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 
 }
 
+void DDDRCaloTubes::DRconstructor::assemble_tower(Detector& description,
+                                                  xml_h& entities,
+                                                  SensitiveDetector& sens,
+                                                  Assembly& tower_volume)
+{
+
+    xml_comp_t  x_tube = entities.child(_Unicode(tube));
+    xml_comp_t  x_capillary = x_tube.child(_Unicode(capillary));
+    xml_comp_t  x_scin_clad = x_tube.child(_Unicode(scin_clad));
+    xml_comp_t  x_scin_core = x_tube.child(_Unicode(scin_core));
+    xml_comp_t  x_cher_clad = x_tube.child(_Unicode(cher_clad));
+    xml_comp_t  x_cher_core = x_tube.child(_Unicode(cher_core));
+
+    Material capillary_material    = description.material(x_capillary.materialStr());
+    Material scin_clad_material    = description.material(x_scin_clad.materialStr());
+    Material scin_core_material    = description.material(x_scin_core.materialStr()); 
+    Material cher_clad_material    = description.material(x_cher_clad.materialStr());
+    Material cher_core_material    = description.material(x_cher_core.materialStr());
+
+
+    // Placement and shortening of tube depends on whether the rows have an offset or not
+    // The below method of calculating assumes that the final row at the front face before the staggering begins has an offset 
+    // (even number of rows in front face) such that the next tower can be placed smoothly into the last row
+    double tube_shortening_odd_stagger  = m_capillary_diameter/m_tower_tan_theta;
+    double tube_shortening_even_stagger = 2*m_V/m_tower_tan_theta - tube_shortening_odd_stagger;
+    int num_bad_rows = 0;
+
+    for (unsigned int row=0; row<m_num_rows; row++)
+    {
+        int staggered_row = (row >= m_num_front_rows) ? row-m_num_front_rows+1 : 0 ;
+        int even_staggers = (staggered_row & 1) ? (staggered_row-1)/2 : staggered_row/2;
+        int odd_staggers  = (staggered_row & 1) ? (staggered_row+1)/2 : staggered_row/2;
+
+        double row_staggered_z = (even_staggers*tube_shortening_even_stagger + odd_staggers*tube_shortening_odd_stagger)/2;
+
+        // In row staggering it can happen in rare cases that the staggering becomes too large in final row
+        // Has to do with fact that caclulation of num_rows does not take different staggering into account
+        if (row_staggered_z > m_tower_half_length) {
+            num_bad_rows++;
+            continue;
+        }
+
+        for (unsigned int col=0; col<1; col++)
+        {
+            // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
+
+            int staggered_col = (col >= m_num_front_cols) ? col-m_num_front_cols+1 : 0 ;
+            double col_staggered_z = staggered_col*m_capillary_diameter/m_tower_tan_phi/2;
+
+
+            // Configuration for placing the tube
+            double offset = (row & 1) ? m_capillary_outer_r : 0.0*mm;
+            double x = col*m_capillary_diameter + offset;
+            double y = row*m_V;                       // Vertical spacing for hexagonal grid (pointy-top)
+
+            double z = (row_staggered_z > col_staggered_z) ? row_staggered_z : col_staggered_z ;
+
+            // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a fibre
+            auto position = Position(x+m_capillary_outer_r, y+m_capillary_outer_r, z);
+
+            // Offset coordinates following https://www.redblobgames.com/grids/hexagons/#coordinates-offset
+            unsigned short int q = col;
+            unsigned short int r = row;
+
+            // TubeID composed of q in first 16 bits, r in last 16 bits
+            // unsigned int tube_id = (q << 16) | r;
+            unsigned int tube_id = q + r*m_num_cols;
+            
+            //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
+
+            double tube_half_length = m_tower_half_length - z;
+
+            // Capillary tube
+            Tube        capillary_solid(0.0*mm, m_capillary_outer_r, tube_half_length);
+            std::string capillary_name = "capillary";
+            Volume      capillary_volume(capillary_name, capillary_solid, capillary_material);
+            if (x_capillary.isSensitive()) capillary_volume.setSensitiveDetector(sens);
+            capillary_volume.setVisAttributes(description, x_capillary.visStr()); 
+
+            if (row & 1) // Cherenkov row
+            {
+                // Cherenkov cladding
+                Tube        cher_clad_solid(0.0*mm, m_cher_clad_outer_r, tube_half_length);
+                std::string cher_clad_name = "cher_clad";
+                Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
+                if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
+                PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
+                cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
+                cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
+
+                // Chrerenkov fibre
+                Tube        cher_fibre_solid(0.0*mm, m_cher_core_outer_r, tube_half_length);
+                std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_core_material);
+                if (x_cher_core.isSensitive()) cher_fibre_volume.setSensitiveDetector(sens);
+                PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
+                cher_fibre_volume.setVisAttributes(description, x_cher_core.visStr());
+                cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+            }
+            else // Scintillation row
+            {
+                // Scintillation cladding
+                Tube        scin_clad_solid(0.0*mm, m_scin_clad_outer_r, tube_half_length);
+                std::string scin_clad_name = "scin_clad";
+                Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
+                if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
+                PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
+                scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
+                scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
+
+                // Scintillation fibre
+                Tube        scin_fibre_solid(0.0*mm, m_scin_core_outer_r, tube_half_length);
+                std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
+                Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_core_material);
+                if (x_scin_core.isSensitive()) scin_fibre_volume.setSensitiveDetector(sens);
+                PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
+                scin_fibre_volume.setVisAttributes(description, x_scin_core.visStr());
+                scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+            }
+
+            PlacedVolume    tube_placed = tower_volume.placeVolume(capillary_volume, tube_id, position);
+            tube_placed.addPhysVolID("col", col).addPhysVolID("row", row);
+            // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r);
+
+            
+        }
+    }
+
+}
+
 Assembly DDDRCaloTubes::DRconstructor::construct_tower(Detector& description,
                                                     xml_h& entities,
                                                     SensitiveDetector& sens,
@@ -271,7 +401,7 @@ Assembly DDDRCaloTubes::DRconstructor::construct_tower(Detector& description,
 
             // TubeID composed of q in first 16 bits, r in last 16 bits
             // unsigned int tube_id = (q << 16) | r;
-            unsigned int tube_id = q + r*num_cols;
+            unsigned int tube_id = q + r*m_num_cols;
             
             //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
 

@@ -26,6 +26,10 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
+    void assemble_tower(Detector& description, 
+                        xml_h& entities,
+                        SensitiveDetector& sens,
+                        Assembly& tower_volume);
     Assembly construct_tower(Detector& description,
                          xml_h& entities,
                          SensitiveDetector& sens,

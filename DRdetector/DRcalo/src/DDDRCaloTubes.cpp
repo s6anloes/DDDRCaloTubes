@@ -17,7 +17,8 @@ Assembly construct_barrel_tower(Detector& description,
                          double& delta_theta,
                          int num_cols,
                          double phi_back_shift,
-                         Position& tower_position);
+                         Position& tower_position,
+                         DDDRCaloTubes::DRconstructor& constructor);
 
 void place_barrel_tower(Volume& calorimeter_volume,
                  Assembly& tower_volume,
@@ -113,10 +114,11 @@ static Ref_t create_detector(Detector& description,
     unsigned int layer = 0;
     for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; layer++) 
     {
+        constructor.calculate_theta_parameters();
         double theta = 90*deg - covered_theta;
         double delta_theta;
         Position tower_position;
-        Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position);
+        Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position, constructor);
         double phi = 0*deg;
         for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
         {
@@ -125,6 +127,8 @@ static Ref_t create_detector(Detector& description,
         }
 
         covered_theta += delta_theta;
+        constructor.increase_covered_theta(delta_theta);
+        
         // if (layer >= 1) break;
     }
 
@@ -146,7 +150,8 @@ Assembly construct_barrel_tower(Detector& description,
                      double& delta_theta,
                      int num_cols,
                      double phi_back_shift,
-                     Position& tower_position) 
+                     Position& tower_position,
+                     DDDRCaloTubes::DRconstructor& constructor) 
 {
     xml_det_t   x_det       = entities;    
     std::string det_name    = x_det.nameStr();
@@ -261,113 +266,9 @@ Assembly construct_barrel_tower(Detector& description,
 
     int num_rows = num_back_rows;
 
-    // Placement and shortening of tube depends on whether the rows have an offset or not
-    // The below method of calculating assumes that the final row at the front face before the staggering begins has an offset 
-    // (even number of rows in front face) such that the next tower can be placed smoothly into the last row
-    double tube_shortening_odd_stagger  = 2*capillary_outer_r/tan_theta;
-    double tube_shortening_even_stagger = 2*V/tan_theta - tube_shortening_odd_stagger;
-    int num_bad_rows = 0;
 
-    for (int row=0; row<num_rows; row++)
-    {
-        int staggered_row = (row >= num_front_rows) ? row-num_front_rows+1 : 0 ;
-        int even_staggers = (staggered_row & 1) ? (staggered_row-1)/2 : staggered_row/2;
-        int odd_staggers  = (staggered_row & 1) ? (staggered_row+1)/2 : staggered_row/2;
-
-        double row_staggered_z = (even_staggers*tube_shortening_even_stagger + odd_staggers*tube_shortening_odd_stagger)/2;
-
-        // In row staggering it can happen in rare cases that the staggering becomes too large in final row
-        // Has to do with fact that caclulation of num_rows does not take different staggering into account
-        if (row_staggered_z > z_half) {
-            num_bad_rows++;
-            continue;
-        }
-
-        for (int col=0; col<1; col++)
-        {
-            // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
-
-            int staggered_col = (col >= num_front_cols) ? col-num_front_cols+1 : 0 ;
-            double col_staggered_z = staggered_col*2*capillary_outer_r/tan_phi/2;
-
-
-            // Configuration for placing the tube
-            double offset = (row & 1) ? capillary_outer_r : 0.0*mm;
-            double x = col*2*capillary_outer_r + offset;
-            double y = row*V;                       // Vertical spacing for hexagonal grid (pointy-top)
-
-            double z = (row_staggered_z > col_staggered_z) ? row_staggered_z : col_staggered_z ;
-
-            // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a core
-            auto position = Position(x+capillary_outer_r, y+capillary_outer_r, z);
-
-            // Offset coordinates following https://www.redblobgames.com/grids/hexagons/#coordinates-offset
-            unsigned short int q = col;
-            unsigned short int r = row;
-
-            // TubeID composed of q in first 16 bits, r in last 16 bits
-            // unsigned int tube_id = (q << 16) | r;
-            unsigned int tube_id = q + r*num_cols;
-            
-            //std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
-
-            double tube_half_length = z_half - z;
-
-            // Capillary tube
-            Tube        capillary_solid(0.0*mm, capillary_outer_r, tube_half_length);
-            std::string capillary_name = "capillary";
-            Volume      capillary_volume(capillary_name, capillary_solid, capillary_material);
-            if (x_capillary.isSensitive()) capillary_volume.setSensitiveDetector(sens);
-            capillary_volume.setVisAttributes(description, x_capillary.visStr()); 
-
-            if (row & 1) // Cherenkov row
-            {
-                // Cherenkov cladding
-                Tube        cher_clad_solid(0.0*mm, cher_clad_outer_r, tube_half_length);
-                std::string cher_clad_name = "cher_clad";
-                Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
-                if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(sens);
-                PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
-                cher_clad_volume.setVisAttributes(description, x_cher_clad.visStr());
-                cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
-
-                // Chrerenkov core
-                Tube        cher_core_solid(0.0*mm, cher_core_outer_r, tube_half_length);
-                std::string cher_core_name = "cher_core";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      cher_core_volume(cher_core_name, cher_core_solid, cher_core_material);
-                if (x_cher_core.isSensitive()) cher_core_volume.setSensitiveDetector(sens);
-                PlacedVolume    cher_core_placed = cher_clad_volume.placeVolume(cher_core_volume, tube_id);
-                cher_core_volume.setVisAttributes(description, x_cher_core.visStr());
-                cher_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
-            }
-            else // Scintillation row
-            {
-                // Scintillation cladding
-                Tube        scin_clad_solid(0.0*mm, scin_clad_outer_r, tube_half_length);
-                std::string scin_clad_name = "scin_clad";
-                Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
-                if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(sens);
-                PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
-                scin_clad_volume.setVisAttributes(description, x_scin_clad.visStr());
-                scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
-
-                // Scintillation core
-                Tube        scin_core_solid(0.0*mm, scin_core_outer_r, tube_half_length);
-                std::string scin_core_name = "scin_core";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      scin_core_volume(scin_core_name, scin_core_solid, scin_core_material);
-                if (x_scin_core.isSensitive()) scin_core_volume.setSensitiveDetector(sens);
-                PlacedVolume    scin_core_placed = scin_clad_volume.placeVolume(scin_core_volume, tube_id);
-                scin_core_volume.setVisAttributes(description, x_scin_core.visStr());
-                scin_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
-            }
-
-            PlacedVolume    tube_placed = tower_volume.placeVolume(capillary_volume, tube_id, position);
-            tube_placed.addPhysVolID("col", col).addPhysVolID("row", row);
-            // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r);
-
-            
-        }
-    }
+    constructor.assemble_tower(description, entities, sens, tower_volume);
+    
     
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(covered_theta)*(z_half+back_shift); // How much the tower volume reference points moves in z wrt to previous tower
