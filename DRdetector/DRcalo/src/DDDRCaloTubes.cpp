@@ -29,19 +29,6 @@ void place_barrel_tower(Volume& calorimeter_volume,
                  double covered_theta,
                  double phi);
 
-Assembly construct_endcap_tower(Detector& description,
-                         xml_h& entities,
-                         SensitiveDetector& sens,
-                         Volume& calorimeter_volume,
-                         double covered_theta,
-                         double& delta_theta,
-                         int num_cols,
-                         double phi_back_shift,
-                         Position& tower_position);
-
-// int fast_floor(double x);
-// int fast_ceil(double x);
-// bool check_for_integer(double x);
 
 static Ref_t create_detector(Detector& description,
                              xml_h entities,
@@ -117,19 +104,19 @@ static Ref_t create_detector(Detector& description,
     unsigned int layer = 0;
     for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; layer++) 
     {
-        constructor.calculate_theta_parameters();
+        // constructor.calculate_theta_parameters();
         // double theta = 90*deg - covered_theta;
         double delta_theta;
-        Position tower_position;
+        // Position tower_position;
         // Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position, constructor);
         Assembly tower_volume("tower");
-        constructor.construct_tower(tower_volume, delta_theta, tower_position);
+        constructor.construct_tower(tower_volume, delta_theta);
         double phi = 0*deg;
         for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
         {
             unsigned int tower_id = stave + layer*num_phi_towers;
             // place_barrel_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
-            constructor.place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
+            constructor.place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, phi);
         }
 
         covered_theta += delta_theta;
@@ -347,21 +334,6 @@ void place_barrel_tower(Volume& calorimeter_volume,
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
 }
-
-// int fast_floor(double x)
-// {
-//     return (int) x - (x < (int) x);
-// }
-
-// int fast_ceil(double x)
-// {
-//     return (int) x + (x > (int) x);
-// }
-
-// bool check_for_integer(double x)
-// {
-//     return (std::abs(x - std::round(x)) < 1e-10);
-// }
 
 
 DECLARE_DETELEMENT(DDDRCaloTubes,create_detector)

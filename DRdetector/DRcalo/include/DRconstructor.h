@@ -28,8 +28,8 @@ public:
     void calculate_phi_parameters();
     void calculate_theta_parameters();
     void assemble_tower(Assembly& tower_volume);
-    void construct_tower(Assembly& tower_volume, double& delta_theta,
-                             Position& tower_position);
+    void calculated_tower_position();
+    void construct_tower(Assembly& tower_volume, double& delta_theta);
     void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
     void place_tower(Volume& calorimeter_volume,
@@ -37,8 +37,6 @@ public:
                      unsigned int stave, 
                      unsigned int layer,
                      unsigned int tower_id,
-                     Position tower_position,
-                     double covered_theta,
                      double phi);
 
 private:
@@ -96,6 +94,7 @@ private:
     // Construction parameters
     float m_covered_theta;
     float m_back_shift;
+    Position m_tower_position;
     // Assembly* m_tower_volume;
 
 

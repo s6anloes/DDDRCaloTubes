@@ -284,18 +284,10 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
 
 }
 
-void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
-                                                    double& delta_theta,
-                                                    dd4hep::Position& tower_position)
+
+// Function to calculate the position of the tower in stave (for fixed phi = 0*deg)
+void DDDRCaloTubes::DRconstructor::calculated_tower_position()
 {
-    
-    
-    // dd4hep::Assembly      tower_volume("tower");
-
-    // // dd4hep::
-
-    this->assemble_tower(tower_volume);
-    
     double covered_z = std::tan(m_covered_theta)*m_effective_inner_r;
     double y_shift = std::cos(m_covered_theta)*(m_tower_half_length+m_back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(m_covered_theta)*(m_tower_half_length+m_back_shift); // How much the tower volume reference points moves in z wrt to previous tower
@@ -305,11 +297,23 @@ void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
     double tower_z = -(z_shift + covered_z);
 
 
-    tower_position = dd4hep::Position(tower_x, tower_y, tower_z);
+    m_tower_position = dd4hep::Position(tower_x, tower_y, tower_z);
+}
+
+
+void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
+                                                    double& delta_theta)
+{
+    
+    this->calculate_theta_parameters();
+
+    this->assemble_tower(tower_volume);
+    
+    this->calculated_tower_position();
 
     delta_theta = m_this_tower_theta;
 
-    std::cout << "--------------------------------------------------------" << std::endl;
+    /* std::cout << "--------------------------------------------------------" << std::endl;
     std::cout << "this_tower_theta = " << m_this_tower_theta/deg << std::endl;
     std::cout << "y_shift          = " << y_shift/mm          << std::endl;
     std::cout << "z_shift          = " << z_shift/mm          << std::endl;
@@ -324,11 +328,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
     std::cout << "num_rows         = " << m_num_rows    << std::endl;
     // std::cout << "weightA          = " << tower_volume->WeightA() << std::endl;
     // std::cout << "weight           = " << tower_volume->Weight() << std::endl;
-    std::cout << "--------------------------------------------------------" << std::endl;
-
-
-    // this->reset_tower_parameters();
-    // return tower_volume;
+    std::cout << "--------------------------------------------------------" << std::endl; */
 
 }
 
@@ -348,14 +348,13 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
                  unsigned int stave, 
                  unsigned int layer,
                  unsigned int tower_id,
-                 Position tower_position,
-                 double covered_theta,
                  double phi)
 {
 
-    double tower_x = std::sin(phi)*tower_position.Y();
-    double tower_y = std::cos(phi)*tower_position.Y();
-    double tower_z = tower_position.Z();
+    // Tower position with phi rotation
+    double tower_x = std::sin(phi)*m_tower_position.Y();
+    double tower_y = std::cos(phi)*m_tower_position.Y();
+    double tower_z = m_tower_position.Z();
 
     /* std::cout<<"tower_id = "<<tower_id<<std::endl;
     std::cout<<"stave    = "<<stave<<std::endl;
@@ -367,12 +366,12 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     std::cout<<"----------------------------------------" << std::endl; */
 
     // Backward barrel region
-    Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-covered_theta), Position(tower_x, tower_y, tower_z));
+    Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-m_covered_theta), Position(tower_x, tower_y, tower_z));
     PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
     tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
     
     // Forward barrel region
-    Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+covered_theta), Position(tower_x, tower_y, -tower_z));
+    Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+m_covered_theta), Position(tower_x, tower_y, -tower_z));
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
