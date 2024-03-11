@@ -26,24 +26,34 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     xml_comp_t  x_tube = entities.child(_Unicode(tube));
 
     xml_comp_t  x_capillary = x_tube.child(_Unicode(capillary));
-    // m_capillary_material    = description.material(x_capillary.materialStr()); 
+    m_capillary_material    = m_description->material(x_capillary.materialStr()); 
     m_capillary_outer_r     = x_capillary.outer_r();
+    m_capillary_visString   = x_capillary.visStr();
+    m_capillary_isSensitive = x_capillary.isSensitive();
 
     xml_comp_t  x_scin_clad = x_tube.child(_Unicode(scin_clad));
-    // m_scin_clad_material    = description.material(x_scin_clad.materialStr()); 
+    m_scin_clad_material    = m_description->material(x_scin_clad.materialStr()); 
     m_scin_clad_outer_r     = x_scin_clad.outer_r();
+    m_scin_clad_visString   = x_scin_clad.visStr();
+    m_scin_clad_isSensitive = x_scin_clad.isSensitive();
 
     xml_comp_t  x_scin_core = x_tube.child(_Unicode(scin_core));
-    // m_scin_core_material    = description.material(x_scin_core.materialStr()); 
+    m_scin_core_material    = m_description->material(x_scin_core.materialStr()); 
     m_scin_core_outer_r     = x_scin_core.outer_r();
+    m_scin_core_visString   = x_scin_core.visStr();
+    m_scin_core_isSensitive = x_scin_core.isSensitive();
 
     xml_comp_t  x_cher_clad = x_tube.child(_Unicode(cher_clad));
-    // m_cher_clad_material    = description.material(x_cher_clad.materialStr()); 
+    m_cher_clad_material    = m_description->material(x_cher_clad.materialStr()); 
     m_cher_clad_outer_r     = x_cher_clad.outer_r();
+    m_cher_clad_visString   = x_cher_clad.visStr();
+    m_cher_clad_isSensitive = x_cher_clad.isSensitive();
 
     xml_comp_t  x_cher_core = x_tube.child(_Unicode(cher_core));
-    // m_cher_core_material    = description.material(x_cher_core.materialStr()); 
+    m_cher_core_material    = m_description->material(x_cher_core.materialStr()); 
     m_cher_core_outer_r     = x_cher_core.outer_r();
+    m_cher_core_visString   = x_cher_core.visStr();
+    m_cher_core_isSensitive = x_cher_core.isSensitive();
 
 
     // Tower parameters
@@ -160,20 +170,6 @@ void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
 {
 
-    xml_comp_t  x_tube = m_entities.child(_Unicode(tube));
-    xml_comp_t  x_capillary = x_tube.child(_Unicode(capillary));
-    xml_comp_t  x_scin_clad = x_tube.child(_Unicode(scin_clad));
-    xml_comp_t  x_scin_core = x_tube.child(_Unicode(scin_core));
-    xml_comp_t  x_cher_clad = x_tube.child(_Unicode(cher_clad));
-    xml_comp_t  x_cher_core = x_tube.child(_Unicode(cher_core));
-
-    Material capillary_material    = m_description->material(x_capillary.materialStr());
-    Material scin_clad_material    = m_description->material(x_scin_clad.materialStr());
-    Material scin_core_material    = m_description->material(x_scin_core.materialStr()); 
-    Material cher_clad_material    = m_description->material(x_cher_clad.materialStr());
-    Material cher_core_material    = m_description->material(x_cher_core.materialStr());
-
-
     // Placement and shortening of tube depends on whether the rows have an offset or not
     // The below method of calculating assumes that the final row at the front face before the staggering begins has an offset 
     // (even number of rows in front face) such that the next tower can be placed smoothly into the last row
@@ -228,49 +224,44 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
 
             // Capillary tube
             Tube        capillary_solid(0.0*mm, m_capillary_outer_r, tube_half_length);
-            std::string capillary_name = "capillary";
-            Volume      capillary_volume(capillary_name, capillary_solid, capillary_material);
-            if (x_capillary.isSensitive()) capillary_volume.setSensitiveDetector(*m_sens);
-            capillary_volume.setVisAttributes(*m_description, x_capillary.visStr()); 
+            Volume      capillary_volume("capillary", capillary_solid, m_capillary_material);
+            if (m_capillary_isSensitive) capillary_volume.setSensitiveDetector(*m_sens);
+            capillary_volume.setVisAttributes(*m_description, m_capillary_visString); 
 
             if (row & 1) // Cherenkov row
             {
                 // Cherenkov cladding
                 Tube        cher_clad_solid(0.0*mm, m_cher_clad_outer_r, tube_half_length);
-                std::string cher_clad_name = "cher_clad";
-                Volume      cher_clad_volume(cher_clad_name, cher_clad_solid, cher_clad_material);
-                if (x_cher_clad.isSensitive()) cher_clad_volume.setSensitiveDetector(*m_sens);
+                Volume      cher_clad_volume("cher_clad", cher_clad_solid, m_cher_clad_material);
+                if (m_cher_clad_isSensitive) cher_clad_volume.setSensitiveDetector(*m_sens);
                 PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
-                cher_clad_volume.setVisAttributes(*m_description, x_cher_clad.visStr());
+                cher_clad_volume.setVisAttributes(*m_description, m_cher_clad_visString);
                 cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
 
                 // Chrerenkov fibre
                 Tube        cher_fibre_solid(0.0*mm, m_cher_core_outer_r, tube_half_length);
-                std::string cher_fibre_name = "cher_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      cher_fibre_volume(cher_fibre_name, cher_fibre_solid, cher_core_material);
-                if (x_cher_core.isSensitive()) cher_fibre_volume.setSensitiveDetector(*m_sens);
+                Volume      cher_fibre_volume("cher_fibre", cher_fibre_solid, m_cher_core_material);
+                if (m_cher_core_isSensitive) cher_fibre_volume.setSensitiveDetector(*m_sens);
                 PlacedVolume    cher_fibre_placed = cher_clad_volume.placeVolume(cher_fibre_volume, tube_id);
-                cher_fibre_volume.setVisAttributes(*m_description, x_cher_core.visStr());
+                cher_fibre_volume.setVisAttributes(*m_description, m_cher_core_visString);
                 cher_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
             else // Scintillation row
             {
                 // Scintillation cladding
                 Tube        scin_clad_solid(0.0*mm, m_scin_clad_outer_r, tube_half_length);
-                std::string scin_clad_name = "scin_clad";
-                Volume      scin_clad_volume(scin_clad_name, scin_clad_solid, scin_clad_material);
-                if (x_scin_clad.isSensitive()) scin_clad_volume.setSensitiveDetector(*m_sens);
+                Volume      scin_clad_volume("scin_clad", scin_clad_solid, m_scin_clad_material);
+                if (m_scin_clad_isSensitive) scin_clad_volume.setSensitiveDetector(*m_sens);
                 PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
-                scin_clad_volume.setVisAttributes(*m_description, x_scin_clad.visStr());
+                scin_clad_volume.setVisAttributes(*m_description, m_scin_clad_visString);
                 scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
 
                 // Scintillation fibre
                 Tube        scin_fibre_solid(0.0*mm, m_scin_core_outer_r, tube_half_length);
-                std::string scin_fibre_name = "scin_fibre";//_"+std::to_string(row)+"_"+std::to_string(col);
-                Volume      scin_fibre_volume(scin_fibre_name, scin_fibre_solid, scin_core_material);
-                if (x_scin_core.isSensitive()) scin_fibre_volume.setSensitiveDetector(*m_sens);
+                Volume      scin_fibre_volume("scin_fibre", scin_fibre_solid, m_scin_core_material);
+                if (m_scin_core_isSensitive) scin_fibre_volume.setSensitiveDetector(*m_sens);
                 PlacedVolume    scin_fibre_placed = scin_clad_volume.placeVolume(scin_fibre_volume, tube_id);
-                scin_fibre_volume.setVisAttributes(*m_description, x_scin_core.visStr());
+                scin_fibre_volume.setVisAttributes(*m_description, m_scin_core_visString);
                 scin_fibre_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
             }
 

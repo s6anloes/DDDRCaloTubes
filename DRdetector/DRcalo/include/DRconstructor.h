@@ -60,11 +60,22 @@ private:
     float    m_scin_core_outer_r;
     float    m_cher_clad_outer_r;
     float    m_cher_core_outer_r;
-    // Material m_capillary_material;
-    // Material m_scin_clad_material;
-    // Material m_scin_core_material;
-    // Material m_cher_clad_material;
-    // Material m_cher_core_material;
+    Material m_capillary_material;
+    Material m_scin_clad_material;
+    Material m_scin_core_material;
+    Material m_cher_clad_material;
+    Material m_cher_core_material;
+    std::string m_capillary_visString;
+    std::string m_scin_clad_visString;
+    std::string m_scin_core_visString;
+    std::string m_cher_clad_visString;
+    std::string m_cher_core_visString;
+    bool m_capillary_isSensitive;
+    bool m_scin_clad_isSensitive;
+    bool m_scin_core_isSensitive;
+    bool m_cher_clad_isSensitive;
+    bool m_cher_core_isSensitive;
+
 
     float m_capillary_diameter; // calculated from m_capillary_outer_r
 
