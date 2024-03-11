@@ -3,16 +3,16 @@
 Implementing the IDEA dual-readout calorimeter using a capillary tube geometry (Bucatini structure) 
 
 **Installation**:
-After installing DD4hep (I also had to add /path/to/DD4hep/lib to LIBRARY_PATH)
 ```
+source /cvmfs/sw.hsf.org/key4hep/setup.sh
 mkdir build
 cd build
-cmake ..
-make 
-make install
-cd ..
-source bin/thisDDDRCaloTubes.sh
+cmake -DCMAKE_INSTALL_PREFIX=../install/ ..
+make install -j6
+cd ../install/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib64
 ```
+(assuming `$PWD=<path_to_install_directory>`)
 
 **Running geoDisplay**
 ```
