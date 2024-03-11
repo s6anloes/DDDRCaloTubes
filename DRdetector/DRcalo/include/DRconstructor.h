@@ -16,9 +16,10 @@ namespace DDDRCaloTubes {
 class DRconstructor {
 public:
     // Constructor
-    DRconstructor(Detector& description,
+    DRconstructor(Detector* description,
                   xml_h& entities,
-                  SensitiveDetector& sens);
+                  SensitiveDetector* sens,
+                  Volume& calorimeter_volume);
 
     // Destructor
     ~DRconstructor() {}
@@ -26,26 +27,18 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
-    void assemble_tower(Detector& description, 
-                        xml_h& entities,
-                        SensitiveDetector& sens,
-                        Assembly& tower_volume);
-    Assembly construct_tower(Detector& description,
-                         xml_h& entities,
-                         SensitiveDetector& sens,
-                         Volume& calorimeter_volume,
-                         double& covered_theta,
-                         double& delta_theta,
-                         int& num_cols,
-                         double& phi_back_shift,
-                         Position& tower_position);
+    void assemble_tower(Assembly& tower_volume);
+    void construct_tower(Assembly& tower_volume, double& delta_theta,
+                             Position& tower_position);
     void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
 
 private:
-    // Detector* m_description;
-    // xml_h m_entities;
-    // SensitiveDetector m_sens;
+    Detector* m_description;
+    xml_h m_entities;
+    SensitiveDetector* m_sens;
+    Volume* m_calorimeter_volume;
+    // Assembly* m_tower_volume;
 
     // Calorimeter parameters
     float m_calo_inner_r;

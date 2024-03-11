@@ -47,7 +47,8 @@ static Ref_t create_detector(Detector& description,
                              xml_h entities,
                              SensitiveDetector sens) 
 {
-    DDDRCaloTubes::DRconstructor constructor(description, entities, sens);
+    Volume calorimeter_volume("calorimeter");
+    DDDRCaloTubes::DRconstructor constructor(&description, entities, &sens, calorimeter_volume);
     xml_det_t   x_det       = entities;    
     int         det_id      = x_det.id();
     std::string det_name    = x_det.nameStr();
@@ -74,8 +75,10 @@ static Ref_t create_detector(Detector& description,
     double barrel_endcap_angle = std::atan2(calo_inner_half_length, calo_inner_r);
     Tube        calorimeter_solid(calo_inner_r, calo_inner_r+2*tower_length, calo_inner_half_length+2*tower_length); // Per design a "square" cylinder
     // Tube        calorimeter_solid(0, calo_inner_r+2*tower_length, 0); // Per design a "square" cylinder
-    std::string calorimeter_name = "calorimeter";
-    Volume      calorimeter_volume(calorimeter_name, calorimeter_solid, air);
+    // std::string calorimeter_name = "calorimeter";
+    // Volume      calorimeter_volume(calorimeter_name, calorimeter_solid, air);
+    calorimeter_volume.setSolid(calorimeter_solid);
+    calorimeter_volume.setMaterial(air);
     calorimeter_volume.setVisAttributes(description, "MyVis");
 
     DetElement    s_detElement(det_name, det_id);
@@ -115,10 +118,12 @@ static Ref_t create_detector(Detector& description,
     for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; layer++) 
     {
         constructor.calculate_theta_parameters();
-        double theta = 90*deg - covered_theta;
+        // double theta = 90*deg - covered_theta;
         double delta_theta;
         Position tower_position;
-        Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position, constructor);
+        // Assembly tower_volume = construct_barrel_tower(description, entities, sens, calorimeter_volume, covered_theta, delta_theta, num_cols, phi_back_shift, tower_position, constructor);
+        Assembly tower_volume("tower");
+        constructor.construct_tower(tower_volume, delta_theta, tower_position);
         double phi = 0*deg;
         for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
         {
@@ -267,7 +272,7 @@ Assembly construct_barrel_tower(Detector& description,
     int num_rows = num_back_rows;
 
 
-    constructor.assemble_tower(description, entities, sens, tower_volume);
+    constructor.assemble_tower(tower_volume);
     
     
     double y_shift = std::cos(covered_theta)*(z_half+back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
@@ -281,24 +286,26 @@ Assembly construct_barrel_tower(Detector& description,
     tower_position = Position(tower_x, tower_y, tower_z);
     delta_theta = (last_tower) ? barrel_endcap_angle : this_tower_theta ; // For last tower just return barrel_endcap_angle to make sure we cross boundary
 
-    /* std::cout << "--------------------------------------------------------" << std::endl;
+    std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
     std::cout << "this_tower_theta = " << this_tower_theta/deg << std::endl;
-    std::cout << "this_tower_z     = " << this_tower_z     << std::endl;
-    std::cout << "tower_max_z      = " << tower_max_z      << std::endl;
-    std::cout << "y_shift          = " << y_shift          << std::endl;
-    std::cout << "z_shift          = " << z_shift          << std::endl;
+    // std::cout << "this_tower_z     = " << this_tower_z     << std::endl;
+    // std::cout << "tower_max_z      = " << tower_max_z      << std::endl;
+    std::cout << "y_shift          = " << y_shift/mm          << std::endl;
+    std::cout << "z_shift          = " << z_shift/mm          << std::endl;
     std::cout << "covered_theta    = " << covered_theta/deg    << std::endl;
-    std::cout << "tower_x         = " << tower_x         << std::endl;
-    std::cout << "tower_y         = " << tower_y         << std::endl;
-    std::cout << "tower_z         = " << tower_z         << std::endl;
+    std::cout << "covered_z        = " << covered_z /mm       << std::endl;
+    std::cout << "tower_x          = " << tower_x/mm         << std::endl;
+    std::cout << "tower_y          = " << tower_y/mm         << std::endl;
+    std::cout << "tower_z          = " << tower_z/mm         << std::endl;
     std::cout << "num_front_rows   = " << num_front_rows   << std::endl;
     std::cout << "num_front_cols   = " << num_front_cols   << std::endl;
-    std::cout << "phi_back_shift   = " << phi_back_shift/mm<< std::endl;
+    // std::cout << "phi_back_shift   = " << phi_back_shift/mm<< std::endl;
     std::cout << "num_back_cols    = " << num_back_cols    << std::endl;
     std::cout << "num_back_rows    = " << num_back_rows    << std::endl;
-    std::cout << "num_bad_rows     = " << num_bad_rows     << std::endl; 
-    std::cout << "weightA          = " << tower_volume->WeightA() << std::endl;
-    std::cout << "weight           = " << tower_volume->Weight() << std::endl; */
+    // std::cout << "num_bad_rows     = " << num_bad_rows     << std::endl; 
+    // std::cout << "weightA          = " << tower_volume->WeightA() << std::endl;
+    // std::cout << "weight           = " << tower_volume->Weight() << std::endl;
+    std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
 
 
 
