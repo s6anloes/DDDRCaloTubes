@@ -189,7 +189,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
             continue;
         }
 
-        for (unsigned int col=0; col<1; col++)
+        for (unsigned int col=0; col<m_num_cols; col++)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
 
@@ -377,7 +377,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         Assembly tower_volume("tower");
         this->construct_tower(tower_volume, delta_theta);
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
+        for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, phi);
