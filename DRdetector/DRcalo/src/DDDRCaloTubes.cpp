@@ -51,40 +51,7 @@ static Ref_t create_detector(Detector& description,
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
 
-    /*****************************************
-     *Calculation of required phi parameters *
-     *****************************************/
-    // ---------------------------------------------------------------------------------------------------
-    int num_cols;
-    double tan_phi = std::tan(tower_phi);
-    unsigned int num_phi_towers;
-    double num_phi_towers_d = 360.0*deg/tower_phi;
-    // Check if num_phi_towers is a whole number
-    if (DDDRCaloTubes::check_for_integer(num_phi_towers_d)) num_phi_towers = static_cast<unsigned int>(num_phi_towers_d);
-    else throw std::runtime_error("Not an integer number of towers in phi direction");
-
-
-    // ---------------------------------------------------------------------------------------------------
-    unsigned int layer = 0;
-    for (double covered_theta=0*deg; covered_theta<barrel_endcap_angle; layer++) 
-    {
-        // constructor.calculate_theta_parameters();
-        // double theta = 90*deg - covered_theta;
-        double delta_theta;
-        Assembly tower_volume("tower");
-        constructor.construct_tower(tower_volume, delta_theta);
-        double phi = 0*deg;
-        for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
-        {
-            unsigned int tower_id = stave + layer*num_phi_towers;
-            constructor.place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, phi);
-        }
-
-        covered_theta += delta_theta;
-        constructor.increase_covered_theta(delta_theta);
-        
-        // if (layer >= 1) break;
-    }
+    constructor.construct_calorimeter(calorimeter_volume);
 
 
     Transform3D calorimeter_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));

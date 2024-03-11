@@ -28,7 +28,7 @@ public:
     void calculate_phi_parameters();
     void calculate_theta_parameters();
     void assemble_tower(Assembly& tower_volume);
-    void calculated_tower_position();
+    void calculate_tower_position();
     void construct_tower(Assembly& tower_volume, double& delta_theta);
     void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
@@ -39,11 +39,13 @@ public:
                      unsigned int tower_id,
                      double phi);
 
+    void construct_calorimeter(Volume& calorimeter_volume);
+
 private:
     Detector* m_description;
     xml_h m_entities;
     SensitiveDetector* m_sens;
-    Volume* m_calorimeter_volume;
+    // Volume* m_calorimeter_volume;
     // Assembly* m_tower_volume;
 
     // Calorimeter parameters

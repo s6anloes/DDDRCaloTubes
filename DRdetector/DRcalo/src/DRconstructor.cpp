@@ -11,7 +11,7 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
 {
     m_description = description;
     m_sens = sens;
-    m_calorimeter_volume = &calorimeter_volume;
+    // m_calorimeter_volume = &calorimeter_volume;
     // m_tower_volume = nullptr;
 
     xml_dim_t x_dim = ((xml_det_t) entities).dimensions();
@@ -277,7 +277,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
 
 
 // Function to calculate the position of the tower in stave (for fixed phi = 0*deg)
-void DDDRCaloTubes::DRconstructor::calculated_tower_position()
+void DDDRCaloTubes::DRconstructor::calculate_tower_position()
 {
     double covered_z = std::tan(m_covered_theta)*m_effective_inner_r;
     double y_shift = std::cos(m_covered_theta)*(m_tower_half_length+m_back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
@@ -300,7 +300,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
 
     this->assemble_tower(tower_volume);
     
-    this->calculated_tower_position();
+    this->calculate_tower_position();
 
     delta_theta = m_this_tower_theta;
 
@@ -366,4 +366,30 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
+}
+
+
+void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
+{
+    unsigned int layer = 0;
+    while (m_covered_theta<m_barrel_endcap_angle) 
+    {
+        // constructor.calculate_theta_parameters();
+        // double theta = 90*deg - covered_theta;
+        double delta_theta;
+        Assembly tower_volume("tower");
+        this->construct_tower(tower_volume, delta_theta);
+        double phi = 0*deg;
+        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
+        {
+            unsigned int tower_id = stave + layer*m_num_phi_towers;
+            this->place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, phi);
+        }
+
+        // covered_theta += delta_theta;
+        this->increase_covered_theta(m_this_tower_theta);
+        
+        // if (layer >= 1) break;
+        layer++;
+    }
 }
