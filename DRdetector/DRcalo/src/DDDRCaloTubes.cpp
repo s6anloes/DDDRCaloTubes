@@ -128,7 +128,8 @@ static Ref_t create_detector(Detector& description,
         for (unsigned int stave=1; stave<=1; stave++, phi+=tower_phi)
         {
             unsigned int tower_id = stave + layer*num_phi_towers;
-            place_barrel_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
+            // place_barrel_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
+            constructor.place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, tower_position, covered_theta, phi);
         }
 
         covered_theta += delta_theta;

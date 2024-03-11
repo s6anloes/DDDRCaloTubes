@@ -32,6 +32,14 @@ public:
                              Position& tower_position);
     void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
+    void place_tower(Volume& calorimeter_volume,
+                     Assembly& tower_volume,
+                     unsigned int stave, 
+                     unsigned int layer,
+                     unsigned int tower_id,
+                     Position tower_position,
+                     double covered_theta,
+                     double phi);
 
 private:
     Detector* m_description;
