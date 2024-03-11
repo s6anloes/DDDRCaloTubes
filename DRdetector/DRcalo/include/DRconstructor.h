@@ -18,8 +18,7 @@ public:
     // Constructor
     DRconstructor(Detector* description,
                   xml_h& entities,
-                  SensitiveDetector* sens,
-                  Volume& calorimeter_volume);
+                  SensitiveDetector* sens);
 
     // Destructor
     ~DRconstructor() {}
@@ -45,8 +44,6 @@ private:
     Detector* m_description;
     xml_h m_entities;
     SensitiveDetector* m_sens;
-    // Volume* m_calorimeter_volume;
-    // Assembly* m_tower_volume;
 
     // Calorimeter parameters
     float m_calo_inner_r;

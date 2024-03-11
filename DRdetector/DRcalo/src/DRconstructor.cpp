@@ -5,14 +5,11 @@ using namespace DDDRCaloTubes;
 
 DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
                                             xml_h& entities,
-                                            SensitiveDetector* sens,
-                                            Volume& calorimeter_volume):
+                                            SensitiveDetector* sens):
                                             m_entities(entities)
 {
     m_description = description;
     m_sens = sens;
-    // m_calorimeter_volume = &calorimeter_volume;
-    // m_tower_volume = nullptr;
 
     xml_dim_t x_dim = ((xml_det_t) entities).dimensions();
 
