@@ -100,19 +100,27 @@ void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
     if (check_for_integer(num_phi_towers_d)) m_num_phi_towers = static_cast<unsigned int>(std::round(num_phi_towers_d));
     else throw std::runtime_error("Not an integer number of towers in phi direction");
 
-    /* (Minimal) tower width with given inner calorimeter radius and tower_phi
-       Might need to increase width to ensure integer number of tubes in phi direction
-       at the cost of having to place the tower further back (calo_inner_r + epsilon) */
-    double tower_min_frontface_width = m_calo_inner_r*m_tower_tan_phi;
-    m_num_front_cols = fast_ceil(tower_min_frontface_width/m_capillary_diameter);
-    double tower_frontface_width = m_num_front_cols*m_capillary_diameter;
+    // Frontface width of trapezoid support
+    m_trap_frontface_x = m_calo_inner_r*m_tower_tan_phi;
 
-    m_effective_inner_r = tower_frontface_width/m_tower_tan_phi; // Shifting of tower, change in calo radius
+    m_tower_frontface_x = m_trap_frontface_x + m_tower_tan_phi*m_trap_wall_thickness_front - (1+1/std::cos(m_tower_phi))*m_trap_wall_thickness_sides; 
+
+    float num_front_cols_d = m_tower_frontface_x/m_capillary_diameter;
+    m_num_front_cols = fast_floor(num_front_cols_d);
+    // float remainder = num_front_cols_d - m_num_front_cols;
+    // if (remainder < 0.5)
+    // tower_frontface_x = m_num_front_cols*m_capillary_diameter;
+
+
+    m_effective_inner_r = m_calo_inner_r; // Shifting of tower, change in calo radius
+    float tower_backface_phi_increase = 2*m_tower_half_length*m_tower_tan_phi; // by how much the backface wides for both tower and trap
+    m_trap_backface_x  = m_trap_frontface_x + tower_backface_phi_increase;
+    m_tower_backface_x = m_tower_frontface_x + tower_backface_phi_increase;
+
+
 
     // Calculate how many tubes there are in the back face
-    double tower_outer_r_phi = m_effective_inner_r + 2*m_tower_half_length; 
-    double tower_max_backface_width = tower_outer_r_phi * m_tower_tan_phi;
-    int num_back_cols = fast_floor(tower_max_backface_width/m_capillary_diameter);
+    int num_back_cols = fast_floor(m_tower_backface_x/m_capillary_diameter);
 
     m_num_cols = num_back_cols;
 }
@@ -129,36 +137,43 @@ void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
         covered_z = std::tan(90*deg-m_covered_theta)*m_calo_inner_half_z;
     }
 
+
+
+
     double tower_max_theta = m_covered_theta+m_tower_theta;
     double tower_max_z = std::tan(tower_max_theta)*m_effective_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
-    double tower_max_frontface_height = std::cos(m_covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
+    double tower_max_frontface_y = std::cos(m_covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
 
-    if (tower_max_frontface_height < m_capillary_diameter)
+    if (tower_max_frontface_y < m_capillary_diameter)
     {
         throw std::runtime_error("Can't construct tower with given tower_theta and calo_inner_radius");
     }
 
+    m_tower_tan_theta = std::tan(m_tower_theta);
+    m_trap_frontface_y = tower_max_frontface_y;
+    m_trap_backface_y  = tower_max_frontface_y + 2*m_tower_half_length*m_tower_tan_theta;
+
     // Calculate how many tubes fit at the front face for the given tower theta coverage.
     // This number will serve as the new covered theta since it is important to not have any gaps in the front face
-    m_num_front_rows = 1 + fast_floor((tower_max_frontface_height-m_capillary_diameter) / m_V);
+    m_num_front_rows = 1 + fast_floor((tower_max_frontface_y-m_capillary_diameter) / m_V);
     if (m_num_front_rows&1 ) m_num_front_rows++; // Make sure that front face ends on row with offset (i.e. even number of rows)
 
-    double tower_frontface_height = m_capillary_diameter + (m_num_front_rows-1)*m_V;
+    double tower_frontface_y = m_capillary_diameter + (m_num_front_rows-1)*m_V;
     
     // Distance by which straight edge of this tower is shifted backwards to ensure inner radius of calorimeter
-    m_back_shift = std::tan(m_covered_theta)*tower_frontface_height;                      
+    m_back_shift = std::tan(m_covered_theta)*m_trap_frontface_y;                      
 
     // Radial distance to exceed 2.5m inner radius of calorimeter for this tower
     double rad_distance = m_effective_inner_r/std::cos(m_covered_theta);
 
-    m_this_tower_theta = std::atan2(tower_frontface_height-m_overlap, rad_distance+m_back_shift);
-    m_tower_tan_theta = std::tan(m_this_tower_theta);
+    m_this_tower_theta = std::atan2(tower_frontface_y-m_overlap, rad_distance+m_back_shift);
+    // m_tower_tan_theta = std::tan(m_tower_theta);
     // double missing_theta = m_tower_theta - this_tower_theta;
 
     // Calculate how many tubes there are in the back face
     double tower_outer_r = rad_distance + m_back_shift + 2*m_tower_half_length; 
-    double tower_max_backface_height = tower_outer_r * m_tower_tan_theta;
-    int num_back_rows = m_num_front_rows + fast_floor((tower_max_backface_height-(tower_frontface_height-m_overlap))/m_V);
+    double tower_max_backface_y = tower_outer_r * m_tower_tan_theta;
+    int num_back_rows = m_num_front_rows + fast_floor((tower_max_backface_y-(tower_frontface_y-m_overlap))/m_V);
 
     m_num_rows = num_back_rows;
 
@@ -289,15 +304,50 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_position()
 }
 
 
-void DDDRCaloTubes::DRconstructor::construct_tower(Assembly& tower_volume,
-                                                    double& delta_theta)
+// Function to construct the trapezoidal supoprt structure for the tower in which fibres are placed
+void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume)
+{
+
+        
+        // polar coordinate conversion
+        float delta_x = (m_trap_backface_x - m_trap_frontface_x)/2.0;
+        float delta_y = (m_trap_backface_y - m_trap_frontface_y)/2.0;
+        float delta_z = 2.0*m_tower_half_length;
+        float trap_azimuthal_angle = std::acos(delta_z/std::sqrt(delta_x*delta_x + delta_y*delta_y + delta_z*delta_z));
+        float trap_polar_angle = std::atan2(delta_y, delta_x);   
+
+        Trap trap_tower("trap_solid", m_tower_half_length, trap_azimuthal_angle, trap_polar_angle, 
+                                      m_trap_frontface_y/2.0, m_trap_frontface_x/2.0, m_trap_frontface_x/2.0, 0.,
+                                      m_trap_backface_y/2.0,  m_trap_backface_x/2.0,  m_trap_backface_x/2.0,  0.);
+
+        std::cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<std::endl;
+        std::cout<< "m_tower_half_length = " << m_tower_half_length/mm << std::endl;
+        std::cout<< "m_trap_frontface_x = " << m_trap_frontface_x/mm << std::endl;
+        std::cout<< "m_trap_frontface_y = " << m_trap_frontface_y/mm << std::endl;
+        std::cout<< "m_trap_backface_x = " << m_trap_backface_x/mm << std::endl;
+        std::cout<< "m_trap_backface_y = " << m_trap_backface_y/mm << std::endl;
+        std::cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<std::endl;
+
+
+        trap_volume.setSolid(trap_tower);
+    
+}
+
+
+void DDDRCaloTubes::DRconstructor::construct_tower(Volume& trap_volume,
+                                                   double& delta_theta)
 {
     
     this->calculate_theta_parameters();
 
-    this->assemble_tower(tower_volume);
     
+
+    this->construct_tower_trapezoid(trap_volume);
+    
+    // this->assemble_tower(tower_volume);
     this->calculate_tower_position();
+
+
 
     delta_theta = m_this_tower_theta;
 
@@ -332,7 +382,7 @@ void DDDRCaloTubes::DRconstructor::reset_tower_parameters()
 }
 
 void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
-                 Assembly& tower_volume,
+                 Volume& tower_volume,
                  unsigned int stave, 
                  unsigned int layer,
                  unsigned int tower_id,
@@ -353,13 +403,17 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     std::cout<<"dec      = "<<thetaDecimal<<std::endl;
     std::cout<<"----------------------------------------" << std::endl; */
 
-    // Backward barrel region
-    Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-m_covered_theta), Position(tower_x, tower_y, tower_z));
-    PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
-    tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
+    // // Backward barrel region
+    // Transform3D tower_bwd_tr(RotationZYX(0, phi, -90*deg-m_covered_theta), Position(tower_x, tower_y, tower_z));
+    // PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
+    // tower_bwd_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
+
+    // PlacedVolume trap_towerVol_placed = calorimeter_volume.placeVolume(trap_towerVol, -tower_id, tower_bwd_tr);
+    // trap_towerVol_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
     
     // Forward barrel region
     Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+m_covered_theta), Position(tower_x, tower_y, -tower_z));
+    // Transform3D tower_fwd_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
@@ -374,19 +428,23 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         // constructor.calculate_theta_parameters();
         // double theta = 90*deg - covered_theta;
         double delta_theta;
-        Assembly tower_volume("tower");
-        this->construct_tower(tower_volume, delta_theta);
+        // Assembly tower_volume("tower");
+        Volume trap_volume("tower");
+        trap_volume.setMaterial(m_capillary_material);
+        this->construct_tower(trap_volume, delta_theta);
+
+
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
+        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
         {
             unsigned int tower_id = stave + layer*m_num_phi_towers;
-            this->place_tower(calorimeter_volume, tower_volume, stave, layer, tower_id, phi);
+            this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         }
 
         // covered_theta += delta_theta;
-        this->increase_covered_theta(m_this_tower_theta);
+        this->increase_covered_theta(m_tower_theta);
         
-        // if (layer >= 1) break;
+        if (layer >= 0) break;
         layer++;
     }
 }

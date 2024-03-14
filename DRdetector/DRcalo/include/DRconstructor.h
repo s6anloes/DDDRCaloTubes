@@ -27,12 +27,13 @@ public:
     void calculate_phi_parameters();
     void calculate_theta_parameters();
     void assemble_tower(Assembly& tower_volume);
+    void construct_tower_trapezoid(Volume& trap_volume);
     void calculate_tower_position();
-    void construct_tower(Assembly& tower_volume, double& delta_theta);
+    void construct_tower(Volume& trap_volume, double& delta_theta);
     void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
     void place_tower(Volume& calorimeter_volume,
-                     Assembly& tower_volume,
+                     Volume& tower_volume,
                      unsigned int stave, 
                      unsigned int layer,
                      unsigned int tower_id,
@@ -94,12 +95,23 @@ private:
     unsigned int m_num_cols;             // number of fibres in phi direction (back face) 
     unsigned int m_num_front_cols;       // number of fibres in front face in phi direction
     unsigned int m_num_phi_towers;       // number of towers in phi direction
+    float m_tower_frontface_x;
+    float m_tower_backface_x;
 
     // Tower Theta parameters
     unsigned int m_num_rows;             // number of fibres in theta direction (back face)
     unsigned int m_num_front_rows;       // number of fibres in front face in theta direction
     float m_this_tower_theta;
     float m_tower_tan_theta;
+
+    // Trapezoid support parameters
+    float m_trap_wall_thickness_sides;
+    float m_trap_wall_thickness_front;
+    float m_trap_frontface_x;       // width for frontface
+    float m_trap_backface_x;        // width for backface
+    float m_trap_frontface_y;      // height for frontface
+    float m_trap_backface_y;       // height for backface
+
 
     // Construction parameters
     float m_covered_theta;
