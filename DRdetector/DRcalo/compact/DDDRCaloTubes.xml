@@ -79,8 +79,13 @@
         <constant name="InnerCaloRadius"     value="2.0*m"  />
         <constant name="OuterCaloRadius"     value="4.0*m"  />
         <constant name="InnerCaloHalfLength" value="2.0*m"  />
-        <constant name="TowerThetaCoverage"  value="1.0*deg"/>
-        <constant name="TowerPhiCoverage"    value="1*deg"  />
+
+        <constant name="TowerThetaCoverage"  value="10.0*deg"/>
+        <constant name="TowerPhiCoverage"    value="30.0*deg"  />
+
+        <constant name="SupportSideThickness" value="0.5*cm" />
+        <constant name="SupportFrontThickness" value="0.5*cm" />
+        <constant name="SupportBackThickness" value="0.0*cm" />
         
     </define>
     <properties>
@@ -327,6 +332,10 @@
                 z_length="InnerCaloHalfLength"
                 deltatheta="TowerThetaCoverage"
                 deltaphi="TowerPhiCoverage" />
+
+            <trap>
+                <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness"/>
+            </trap>
 
             <tube>
                 <capillary  material="Brass"               outer_r="TubeOuterRadius"  sensitive="false" vis="capillary_vis"  />

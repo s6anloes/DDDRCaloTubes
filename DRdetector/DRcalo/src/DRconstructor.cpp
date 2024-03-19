@@ -1,5 +1,7 @@
 #include "DRconstructor.h"
 
+#include <TMatrixD.h>
+
 using namespace dd4hep;
 using namespace DDDRCaloTubes;
 
@@ -17,6 +19,13 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_calo_inner_r      = x_dim.inner_radius();
     m_calo_outer_r      = x_dim.outer_radius();
     m_calo_inner_half_z = x_dim.z_length();
+
+    
+    // Trap parameters
+    xml_comp_t  x_trap = entities.child(_Unicode(trap));
+    xml_comp_t  x_trap_support = x_trap.child(_Unicode(support));
+    m_trap_wall_thickness_front = x_trap_support.depth();
+    m_trap_wall_thickness_sides = x_trap_support.width();
 
 
     // Tube parameters
@@ -418,11 +427,26 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
                  unsigned int tower_id,
                  double phi)
 {
+    double goal_x = std::sin(90*deg-m_covered_theta)*std::cos(phi);
+    double goal_y = std::sin(90*deg-m_covered_theta)*std::sin(phi);
+    double goal_z = std::cos(90*deg-m_covered_theta);
+    Direction goal_direction = Direction(goal_x, goal_y, goal_z);
+    Direction start_direction = Direction(0, 0, 1);
 
-    // Tower position with phi rotation
-    // double tower_x = m_tower_position.X();
-    // double tower_y = m_tower_position.Y();
-    // double tower_z = m_tower_position.Z();
+    Direction v = start_direction.Cross(goal_direction);
+    double s = std::sqrt(v.Mag2());
+    double c = start_direction.Dot(goal_direction);
+
+    double unit_matrix[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+    TMatrixD unit = TMatrixD(3, 3, unit_matrix);
+    double v_x_matrix[9] = {0, -v.Z(), v.Y(), v.Z(), 0, -v.X(), -v.Y(), v.X(), 0}; 
+    TMatrixD v_x = TMatrixD(3, 3, v_x_matrix);
+
+    double factor = (1-c)/(s*s);
+    TMatrixD rot_matrix = unit + v_x + v_x*v_x*factor;
+    Rotation3D rot = Rotation3D(rot_matrix(0,0), rot_matrix(0,1), rot_matrix(0,2),
+                                 rot_matrix(1,0), rot_matrix(1,1), rot_matrix(1,2),
+                                 rot_matrix(2,0), rot_matrix(2,1), rot_matrix(2,2));
 
     /* std::cout<<"tower_id = "<<tower_id<<std::endl;
     std::cout<<"stave    = "<<stave<<std::endl;
@@ -446,17 +470,18 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     // Transform3D tower_fwd_tr(RotationZYX(90*deg, 90*deg, 0*deg), Position(std::cos(phi)*2*m, std::sin(phi)*2*m, 0));
     // Transform3D tower_fwd_tr(RotationZYX(0*deg, 0*deg, 0), Position(0, 0, 0));
     RotationZ rot_first = RotationZ(90*deg);
-    RotationY rot_second = RotationY(90*deg);
+    RotationY rot_second = RotationY(90*deg-m_covered_theta);
     RotationY rot_third = RotationY(-m_covered_theta);
     RotationZ rot_fourth = RotationZ(phi);
     // RotationZYX rot_a = RotationZYX(90*deg, 90*deg-m_covered_theta, 0*deg);
+    EulerAngles layer_rot = EulerAngles(0*deg, -m_covered_theta, 0*deg);
 
     // std::cout << "ROtation phi = " << (phi*1.0)/deg << std::endl;
     // std::cout << "phi = " << phi/deg << std::endl;
-    Rotation3D rot = rot_third*rot_fourth*rot_second*rot_first; 
+    // Rotation3D rot = rot_fourth*rot_second*rot_first; 
     // rot_a = rot_fourth*rot_a;
-    Transform3D tower_fwd_tr(rot, m_tower_position);
-    // Transform3D tower_fwd_tr(RotationZYX(0,0,0), Position(tower_x, tower_y, tower_z));
+    Transform3D tower_fwd_tr(rot*rot_fourth*rot_first, m_tower_position);
+    // Transform3D tower_fwd_tr(RotationZYX(0,0,0), m_tower_position);
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
