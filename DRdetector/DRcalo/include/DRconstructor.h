@@ -28,9 +28,9 @@ public:
     void calculate_theta_parameters();
     void assemble_tower(Assembly& tower_volume);
     void construct_tower_trapezoid(Volume& trap_volume);
-    void calculate_tower_position();
+    void calculate_tower_position(double phi);
     void construct_tower(Volume& trap_volume, double& delta_theta);
-    void increase_covered_theta(const float& delta_theta) {m_covered_theta += delta_theta;}
+    void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
     void place_tower(Volume& calorimeter_volume,
                      Volume& tower_volume,
@@ -47,19 +47,19 @@ private:
     SensitiveDetector* m_sens;
 
     // Calorimeter parameters
-    float m_calo_inner_r;
-    float m_calo_outer_r;
-    float m_calo_inner_half_z;
+    double m_calo_inner_r;
+    double m_calo_outer_r;
+    double m_calo_inner_half_z;
 
-    float m_barrel_endcap_angle; // calculated from m_calo_inner_half_z and m_calo_inner_r
-    float m_effective_inner_r;  // inner radius of the calorimeter after the front face is shifted
+    double m_barrel_endcap_angle; // calculated from m_calo_inner_half_z and m_calo_inner_r
+    double m_effective_inner_r;  // inner radius of the calorimeter after the front face is shifted
 
     // Tube parameters
-    float    m_capillary_outer_r;
-    float    m_scin_clad_outer_r;
-    float    m_scin_core_outer_r;
-    float    m_cher_clad_outer_r;
-    float    m_cher_core_outer_r;
+    double    m_capillary_outer_r;
+    double    m_scin_clad_outer_r;
+    double    m_scin_core_outer_r;
+    double    m_cher_clad_outer_r;
+    double    m_cher_core_outer_r;
     Material m_capillary_material;
     Material m_scin_clad_material;
     Material m_scin_core_material;
@@ -77,45 +77,48 @@ private:
     bool m_cher_core_isSensitive;
 
 
-    float m_capillary_diameter; // calculated from m_capillary_outer_r
+    double m_capillary_diameter; // calculated from m_capillary_outer_r
 
     // Constants used through the function (calculated from other parameters)
-    // float m_D; // Long diagonal of hexagaon with capillary_outer_r as inradius
-    float m_V; // Vertical spacing for pointy top oriented tubes
-    float m_overlap; // Overlap between tubes
+    // double m_D; // Long diagonal of hexagaon with capillary_outer_r as inradius
+    double m_V; // Vertical spacing for pointy top oriented tubes
+    double m_overlap; // Overlap between tubes
 
     // Tower parameters
-    float m_tower_theta;
-    float m_tower_phi;
+    double m_tower_theta;
+    double m_tower_phi;
 
-    float m_tower_tan_phi; // calculated from m_tower_phi
-    float m_tower_half_length; // calculated from m_calo_inner_r and m_calo_outer_r
+    double m_tower_tan_phi; // calculated from m_tower_phi
+    double m_tower_half_length; // calculated from m_calo_inner_r and m_calo_outer_r and m_trap_half_length
 
     // Tower Phi parameters
     unsigned int m_num_cols;             // number of fibres in phi direction (back face) 
     unsigned int m_num_front_cols;       // number of fibres in front face in phi direction
     unsigned int m_num_phi_towers;       // number of towers in phi direction
-    float m_tower_frontface_x;
-    float m_tower_backface_x;
+    double m_tower_frontface_x;
+    double m_tower_backface_x;
 
     // Tower Theta parameters
     unsigned int m_num_rows;             // number of fibres in theta direction (back face)
     unsigned int m_num_front_rows;       // number of fibres in front face in theta direction
-    float m_this_tower_theta;
-    float m_tower_tan_theta;
+    double m_this_tower_theta;
+    double m_tower_tan_theta;
 
     // Trapezoid support parameters
-    float m_trap_wall_thickness_sides;
-    float m_trap_wall_thickness_front;
-    float m_trap_frontface_x;       // width for frontface
-    float m_trap_backface_x;        // width for backface
-    float m_trap_frontface_y;      // height for frontface
-    float m_trap_backface_y;       // height for backface
+    double m_trap_wall_thickness_sides;
+    double m_trap_wall_thickness_front;
+    double m_trap_frontface_x;       // width for frontface
+    double m_trap_backface_x;        // width for backface
+    double m_trap_frontface_y;      // height for frontface
+    double m_trap_backface_y;       // height for backface
+    double m_trap_azimuthal_angle;  // azimuthal angle for the trapezoid
+    double m_trap_polar_angle;      // polar angle for the trapezoid
+    double m_trap_half_length;      // half length for the trapezoid
 
 
     // Construction parameters
-    float m_covered_theta;
-    float m_back_shift;
+    double m_covered_theta;
+    double m_back_shift;
     Position m_tower_position;
     // Assembly* m_tower_volume;
 

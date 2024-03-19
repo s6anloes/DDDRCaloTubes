@@ -95,7 +95,7 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_parameters()
 // Function to calculate tower parameters specifically for phi direction
 void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
 {
-    float num_phi_towers_d = 360.0*deg/m_tower_phi;
+    double num_phi_towers_d = 360.0*deg/m_tower_phi;
     // Check if num_phi_towers is a whole number
     if (check_for_integer(num_phi_towers_d)) m_num_phi_towers = static_cast<unsigned int>(std::round(num_phi_towers_d));
     else throw std::runtime_error("Not an integer number of towers in phi direction");
@@ -105,15 +105,15 @@ void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
 
     m_tower_frontface_x = m_trap_frontface_x + m_tower_tan_phi*m_trap_wall_thickness_front - (1+1/std::cos(m_tower_phi))*m_trap_wall_thickness_sides; 
 
-    float num_front_cols_d = m_tower_frontface_x/m_capillary_diameter;
+    double num_front_cols_d = m_tower_frontface_x/m_capillary_diameter;
     m_num_front_cols = fast_floor(num_front_cols_d);
-    // float remainder = num_front_cols_d - m_num_front_cols;
+    // double remainder = num_front_cols_d - m_num_front_cols;
     // if (remainder < 0.5)
     // tower_frontface_x = m_num_front_cols*m_capillary_diameter;
 
 
     m_effective_inner_r = m_calo_inner_r; // Shifting of tower, change in calo radius
-    float tower_backface_phi_increase = 2*m_tower_half_length*m_tower_tan_phi; // by how much the backface wides for both tower and trap
+    double tower_backface_phi_increase = 2*m_tower_half_length*m_tower_tan_phi; // by how much the backface wides for both tower and trap
     m_trap_backface_x  = m_trap_frontface_x + tower_backface_phi_increase;
     m_tower_backface_x = m_tower_frontface_x + tower_backface_phi_increase;
 
@@ -289,18 +289,48 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Assembly& tower_volume)
 
 
 // Function to calculate the position of the tower in stave (for fixed phi = 0*deg)
-void DDDRCaloTubes::DRconstructor::calculate_tower_position()
+void DDDRCaloTubes::DRconstructor::calculate_tower_position(double phi)
 {
-    double covered_z = std::tan(m_covered_theta)*m_effective_inner_r;
-    double y_shift = std::cos(m_covered_theta)*(m_tower_half_length+m_back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
+    double covered_z = std::tan(m_covered_theta)*m_calo_inner_r;
+    double x_shift = std::cos(m_covered_theta)*(m_tower_half_length+m_back_shift); // Where the tower reference point y coordinate is for this tower (not regarding inner calo radius)
     double z_shift = std::sin(m_covered_theta)*(m_tower_half_length+m_back_shift); // How much the tower volume reference points moves in z wrt to previous tower
 
-    double tower_x = 0*cm;
-    double tower_y = y_shift + m_effective_inner_r;
-    double tower_z = -(z_shift + covered_z);
+    // double tower_x = 0*cm;
+    // double tower_y = y_shift + m_effective_inner_r;
+    // double tower_z = -(z_shift + covered_z);
+    double trap_centre_r = m_tower_half_length/std::cos(m_trap_polar_angle);
 
+    // double trap_centre_half_x = m_trap_frontface_x/2.0 + std::tan(m_trap_azimuthal_angle)*m_tower_half_length;
+    // // double trap_centre_half_y = m_trap_frontface_y/2.0 + std::tan(m_trap_polar_angle)*m_tower_half_length;
+    // double trap_centre_half_y = m_trap_backface_y/2.0 - m_trap_frontface_y/2.0;
+
+    double trap_centre_half_x = trap_centre_r*std::sin(m_trap_polar_angle)*std::cos(m_trap_azimuthal_angle) + m_trap_frontface_x/2.0;
+    double trap_centre_half_y = trap_centre_r*std::sin(m_trap_polar_angle)*std::sin(m_trap_azimuthal_angle) + m_trap_frontface_y/2.0;
+    double trap_centre_half_z = m_tower_half_length;
+    double trap_rad_centre = m_calo_inner_r/std::cos(m_covered_theta) + m_back_shift + m_tower_half_length;
+
+    double stave_x = std::cos(m_covered_theta)*trap_rad_centre - std::sin(m_covered_theta)*trap_centre_half_y;
+    double stave_y = trap_centre_half_x;
+    double stave_z = std::sin(m_covered_theta)*trap_rad_centre + std::cos(m_covered_theta)*trap_centre_half_y;
+
+    
+    double tower_x = std::cos(phi)*stave_x - std::sin(phi)*stave_y;
+    double tower_y = std::sin(phi)*stave_x + std::cos(phi)*stave_y;
+    double tower_z = stave_z;
+
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<< "trap_cntr_half_y = " << trap_centre_half_y/mm << std::endl;
+    std::cout<< "trap_rad_centre = " << trap_rad_centre/mm << std::endl;
+    std::cout<< "stave_x = " << stave_x/mm << std::endl;
+    std::cout<< "stave_y = " << stave_y/mm << std::endl;
+    std::cout<< "stave_z = " << stave_z/mm << std::endl;
+    std::cout<< "tower_x = " << tower_x/mm << std::endl;
+    std::cout<< "tower_y = " << tower_y/mm << std::endl;
+    std::cout<< "tower_z = " << tower_z/mm << std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
 
     m_tower_position = dd4hep::Position(tower_x, tower_y, tower_z);
+    // m_tower_position = Position(trap_centre_half_x, trap_centre_half_y, trap_centre_half_z);
 }
 
 
@@ -310,13 +340,13 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
         
         // polar coordinate conversion
-        float delta_x = (m_trap_backface_x - m_trap_frontface_x)/2.0;
-        float delta_y = (m_trap_backface_y - m_trap_frontface_y)/2.0;
-        float delta_z = 2.0*m_tower_half_length;
-        float trap_azimuthal_angle = std::acos(delta_z/std::sqrt(delta_x*delta_x + delta_y*delta_y + delta_z*delta_z));
-        float trap_polar_angle = std::atan2(delta_y, delta_x);   
+        double delta_x = (m_trap_backface_x - m_trap_frontface_x)/2.0;
+        double delta_y = (m_trap_backface_y - m_trap_frontface_y)/2.0;
+        double delta_z = 2.0*m_tower_half_length;
+        m_trap_polar_angle = std::acos(delta_z/std::sqrt(delta_x*delta_x + delta_y*delta_y + delta_z*delta_z));
+        m_trap_azimuthal_angle = std::atan2(delta_y, delta_x);   
 
-        Trap trap_tower("trap_solid", m_tower_half_length, trap_azimuthal_angle, trap_polar_angle, 
+        Trap trap_tower("trap_solid", m_tower_half_length, m_trap_polar_angle, m_trap_azimuthal_angle, 
                                       m_trap_frontface_y/2.0, m_trap_frontface_x/2.0, m_trap_frontface_x/2.0, 0.,
                                       m_trap_backface_y/2.0,  m_trap_backface_x/2.0,  m_trap_backface_x/2.0,  0.);
 
@@ -326,6 +356,8 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         std::cout<< "m_trap_frontface_y = " << m_trap_frontface_y/mm << std::endl;
         std::cout<< "m_trap_backface_x = " << m_trap_backface_x/mm << std::endl;
         std::cout<< "m_trap_backface_y = " << m_trap_backface_y/mm << std::endl;
+        std::cout<< "m_trap_azimuthal_angle = " << m_trap_azimuthal_angle/deg << std::endl;
+        std::cout<< "m_trap_polar_angle = " << m_trap_polar_angle/deg << std::endl;
         std::cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<std::endl;
 
 
@@ -345,8 +377,6 @@ void DDDRCaloTubes::DRconstructor::construct_tower(Volume& trap_volume,
     this->construct_tower_trapezoid(trap_volume);
     
     // this->assemble_tower(tower_volume);
-    this->calculate_tower_position();
-
 
 
     delta_theta = m_this_tower_theta;
@@ -390,9 +420,9 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
 {
 
     // Tower position with phi rotation
-    double tower_x = std::sin(phi)*m_tower_position.Y();
-    double tower_y = std::cos(phi)*m_tower_position.Y();
-    double tower_z = m_tower_position.Z();
+    // double tower_x = m_tower_position.X();
+    // double tower_y = m_tower_position.Y();
+    // double tower_z = m_tower_position.Z();
 
     /* std::cout<<"tower_id = "<<tower_id<<std::endl;
     std::cout<<"stave    = "<<stave<<std::endl;
@@ -412,8 +442,21 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     // trap_towerVol_placed.addPhysVolID("stave", -stave).addPhysVolID("layer", -layer);
     
     // Forward barrel region
-    Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+m_covered_theta), Position(tower_x, tower_y, -tower_z));
-    // Transform3D tower_fwd_tr(RotationZYX(0, 0, 0), Position(0, 0, 0));
+    // Transform3D tower_fwd_tr(RotationZYX(180*deg, phi, -90*deg+m_covered_theta), Position(tower_x, tower_y, -tower_z));
+    // Transform3D tower_fwd_tr(RotationZYX(90*deg, 90*deg, 0*deg), Position(std::cos(phi)*2*m, std::sin(phi)*2*m, 0));
+    // Transform3D tower_fwd_tr(RotationZYX(0*deg, 0*deg, 0), Position(0, 0, 0));
+    RotationZ rot_first = RotationZ(90*deg);
+    RotationY rot_second = RotationY(90*deg);
+    RotationY rot_third = RotationY(-m_covered_theta);
+    RotationZ rot_fourth = RotationZ(phi);
+    // RotationZYX rot_a = RotationZYX(90*deg, 90*deg-m_covered_theta, 0*deg);
+
+    // std::cout << "ROtation phi = " << (phi*1.0)/deg << std::endl;
+    // std::cout << "phi = " << phi/deg << std::endl;
+    Rotation3D rot = rot_third*rot_fourth*rot_second*rot_first; 
+    // rot_a = rot_fourth*rot_a;
+    Transform3D tower_fwd_tr(rot, m_tower_position);
+    // Transform3D tower_fwd_tr(RotationZYX(0,0,0), Position(tower_x, tower_y, tower_z));
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
@@ -435,16 +478,20 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
 
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
+        if (layer<=1)
         {
+        for (unsigned int stave=1; stave<=2; stave++, phi+=m_tower_phi)
+        {
+            this->calculate_tower_position(phi);
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
+        }
         }
 
         // covered_theta += delta_theta;
         this->increase_covered_theta(m_tower_theta);
         
-        if (layer >= 0) break;
+        // if (layer >= 0) break;
         layer++;
     }
 }
