@@ -16,6 +16,7 @@ DRCaloTubesGrid::DRCaloTubesGrid(const std::string& cellEncoding) : Segmentation
   // register all necessary parameters
   registerIdentifier("identifier_stave", "Cell ID identifier for stave", fStave, "stave");
   registerIdentifier("identifier_layer", "Cell ID identifier for layer", fLayer, "layer");
+  registerIdentifier("identifier_air", "Cell ID identifier for air", fAir, "air");
   registerIdentifier("identifier_col", "Cell ID identifier for numCol", fCol, "col");
   registerIdentifier("identifier_row", "Cell ID identifier for numRow", fRow, "row");
   registerIdentifier("identifier_IsCherenkov", "Cell ID identifier for IsCherenkov", fIsCherenkov, "cherenkov");
@@ -35,6 +36,7 @@ DRCaloTubesGrid::DRCaloTubesGrid(const BitFieldCoder* decoder) : Segmentation(de
   // register all necessary parameters
   registerIdentifier("identifier_stave", "Cell ID identifier for stave", fStave, "stave");
   registerIdentifier("identifier_layer", "Cell ID identifier for layer", fLayer, "layer");
+  registerIdentifier("identifier_air", "Cell ID identifier for air", fAir, "air");
   registerIdentifier("identifier_col", "Cell ID identifier for numCol", fCol, "col");
   registerIdentifier("identifier_row", "Cell ID identifier for numRow", fRow, "row");
   registerIdentifier("identifier_IsCherenkov", "Cell ID identifier for IsCherenkov", fIsCherenkov, "cherenkov");

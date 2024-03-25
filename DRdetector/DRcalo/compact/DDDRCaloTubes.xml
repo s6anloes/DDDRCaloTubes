@@ -80,10 +80,10 @@
         <constant name="OuterCaloRadius"     value="4.0*m"  />
         <constant name="InnerCaloHalfLength" value="2.0*m"  />
 
-        <constant name="TowerThetaCoverage"  value="10.0*deg"/>
-        <constant name="TowerPhiCoverage"    value="30.0*deg"  />
+        <constant name="TowerThetaCoverage"  value="1.0*deg"/>
+        <constant name="TowerPhiCoverage"    value="1.0*deg"  />
 
-        <constant name="SupportSideThickness" value="0.5*cm" />
+        <constant name="SupportSideThickness" value="0.45*cm" />
         <constant name="SupportFrontThickness" value="0.5*cm" />
         <constant name="SupportBackThickness" value="0.0*cm" />
         
@@ -334,7 +334,8 @@
                 deltaphi="TowerPhiCoverage" />
 
             <trap>
-                <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness"/>
+                <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness" vis="capillary_vis"/>
+                <air  material="Air"   vis="MyVis" />
             </trap>
 
             <tube>
@@ -354,7 +355,10 @@
                 grid_size="2*TubeOuterRadius"
                 tower_theta="TowerThetaCoverage"
                 tower_phi="TowerPhiCoverage" />
-            <id>system:5,stave:-10,layer:-8,col:10,row:7,clad:1,core:1,cherenkov:1</id>
+
+            <!-- NO SPACES BETWEEN ID DESCRIPTORS!!! -->
+            <id>system:5,stave:-10,layer:-8,air:1,col:10,row:7,clad:1,core:1,cherenkov:1</id>
+            
             <!-- <segmentation type="CartesianGridXY" 
                 grid_size_x="1*mm" 
                 grid_size_y="1*mm"/>
@@ -396,6 +400,12 @@
         <vis name="cher_core_vis" 
             alpha="1.0"
             r="0.392" g="0.584" b="0.929"
+            showDaughters="true"
+            visible="true" />
+
+        <vis name="air_vis" 
+            alpha="0.0"
+            r="1.0" g="1.0" b="1.0"
             showDaughters="true"
             visible="true" />
 

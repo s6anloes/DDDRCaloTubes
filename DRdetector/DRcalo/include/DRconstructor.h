@@ -26,7 +26,7 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
-    void assemble_tower(Assembly& tower_volume);
+    void assemble_tower(Volume& tower_air_volume);
     void construct_tower_trapezoid(Volume& trap_volume);
     void calculate_tower_position(double phi);
     void construct_tower(Volume& trap_volume, double& delta_theta);
@@ -103,10 +103,15 @@ private:
     unsigned int m_num_front_rows;       // number of fibres in front face in theta direction
     double m_this_tower_theta;
     double m_tower_tan_theta;
+    double m_tower_frontface_y;
+    double m_tower_backface_y;
+    double m_tower_polar_angle;
+    double m_tower_azimuthal_angle;
 
     // Trapezoid support parameters
     double m_trap_wall_thickness_sides;
     double m_trap_wall_thickness_front;
+    double m_trap_wall_thickness_back;
     double m_trap_frontface_x;       // width for frontface
     double m_trap_backface_x;        // width for backface
     double m_trap_frontface_y;      // height for frontface
@@ -122,7 +127,8 @@ private:
     Position m_tower_position;
     // Assembly* m_tower_volume;
 
-
+    Material m_air;
+    std::string m_air_visString;
 
 };
 

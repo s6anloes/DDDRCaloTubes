@@ -45,6 +45,7 @@ public:
 
   inline const std::string& fieldNameStave() const { return fStave; }
   inline const std::string& fieldNameLayer() const { return fLayer; }
+  inline const std::string& fieldNameAir() const { return fAir; }
   inline const std::string& fieldNameRow() const { return fRow; }
   inline const std::string& fieldNameCol() const { return fCol; }
   inline const std::string& fieldNameIsCherenkov() const { return fIsCherenkov; }
@@ -54,6 +55,7 @@ public:
 
   inline void setFieldNameStave(const std::string& fieldName) { fStave = fieldName; }
   inline void setFieldNameLayer(const std::string& fieldName) { fLayer = fieldName; }
+  inline void setFieldNameAir(const std::string& fieldName) { fAir = fieldName; }
   inline void setFieldNameRow(const std::string& fieldName) { fRow = fieldName; }
   inline void setFieldNameCol(const std::string& fieldName) { fCol = fieldName; }
   inline void setFieldNameIsCherenkov(const std::string& fieldName) { fIsCherenkov = fieldName; }
@@ -65,6 +67,7 @@ public:
 protected:
   std::string fStave;
   std::string fLayer;
+  std::string fAir;
 
   std::string fRow;
   std::string fCol;
