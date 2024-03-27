@@ -112,8 +112,10 @@ private:
     double m_trap_wall_thickness_sides;
     double m_trap_wall_thickness_front;
     double m_trap_wall_thickness_back;
-    double m_trap_frontface_x;       // width for frontface
-    double m_trap_backface_x;        // width for backface
+    double m_trap_frontface_rightangleedge_x;       // width for frontface
+    double m_trap_frontface_thetaangleedge_x;
+    double m_trap_backface_rightangleedge_x;        // width for backface
+    double m_trap_backface_thetaangleedge_x;
     double m_trap_frontface_y;      // height for frontface
     double m_trap_backface_y;       // height for backface
     double m_trap_azimuthal_angle;  // azimuthal angle for the trapezoid
