@@ -760,9 +760,9 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         // if (layer==0)
         // {
         std::cout << "layer = " << layer << std::endl;
-        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
+        for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
-            if (layer != 44) continue;
+            // if (layer != 44) continue;
             this->calculate_tower_position(phi);
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
