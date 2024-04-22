@@ -26,10 +26,12 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
+    double calculate_trap_width(double given_y, double given_z, bool backface = false);
+    double calculate_tower_width(int given_row, int& n_tubes, bool backface = true);
     void assemble_tower(Volume& tower_air_volume);
     void construct_tower_trapezoid(Volume& trap_volume);
     void calculate_tower_position(double phi);
-    void construct_tower(Volume& trap_volume, double& delta_theta);
+    void construct_tower(Volume& trap_volume);
     void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
     void place_tower(Volume& calorimeter_volume,
@@ -87,16 +89,19 @@ private:
     // Tower parameters
     double m_tower_theta;
     double m_tower_phi;
-
-    double m_tower_tan_phi; // calculated from m_tower_phi
+    
+    double m_tower_half_phi;
+    double m_tower_tan_half_phi; // calculated from m_tower_phi
     double m_tower_half_length; // calculated from m_calo_inner_r and m_calo_outer_r and m_trap_half_length
 
     // Tower Phi parameters
     unsigned int m_num_cols;             // number of fibres in phi direction (back face) 
     unsigned int m_num_front_cols;       // number of fibres in front face in phi direction
     unsigned int m_num_phi_towers;       // number of towers in phi direction
-    double m_tower_frontface_x;
-    double m_tower_backface_x;
+    double m_tower_frontface_rightangleedge_x;
+    double m_tower_frontface_thetaangleedge_x;
+    double m_tower_backface_rightangleedge_x;
+    double m_tower_backface_thetaangleedge_x;
 
     // Tower Theta parameters
     unsigned int m_num_rows;             // number of fibres in theta direction (back face)
@@ -121,6 +126,8 @@ private:
     double m_trap_azimuthal_angle;  // azimuthal angle for the trapezoid
     double m_trap_polar_angle;      // polar angle for the trapezoid
     double m_trap_half_length;      // half length for the trapezoid
+    Material m_trap_material;
+    std::string m_trap_visString;
 
 
     // Construction parameters

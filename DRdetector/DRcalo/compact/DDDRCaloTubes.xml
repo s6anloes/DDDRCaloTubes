@@ -335,7 +335,7 @@
 
             <trap>
                 <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness" vis="capillary_vis"/>
-                <air  material="Air"   vis="MyVis" />
+                <air  material="Air"   vis="air_vis" />
             </trap>
 
             <tube>
@@ -404,8 +404,14 @@
             visible="true" />
 
         <vis name="air_vis" 
-            alpha="0.0"
+            alpha="0.1"
             r="1.0" g="1.0" b="1.0"
+            showDaughters="true"
+            visible="true" />
+
+        <vis name="trap_vis"
+            alpha="0.1"
+            r="0.0" g="0.5" b="0.0"
             showDaughters="true"
             visible="true" />
 
