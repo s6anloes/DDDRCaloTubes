@@ -394,21 +394,21 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             // std::cout << "tower_x = " << tower_x/mm << std::endl;
 
             // int staggered_col = (col >= m_num_front_cols) ? col-m_num_front_cols+1 : 0 ;
-            double col_staggered_z = 0.0*mm;
+            double col_staggered_z_frontface = 0.0*mm;
             if (tower_x/2.0-(covered_tower_x-m_capillary_diameter) > tower_front_x/2.0)
             {
-                col_staggered_z = (tower_x/2.0 - tower_front_x/2.0 - (covered_tower_x-m_capillary_diameter))/m_tower_tan_half_phi/2.0;
-                // std::cout << "First : col_staggered_z = " << col_staggered_z/mm << " mm" << std::endl;
+                col_staggered_z_frontface = (tower_x/2.0 - tower_front_x/2.0 - (covered_tower_x-m_capillary_diameter))/m_tower_tan_half_phi/2.0;
+                // std::cout << "First : col_staggered_z_frontface = " << col_staggered_z_frontface/mm << " mm" << std::endl;
                 // std::cout << "m_tower_half_length = " << m_tower_half_length/mm << " mm" << std::endl;
 
             } else if (covered_tower_x-tower_x/2.0 > tower_front_x/2.0)
             {
-                col_staggered_z = (covered_tower_x - tower_x/2.0 - tower_front_x/2.0)/m_tower_tan_half_phi/2.0;
-                // std::cout << "Second : col_staggered_z = " << col_staggered_z/mm << " mm" << std::endl;
+                col_staggered_z_frontface = (covered_tower_x - tower_x/2.0 - tower_front_x/2.0)/m_tower_tan_half_phi/2.0;
+                // std::cout << "Second : col_staggered_z_frontface = " << col_staggered_z_frontface/mm << " mm" << std::endl;
                 // std::cout << "m_tower_half_length = " << m_tower_half_length/mm << " mm" << std::endl;
             }
 
-            if (col_staggered_z > m_tower_half_length) {
+            if (col_staggered_z_frontface > m_tower_half_length) {
                 num_bad_cols++;
                 covered_tower_x += m_capillary_diameter;
                 std::cout << "m_tower_half_length = " << m_tower_half_length/mm << " mm" << std::endl;
@@ -420,10 +420,21 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             double x = col*m_capillary_diameter + offset + m_capillary_outer_r;
             double y = row*m_V + m_capillary_outer_r;                       // Vertical spacing for hexagonal grid (pointy-top)
 
-            double z = (row_staggered_z > col_staggered_z) ? row_staggered_z : col_staggered_z ;
+
+            double col_staggered_z_phi = 0.0*mm;
+
+            double angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
+            if (first_tube_x-std::cos(angle_edges_x)*m_capillary_outer_r-x > tower_x/2.0)
+            {
+                std::cout << "Skipping tube because of non-rectangular tower" << std::endl;
+                continue;
+            }
+
+
+            double z = (row_staggered_z > col_staggered_z_frontface) ? row_staggered_z : col_staggered_z_frontface ;
 
             // std::cout << "row_staggered_z = " << row_staggered_z/mm << std::endl;
-            // std::cout << "col_staggered_z = " << col_staggered_z/mm << std::endl;
+            // std::cout << "col_staggered_z_frontface = " << col_staggered_z_frontface/mm << std::endl;
             // std::cout << "m_tower_half_length = " << m_tower_half_length/mm << std::endl;
 
             // Adding tube radius to x and y such that volume reference point is at the lower "corner" of the tower instead of in the middle of a fibre
@@ -627,7 +638,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
-        this->assemble_tower(tower_air_volume);
+        // this->assemble_tower(tower_air_volume);
         // std::cout<< "ASDEMBLED TOWER" << std::endl;
     
 }
@@ -762,7 +773,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         std::cout << "layer = " << layer << std::endl;
         for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
-            // if (layer != 44) continue;
+            if (layer != 4) continue;
             this->calculate_tower_position(phi);
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
