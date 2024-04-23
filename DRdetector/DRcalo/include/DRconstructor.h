@@ -54,7 +54,6 @@ private:
     double m_calo_inner_half_z;
 
     double m_barrel_endcap_angle; // calculated from m_calo_inner_half_z and m_calo_inner_r
-    double m_effective_inner_r;  // inner radius of the calorimeter after the front face is shifted
 
     // Tube parameters
     double    m_capillary_outer_r;
@@ -95,8 +94,6 @@ private:
     double m_tower_half_length; // calculated from m_calo_inner_r and m_calo_outer_r and m_trap_half_length
 
     // Tower Phi parameters
-    unsigned int m_num_cols;             // number of fibres in phi direction (back face) 
-    unsigned int m_num_front_cols;       // number of fibres in front face in phi direction
     unsigned int m_num_phi_towers;       // number of towers in phi direction
     double m_tower_frontface_rightangleedge_x;
     double m_tower_frontface_thetaangleedge_x;
@@ -104,9 +101,6 @@ private:
     double m_tower_backface_thetaangleedge_x;
 
     // Tower Theta parameters
-    unsigned int m_num_rows;             // number of fibres in theta direction (back face)
-    unsigned int m_num_front_rows;       // number of fibres in front face in theta direction
-    double m_this_tower_theta;
     double m_tower_tan_theta;
     double m_tower_frontface_y;
     double m_tower_backface_y;

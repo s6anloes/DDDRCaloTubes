@@ -322,11 +322,6 @@
             <type_flags type=" DetType_CALORIMETER + DetType_ELECTROMAGNETIC + DetType_BARREL"/>
 
             <dimensions
-                number="NumRows" 
-                count="NumCols"
-                phi="RotationZ"
-                theta="RotationY"
-                psi="RotationX"
                 inner_radius="InnerCaloRadius"
                 outer_radius="OuterCaloRadius"
                 z_length="InnerCaloHalfLength"
