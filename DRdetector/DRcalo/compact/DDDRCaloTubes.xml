@@ -329,7 +329,7 @@
                 deltaphi="TowerPhiCoverage" />
 
             <trap>
-                <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness" vis="capillary_vis"/>
+                <support material="Brass" width="SupportSideThickness" depth="SupportFrontThickness" z2="SupportBackThickness" vis="trap_vis"/>
                 <air  material="Air"   vis="air_vis" />
             </trap>
 
@@ -402,13 +402,13 @@
             alpha="0.1"
             r="1.0" g="1.0" b="1.0"
             showDaughters="true"
-            visible="true" />
+            visible="false" />
 
         <vis name="trap_vis"
-            alpha="0.1"
-            r="0.0" g="0.5" b="0.0"
+            alpha="1.0"
+            r="0." g="0.647" b="0."
             showDaughters="true"
-            visible="true" />
+            visible="false" />
 
     </display>
 
