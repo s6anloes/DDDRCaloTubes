@@ -99,6 +99,7 @@ private:
     double m_tower_frontface_thetaangleedge_x;
     double m_tower_backface_rightangleedge_x;
     double m_tower_backface_thetaangleedge_x;
+    double m_angle_edges_x;
 
     // Tower Theta parameters
     double m_tower_tan_theta;

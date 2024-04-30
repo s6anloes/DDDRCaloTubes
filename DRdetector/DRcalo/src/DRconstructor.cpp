@@ -165,6 +165,8 @@ void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 
     double effective_side_wall_thickness_x = m_trap_wall_thickness_sides/std::cos(m_tower_phi);
 
+    m_angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
+
     m_tower_frontface_rightangleedge_x = calculate_trap_width(m_trap_wall_thickness_sides, m_trap_wall_thickness_front, false) - 2.0*effective_side_wall_thickness_x;
 
     m_tower_backface_rightangleedge_x = calculate_trap_width(m_trap_wall_thickness_sides, m_trap_wall_thickness_back, true) - 2.0*effective_side_wall_thickness_x;
@@ -186,9 +188,9 @@ double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double
     if (given_y > max_y_for_given_z) throw std::runtime_error("calculate_trap_width: Given y is larger than maximum y for given z");
 
     // Angle between frontface edge at the right angle and the theta angled edge
-    double angle_edges_x = std::atan2((m_trap_frontface_rightangleedge_x-m_trap_frontface_thetaangleedge_x)/2.0, m_trap_frontface_y);
+    // double angle_edges_x = std::atan2((m_trap_frontface_rightangleedge_x-m_trap_frontface_thetaangleedge_x)/2.0, m_trap_frontface_y);
 
-    double delta_y = -2.0*given_y*std::tan(angle_edges_x);
+    double delta_y = -2.0*given_y*std::tan(m_angle_edges_x);
     double delta_z;
     if (backface) delta_z = -2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
     else          delta_z =  2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
@@ -207,19 +209,19 @@ double DDDRCaloTubes::DRconstructor::calculate_tower_width(int given_row, int& n
     // Assuming row 0 is at the right angle edge
 
     // Angle between backface edge at the right angle and the theta angled edge
-    double angle_edges_x;
-    if (backface) angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
-    else          angle_edges_x = std::atan2((m_tower_frontface_rightangleedge_x-m_tower_frontface_thetaangleedge_x)/2.0, m_tower_frontface_y);
+    // double angle_edges_x;
+    // if (backface) angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
+    // else          angle_edges_x = std::atan2((m_tower_frontface_rightangleedge_x-m_tower_frontface_thetaangleedge_x)/2.0, m_tower_frontface_y);
 
     // y distance where tube hits side of the wall with given angle between backfaces (y=0 corresponds to m_tower_backface_rightangleedge_x)
-    double y = m_capillary_outer_r + given_row*m_V + std::cos(90*deg-angle_edges_x)*m_capillary_outer_r;
+    double y = m_capillary_outer_r + given_row*m_V + std::cos(90*deg-m_angle_edges_x)*m_capillary_outer_r;
 
 
     double tower_x;
-    if (backface) tower_x = m_tower_backface_rightangleedge_x  - 2.0*y*std::tan(angle_edges_x);
-    else          tower_x = m_tower_frontface_rightangleedge_x - 2.0*y*std::tan(angle_edges_x);
+    if (backface) tower_x = m_tower_backface_rightangleedge_x  - 2.0*y*std::tan(m_angle_edges_x);
+    else          tower_x = m_tower_frontface_rightangleedge_x - 2.0*y*std::tan(m_angle_edges_x);
 
-    n_tubes = 1 + fast_floor((tower_x-2*std::sin(90*deg-angle_edges_x)*m_capillary_outer_r)/m_capillary_diameter); 
+    n_tubes = 1 + fast_floor((tower_x-2*std::sin(90*deg-m_angle_edges_x)*m_capillary_outer_r)/m_capillary_diameter); 
     return tower_x;
 }
 
@@ -228,21 +230,13 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
     // Placement and shortening of tube depends on whether the rows have an offset or not
     
+    // Some coordinates used throughout the functions
     double tower_centre_r = m_tower_half_length/std::cos(m_tower_polar_angle);
     double tower_centre_half_y = tower_centre_r*std::sin(m_tower_polar_angle)*std::sin(m_tower_azimuthal_angle) + m_tower_frontface_y/2.0;
 
-    double angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
+    // Angle of the edge connecting the right angle edge and the theta angle edge
+    // double angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
 
-    // Position back_upper_left_corner  = Position(-m_tower_backface_rightangleedge_x/2.0,  tower_centre_half_y, -m_tower_half_length);
-    // Position back_lower_left_corner  = Position(-m_tower_backface_thetaangleedge_x/2.0,  -tower_centre_half_y,  -m_tower_half_length);
-    // Position front_upper_left_corner = Position(-m_tower_frontface_rightangleedge_x/2.0, tower_centre_half_y, m_tower_half_length);
-
-    // Position back_upper_right_corner  = Position(m_tower_backface_rightangleedge_x/2.0,  tower_centre_half_y, -m_tower_half_length);
-    // Position back_lower_right_corner  = Position(m_tower_backface_thetaangleedge_x/2.0,  -tower_centre_half_y,  -m_tower_half_length);
-    // Position front_upper_right_corner = Position(m_tower_frontface_rightangleedge_x/2.0, tower_centre_half_y, m_tower_half_length);
-   
-
-    // Testing planes
     Position back_upper_left_corner  = Position(-m_tower_backface_rightangleedge_x/2.0,  -tower_centre_half_y, m_tower_half_length);
     Position back_lower_left_corner  = Position(-m_tower_backface_thetaangleedge_x/2.0,  tower_centre_half_y,  m_tower_half_length);
     Position front_upper_left_corner = Position(-m_tower_frontface_rightangleedge_x/2.0, -tower_centre_half_y, -m_tower_half_length);
@@ -314,9 +308,9 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             double y = row*m_V + m_capillary_outer_r;                       // Vertical spacing for hexagonal grid (pointy-top)
 
             double col_staggered_z = 0.0*mm;
-            if (tower_x/2.0-(covered_tower_x-m_capillary_diameter) + m_capillary_outer_r*(1.0-std::cos(angle_edges_x)) > tower_front_x/2.0)
+            if (tower_x/2.0-(covered_tower_x-m_capillary_diameter) + m_capillary_outer_r*(1.0-std::cos(m_angle_edges_x)) > tower_front_x/2.0)
             {
-                Position line_point = Position(x-first_tube_x-m_capillary_outer_r*std::cos(angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(angle_edges_x), m_tower_half_length);
+                Position line_point = Position(x-first_tube_x-m_capillary_outer_r*std::cos(m_angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(m_angle_edges_x), m_tower_half_length);
                 Position intersection = get_intersection(plane_left_coefficients, line_point, line_direction);
 
                 // Position intersection = get_intersection(Direction(plane_left_coefficients[0], plane_left_coefficients[1], plane_left_coefficients[2]), back_upper_left_corner, line_point, line_direction);
@@ -326,7 +320,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             } else if (covered_tower_x-tower_x/2.0 > tower_front_x/2.0)
             {
-                Position line_point = Position(x-first_tube_x+m_capillary_outer_r*std::cos(angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(angle_edges_x), m_tower_half_length);
+                Position line_point = Position(x-first_tube_x+m_capillary_outer_r*std::cos(m_angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(m_angle_edges_x), m_tower_half_length);
                 Position intersection = get_intersection(plane_right_coefficients, line_point, line_direction);
 
                 col_staggered_z = (m_tower_half_length + intersection.z())/2.0;
@@ -344,7 +338,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             // }
 
 
-            if (first_tube_x-std::cos(angle_edges_x)*m_capillary_outer_r-x > tower_x/2.0)
+            if (first_tube_x-std::cos(m_angle_edges_x)*m_capillary_outer_r-x > tower_x/2.0)
             {
                 std::cout << "Skipping tube because of non-rectangular tower" << std::endl;
                 covered_tower_x += m_capillary_diameter;
@@ -496,11 +490,11 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
 
         // Subtraction solid used sometimes for easier visualisation. NOT TO BE USED IN FINAL GEOMETRY
-        SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
+        // SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
         Volume tower_air_volume("tower_air_volume", tower_air_solid, m_air);
         tower_air_volume.setVisAttributes(*m_description, m_air_visString);
 
-        trap_volume.setSolid(solid);
+        trap_volume.setSolid(trap_solid);
         trap_volume.setVisAttributes(*m_description, m_trap_visString);
 
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
@@ -600,7 +594,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         std::cout << "layer = " << layer << std::endl;
         for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
         {
-            // if (layer != 44) continue;
+            if (layer != 44) continue;
             this->calculate_tower_position(phi);
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
