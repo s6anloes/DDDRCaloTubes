@@ -187,9 +187,6 @@ double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double
     else          max_y_for_given_z = m_trap_frontface_y + given_z*m_tower_tan_theta;
     if (given_y > max_y_for_given_z) throw std::runtime_error("calculate_trap_width: Given y is larger than maximum y for given z");
 
-    // Angle between frontface edge at the right angle and the theta angled edge
-    // double angle_edges_x = std::atan2((m_trap_frontface_rightangleedge_x-m_trap_frontface_thetaangleedge_x)/2.0, m_trap_frontface_y);
-
     double delta_y = -2.0*given_y*std::tan(m_angle_edges_x);
     double delta_z;
     if (backface) delta_z = -2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
@@ -207,11 +204,6 @@ double DDDRCaloTubes::DRconstructor::calculate_tower_width(int given_row, int& n
 {
     // Calculate width (x_direction) of tower at given row
     // Assuming row 0 is at the right angle edge
-
-    // Angle between backface edge at the right angle and the theta angled edge
-    // double angle_edges_x;
-    // if (backface) angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
-    // else          angle_edges_x = std::atan2((m_tower_frontface_rightangleedge_x-m_tower_frontface_thetaangleedge_x)/2.0, m_tower_frontface_y);
 
     // y distance where tube hits side of the wall with given angle between backfaces (y=0 corresponds to m_tower_backface_rightangleedge_x)
     double y = m_capillary_outer_r + given_row*m_V + std::cos(90*deg-m_angle_edges_x)*m_capillary_outer_r;
@@ -234,8 +226,6 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
     double tower_centre_r = m_tower_half_length/std::cos(m_tower_polar_angle);
     double tower_centre_half_y = tower_centre_r*std::sin(m_tower_polar_angle)*std::sin(m_tower_azimuthal_angle) + m_tower_frontface_y/2.0;
 
-    // Angle of the edge connecting the right angle edge and the theta angle edge
-    // double angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
 
     Position back_upper_left_corner  = Position(-m_tower_backface_rightangleedge_x/2.0,  -tower_centre_half_y, m_tower_half_length);
     Position back_lower_left_corner  = Position(-m_tower_backface_thetaangleedge_x/2.0,  tower_centre_half_y,  m_tower_half_length);
@@ -269,22 +259,24 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
     double covered_tower_y = m_capillary_diameter;
 
-    int row = 0;
-    while(covered_tower_y < m_tower_backface_y)
+    // int row = 0;
+    // while(covered_tower_y < m_tower_backface_y)
+    unsigned int num_rows = fast_floor((m_tower_backface_y-m_capillary_diameter)/m_V) + 1; 
+    for (unsigned int row = 0; row < num_rows; row++, covered_tower_y+=m_V)
     {
 
-        // double row_staggered_z = (even_staggers*tube_shortening_even_stagger + odd_staggers*tube_shortening_odd_stagger)/2;
+        // Staggering of tubes at the lower edge (theta edge/face)
         double row_staggered_z = 0.0*mm;
         if (covered_tower_y > m_tower_frontface_y) row_staggered_z = (covered_tower_y-m_tower_frontface_y)/m_tower_tan_theta/2.0;
         // else std::cout << "Row: " << row << std::endl;
 
-        // In row staggering it can happen in rare cases that the staggering becomes too large in final row
-        // Has to do with fact that caclulation of num_rows does not take different staggering into account
+        // Failsafe for tubes which would have 'negative length'
+        // Should not happen, but if it does, following rows will also be too short, so can skip the rest
         if (row_staggered_z > m_tower_half_length) {
-            num_bad_rows++;
-            std::cout << "Bad row by " << (row_staggered_z-m_tower_half_length)/um << " um" << std::endl;
-            covered_tower_y += m_V;
-            continue;
+            num_bad_rows = num_rows-row;
+            std::cout << "Encountered bad row at row " << row << std::endl;
+            std::cout << "Number of leftover bad rows: " << num_bad_rows << std::endl;
+            break;
         }
 
 
@@ -426,8 +418,8 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             
         }
 
-        covered_tower_y += m_V;
-        row++;
+        // covered_tower_y += m_V;
+        // row++;
     }
 
 }
