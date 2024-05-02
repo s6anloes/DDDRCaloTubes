@@ -26,8 +26,9 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
+    void prepare_tube_volumes();
     double calculate_trap_width(double given_y, double given_z, bool backface = false);
-    double calculate_tower_width(int given_row, int& n_tubes, bool backface = true);
+    double calculate_tower_width(int given_row, bool backface = true);
     void assemble_tower(Volume& tower_air_volume);
     void construct_tower_trapezoid(Volume& trap_volume);
     void calculate_tower_position(double phi);
@@ -77,6 +78,22 @@ private:
     bool m_cher_clad_isSensitive;
     bool m_cher_core_isSensitive;
 
+    // Full length volumes placed repeatedly to reduce memory usage
+    Volume m_scin_tube_volume_full_length;
+    Volume m_scin_clad_volume_full_length;
+    Volume m_scin_core_volume_full_length;
+
+    Volume m_cher_tube_volume_full_length;
+    Volume m_cher_clad_volume_full_length;
+    Volume m_cher_core_volume_full_length;
+
+    Tube m_capillary_solid_full_length;
+    Tube m_scin_clad_solid_full_length;
+    Tube m_scin_core_solid_full_length;
+    Tube m_cher_clad_solid_full_length;
+    Tube m_cher_core_solid_full_length;
+
+    Volume* m_capillary_vol_to_be_placed;
 
     double m_capillary_diameter; // calculated from m_capillary_outer_r
 
