@@ -336,7 +336,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
         double tower_front_x = calculate_tower_width(row, false);
         
         unsigned int num_cols_half = (num_back_cols_rightangleedge + 1) / 2;
-        for (unsigned int col = 0; col < num_cols_half; col++, covered_tower_x+=m_capillary_diameter)
+        for (unsigned int col = 0; col < num_back_cols_rightangleedge; col++, covered_tower_x+=m_capillary_diameter)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
 
@@ -474,11 +474,11 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
             // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r)
             // std::cout << "Placed tube at row_"<<row<<"_col_"<<col<<std::endl;
-            if (x_pos < 0.0) {
-                PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id2, position2);
-                tube_placed2.addPhysVolID("air",0).addPhysVolID("col", mirrored_col).addPhysVolID("row", row);
-                // std::cout << "Placed tube at row_"<<row<<"_col_"<<mirrored_col<<std::endl;
-            }
+            // if (x_pos < 0.0) {
+            //     PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id2, position2);
+            //     tube_placed2.addPhysVolID("air",0).addPhysVolID("col", mirrored_col).addPhysVolID("row", row);
+            //     // std::cout << "Placed tube at row_"<<row<<"_col_"<<mirrored_col<<std::endl;
+            // }
             // std::cout << "col = " << col << std::endl;
             //
             
@@ -648,9 +648,9 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
 
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=1; stave++, phi+=m_tower_phi)
+        for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
-            if (layer != 43) continue;
+            // if (layer != 43) continue;
             this->calculate_tower_position(phi);
             unsigned int tower_id = stave + layer*m_num_phi_towers;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
