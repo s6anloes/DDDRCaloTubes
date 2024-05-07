@@ -301,7 +301,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
 
     int num_bad_rows = 0;
-    int num_bad_cols = 0;
+    // int num_bad_cols = 0;
 
     double covered_tower_y = m_capillary_diameter;
 
@@ -334,8 +334,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
         tower_x = calculate_tower_width(row);
 
         double tower_front_x = calculate_tower_width(row, false);
-        
-        unsigned int num_cols_half = (num_back_cols_rightangleedge + 1) / 2;
+
         for (unsigned int col = 0; col < num_back_cols_rightangleedge; col++, covered_tower_x+=m_capillary_diameter)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
@@ -384,18 +383,13 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             // Reference point for tube placement is trapezoid centre
             auto position = Position(x_pos, y-tower_centre_half_y, z);
-            auto position2 = Position(-x_pos, y-tower_centre_half_y, z);
-
-            unsigned int mirrored_col = num_back_cols_rightangleedge-1-(row&1)-col;
 
             // Offset coordinates following https://www.redblobgames.com/grids/hexagons/#coordinates-offset
             unsigned short int q = col;
             unsigned short int r = row;
-            unsigned short int q2 = mirrored_col;
 
             // TubeID composed of q in first 16 bits, r in last 16 bits
             unsigned int tube_id = (q << 16) | r;
-            unsigned int tube_id2 = (q2 << 16) | r;
             
             // std::cout<<"(row, col) -> (r, q) -> (tubeID) : (" <<row<<", "<<col<<") -> (" <<r<<", " <<q<<") -> (" << tube_id << ")" <<std::endl; 
 
@@ -409,21 +403,17 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
                 std::cout << "m_tower_half_length = " << m_tower_half_length/um << " um" << std::endl;
                 continue;
             }
-            std::cout << "Tube length row_"<<row<<"_col_"<<col<< " " << 2*tube_half_length/mm << " mm" << std::endl;
-            std::cout << "Tube length row_"<<row<<"_col_"<<mirrored_col<< " " << 2*tube_half_length/mm << " mm" << std::endl;
+            // std::cout << "Tube length row_"<<row<<"_col_"<<col<< " " << 2*tube_half_length/mm << " mm" << std::endl;
 
             if (tube_half_length < m_tower_half_length)
             {
 
                 // Capillary tube
-                std::string capillary_name = "capillary_" + std::to_string(row) + "_" + std::to_string(col);
-                std::string capillary_name2 = "capillary_" + std::to_string(row) + "_" + std::to_string(mirrored_col);
+                // std::string capillary_name = "capillary_" + std::to_string(row) + "_" + std::to_string(col);
                 Tube        capillary_solid(0.0*mm, m_capillary_outer_r, tube_half_length);
                 Volume      capillary_volume("capillary", capillary_solid, m_capillary_material);
-                Volume      capillary_volume2(capillary_name2, capillary_solid, m_capillary_material);
                 if (m_capillary_isSensitive) capillary_volume.setSensitiveDetector(*m_sens);
                 capillary_volume.setVisAttributes(*m_description, m_capillary_visString); 
-                capillary_volume2.setVisAttributes(*m_description, m_capillary_visString);
 
 
                 if (row & 1) // Cherenkov row
@@ -472,15 +462,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             PlacedVolume    tube_placed = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id, position);
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
-            // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r)
-            // std::cout << "Placed tube at row_"<<row<<"_col_"<<col<<std::endl;
-            // if (x_pos < 0.0) {
-            //     PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id2, position2);
-            //     tube_placed2.addPhysVolID("air",0).addPhysVolID("col", mirrored_col).addPhysVolID("row", row);
-            //     // std::cout << "Placed tube at row_"<<row<<"_col_"<<mirrored_col<<std::endl;
-            // }
             // std::cout << "col = " << col << std::endl;
-            //
             
         }
 
@@ -495,7 +477,7 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_position(double phi)
     
     double trap_centre_r = m_trap_half_length/std::cos(m_trap_polar_angle);
 
-    double trap_centre_half_x = trap_centre_r*std::sin(m_trap_polar_angle)*std::cos(m_trap_azimuthal_angle) + m_trap_frontface_rightangleedge_x/2.0;
+    // double trap_centre_half_x = trap_centre_r*std::sin(m_trap_polar_angle)*std::cos(m_trap_azimuthal_angle) + m_trap_frontface_rightangleedge_x/2.0;
     double trap_centre_half_y = trap_centre_r*std::sin(m_trap_polar_angle)*std::sin(m_trap_azimuthal_angle) + m_trap_frontface_y/2.0;
     double trap_rad_centre = m_calo_inner_r/std::cos(m_covered_theta) + m_back_shift + m_trap_half_length;
 
