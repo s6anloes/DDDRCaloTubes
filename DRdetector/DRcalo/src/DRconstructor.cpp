@@ -227,56 +227,91 @@ void DDDRCaloTubes::DRconstructor::prepare_tube_volumes()
 }
 
 // Check if tube of this (half) length already exists, if not, create it
-void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, std::unordered_map<double, Volume*>& volume_map, bool cher, unsigned int tube_id)
+void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher, unsigned int tube_id)
 {
+    std::unordered_map<int, Volume>* tube_volume_map;
+    std::unordered_map<int, Volume>* clad_volume_map;
+    std::unordered_map<int, Volume>* core_volume_map;
+    std::unordered_map<int, Tube>*   tube_solid_map;
+    std::unordered_map<int, Tube>*   clad_solid_map;
+    std::unordered_map<int, Tube>*   core_solid_map;
 
-    if (volume_map.find(key) != volume_map.end()) return;
+    if (cher) {
+        tube_volume_map = &m_cher_tube_volume_map;
+        clad_volume_map = &m_cher_clad_volume_map;
+        core_volume_map = &m_cher_core_volume_map;
+        tube_solid_map = &m_capillary_solid_map;
+        clad_solid_map = &m_cher_clad_solid_map;
+        core_solid_map = &m_cher_core_solid_map;
+    } else {
+        tube_volume_map = &m_scin_tube_volume_map;
+        clad_volume_map = &m_scin_clad_volume_map;
+        core_volume_map = &m_scin_core_volume_map;
+        tube_solid_map = &m_capillary_solid_map;
+        clad_solid_map = &m_scin_clad_solid_map;
+        core_solid_map = &m_scin_core_solid_map;
+    }
+    
+    if (tube_volume_map->find(key) != tube_volume_map->end()) return;
 
     double length_rounded_down = key*m_tolerance*um;
     std::cout << "Creating tube with length " << length_rounded_down/mm << " mm" << std::endl;
     // Capillary tube
-    Tube        capillary_solid(0.0*mm, m_capillary_outer_r, length_rounded_down);
-    Volume*     capillary_volume = new Volume("capillary", capillary_solid, m_capillary_material);
-    if (m_capillary_isSensitive) capillary_volume->setSensitiveDetector(*m_sens);
-    capillary_volume->setVisAttributes(*m_description, m_capillary_visString); 
+    if (tube_solid_map->find(key) == tube_solid_map->end()) {
+        Tube        capillary_solid(0.0*mm, m_capillary_outer_r, length_rounded_down);
+        tube_solid_map->insert(std::make_pair(key, capillary_solid));
+    }
+    Volume capillary_volume("capillary", tube_solid_map->at(key), m_capillary_material);
+    if (m_capillary_isSensitive) capillary_volume.setSensitiveDetector(*m_sens);
+    capillary_volume.setVisAttributes(*m_description, m_capillary_visString); 
 
     if (cher)
     {
         // Cherenkov cladding
         Tube        cher_clad_solid(0.0*mm, m_cher_clad_outer_r, length_rounded_down);
+        clad_solid_map->insert(std::make_pair(key, cher_clad_solid));
         Volume      cher_clad_volume("cher_clad", cher_clad_solid, m_cher_clad_material);
         if (m_cher_clad_isSensitive) cher_clad_volume.setSensitiveDetector(*m_sens);
-        PlacedVolume cher_clad_placed = capillary_volume->placeVolume(cher_clad_volume, tube_id);
+        PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
         cher_clad_volume.setVisAttributes(*m_description, m_cher_clad_visString);
         cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
 
         // Chrerenkov fibre
         Tube        cher_core_solid(0.0*mm, m_cher_core_outer_r, length_rounded_down);
+        core_solid_map->insert(std::make_pair(key, cher_core_solid));
         Volume      cher_core_volume("cher_fibre", cher_core_solid, m_cher_core_material);
         if (m_cher_core_isSensitive) cher_core_volume.setSensitiveDetector(*m_sens);
         PlacedVolume    cher_core_placed = cher_clad_volume.placeVolume(cher_core_volume, tube_id);
         cher_core_volume.setVisAttributes(*m_description, m_cher_core_visString);
         cher_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+
+        clad_volume_map->insert(std::make_pair(key, cher_clad_volume));
+        core_volume_map->insert(std::make_pair(key, cher_core_volume));
     } else
     {
         // Scintillation cladding
         Tube        scin_clad_solid(0.0*mm, m_scin_clad_outer_r, length_rounded_down);
+        clad_solid_map->insert(std::make_pair(key, scin_clad_solid));
         Volume      scin_clad_volume("scin_clad", scin_clad_solid, m_scin_clad_material);
         if (m_scin_clad_isSensitive) scin_clad_volume.setSensitiveDetector(*m_sens);
-        PlacedVolume scin_clad_placed = capillary_volume->placeVolume(scin_clad_volume, tube_id);
+        PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
         scin_clad_volume.setVisAttributes(*m_description, m_scin_clad_visString);
         scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
 
         // Scintillation fibre
         Tube        scin_core_solid(0.0*mm, m_scin_core_outer_r, length_rounded_down);
+        core_solid_map->insert(std::make_pair(key, scin_core_solid));
         Volume      scin_core_volume("scin_fibre", scin_core_solid, m_scin_core_material);
         if (m_scin_core_isSensitive) scin_core_volume.setSensitiveDetector(*m_sens);
         PlacedVolume    scin_core_placed = scin_clad_volume.placeVolume(scin_core_volume, tube_id);
         scin_core_volume.setVisAttributes(*m_description, m_scin_core_visString);
         scin_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
+
+        clad_volume_map->insert(std::make_pair(key, scin_clad_volume));
+        core_volume_map->insert(std::make_pair(key, scin_core_volume));
     }
 
-    volume_map.insert(std::make_pair(key, capillary_volume));
+    tube_volume_map->insert(std::make_pair(key, capillary_volume));
     
 }
 
@@ -394,7 +429,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
         double tower_front_x = calculate_tower_width(row, false);
 
         unsigned int num_cols_half = (num_back_cols_rightangleedge + 1) / 2;
-        for (unsigned int col = 0; col < num_cols_half; col++, covered_tower_x+=m_capillary_diameter)
+        for (unsigned int col = 0; col < num_back_cols_rightangleedge; col++, covered_tower_x+=m_capillary_diameter)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
 
@@ -529,14 +564,14 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             } */
 
             bool cher = (row & 1);
-            std::unordered_map<double, Volume*>* volume_map;
+            std::unordered_map<int, Volume>* volume_map;
             if (cher) volume_map = &m_cher_tube_volume_map;
             else      volume_map = &m_scin_tube_volume_map;
             // Round length down to next multiple of tolerance (in mircometer)
             int key = static_cast<int>(fast_floor(tube_half_length/um / m_tolerance));
-            this->assert_tube_existence(key, *volume_map, cher, tube_id);
+            this->assert_tube_existence(key, cher, tube_id);
 
-            m_capillary_vol_to_be_placed = volume_map->at(key);
+            m_capillary_vol_to_be_placed = &(volume_map->at(key));
 
             PlacedVolume    tube_placed = tower_air_volume.placeVolume(capillary_volume, tube_id, position);
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
@@ -614,11 +649,11 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
 
         // Subtraction solid used sometimes for easier visualisation. NOT TO BE USED IN FINAL GEOMETRY
-        // SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
+        SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
         Volume tower_air_volume("tower_air_volume", tower_air_solid, m_air);
         tower_air_volume.setVisAttributes(*m_description, m_air_visString);
 
-        trap_volume.setSolid(trap_solid);
+        trap_volume.setSolid(solid);
         trap_volume.setVisAttributes(*m_description, m_trap_visString);
 
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
