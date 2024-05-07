@@ -26,6 +26,8 @@ public:
     void calculate_tower_parameters();
     void calculate_phi_parameters();
     void calculate_theta_parameters();
+    void prepare_tube_volumes();
+    void assert_tube_existence(int key, std::unordered_map<double, Volume*>& volume_map, bool cher, unsigned int tube_id);
     double calculate_trap_width(double given_y, double given_z, bool backface = false);
     double calculate_tower_width(int given_row, bool backface = true);
     void assemble_tower(Volume& tower_air_volume);
@@ -34,9 +36,12 @@ public:
     void construct_tower(Volume& trap_volume);
     void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
-    void place_tower(Volume& stave_volume,
+    void place_tower(Volume& calorimeter_volume,
                      Volume& tower_volume,
-                     unsigned int layer);
+                     unsigned int stave, 
+                     unsigned int layer,
+                     unsigned int tower_id,
+                     double phi);
 
     void construct_calorimeter(Volume& calorimeter_volume);
 
@@ -73,6 +78,26 @@ private:
     bool m_scin_core_isSensitive;
     bool m_cher_clad_isSensitive;
     bool m_cher_core_isSensitive;
+
+    // Full length volumes placed repeatedly to reduce memory usage
+    Volume m_scin_tube_volume_full_length;
+    Volume m_scin_clad_volume_full_length;
+    Volume m_scin_core_volume_full_length;
+
+    Volume m_cher_tube_volume_full_length;
+    Volume m_cher_clad_volume_full_length;
+    Volume m_cher_core_volume_full_length;
+
+    Tube m_capillary_solid_full_length;
+    Tube m_scin_clad_solid_full_length;
+    Tube m_scin_core_solid_full_length;
+    Tube m_cher_clad_solid_full_length;
+    Tube m_cher_core_solid_full_length;
+
+    Volume* m_capillary_vol_to_be_placed;
+    std::unordered_map<double, Volume*> m_scin_tube_volume_map;
+    std::unordered_map<double, Volume*> m_cher_tube_volume_map;
+    int m_tolerance;
 
     double m_capillary_diameter; // calculated from m_capillary_outer_r
 
@@ -125,6 +150,7 @@ private:
     double m_covered_theta;
     double m_back_shift;
     Position m_tower_position;
+    // Assembly* m_tower_volume;
 
     Material m_air;
     std::string m_air_visString;
