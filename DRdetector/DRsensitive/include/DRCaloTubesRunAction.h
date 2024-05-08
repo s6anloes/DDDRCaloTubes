@@ -37,10 +37,10 @@ namespace dd4hep {
 
             private:
                 //DRCaloTubesEventAction* fEventAction;
-                TFile* fFile;
+                // TFile* fFile;
 
 
-                TTree* fTree;
+                // TTree* fTree;
 
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
