@@ -164,7 +164,7 @@ void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 
     double effective_side_wall_thickness_x = m_trap_wall_thickness_sides/std::cos(m_tower_phi);
 
-    m_angle_edges_x = std::atan2((m_tower_backface_rightangleedge_x-m_tower_backface_thetaangleedge_x)/2.0, m_tower_backface_y);
+    m_angle_edges_x = std::atan2((m_trap_backface_rightangleedge_x-m_trap_backface_thetaangleedge_x)/2.0, m_trap_backface_y);
 
     m_tower_frontface_rightangleedge_x = calculate_trap_width(m_trap_wall_thickness_sides, m_trap_wall_thickness_front, false) - 2.0*effective_side_wall_thickness_x;
 
@@ -557,8 +557,9 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
     // std::cout << "phi = " << phi/deg << std::endl;
     // Rotation3D rot = rot_fourth*rot_second*rot_first; 
     // rot_a = rot_fourth*rot_a;
-    Transform3D tower_fwd_tr(rot*rot_fourth*rot_first, m_tower_position);
+    // Transform3D tower_fwd_tr(rot*rot_fourth*rot_first, m_tower_position);
     // Transform3D tower_fwd_tr(RotationZYX(0,0,0), m_tower_position);
+    Transform3D tower_fwd_tr(rot_fourth*rot_second*rot_first, m_tower_position);
     PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
@@ -567,7 +568,7 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
 
 void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
 {
-    unsigned int layer = 0;
+    short int layer = 1;
     while (m_covered_theta<m_barrel_endcap_angle) 
     {
         std::cout << "layer = " << layer << std::endl;
@@ -577,11 +578,12 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
 
         double phi = 0*deg;
-        for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
+        for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
-            // if (layer != 43) continue;
+            // if (layer != 5) continue;
             this->calculate_tower_position(phi);
-            unsigned int tower_id = stave + layer*m_num_phi_towers;
+            // TowerID composed of layer in first 16 bits, stave in last 16 bits
+            int tower_id = (layer << 16) | stave;
             this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         }
 
