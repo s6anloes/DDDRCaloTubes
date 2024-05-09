@@ -1,8 +1,6 @@
 #ifndef DRCaloTubesEventAction_h
 #define DRCaloTubesEventAction_h 1
 
-#include "DRCaloTubesRunAction.h"
-
 #include "G4UserEventAction.hh"
 #include "G4Event.hh"
 #include <map>
@@ -12,7 +10,7 @@ namespace dd4hep {
     namespace sim{
         class DRCaloTubesEventAction : public G4UserEventAction {
             public:
-                DRCaloTubesEventAction(DRCaloTubesRunAction* runAction);
+                DRCaloTubesEventAction();
                 virtual ~DRCaloTubesEventAction();
 
                 virtual void BeginOfEventAction(const G4Event*) final;
@@ -27,9 +25,6 @@ namespace dd4hep {
 
 
             private:
-
-                DRCaloTubesRunAction* fRunAction;
-
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
                 // std::map<unsigned int, G4int> FibreSignalsCher;

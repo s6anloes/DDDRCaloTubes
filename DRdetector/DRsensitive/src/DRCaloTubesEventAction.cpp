@@ -2,11 +2,12 @@
 #include "G4SystemOfUnits.hh"
 
 //#include "G4RunManager.hh"
+#include "G4RootAnalysisManager.hh"
 
 namespace dd4hep {
     namespace sim {
-        DRCaloTubesEventAction::DRCaloTubesEventAction(DRCaloTubesRunAction* runAction): G4UserEventAction(),
-            fRunAction(runAction), NofCherDet(0), NofScinDet(0){
+        DRCaloTubesEventAction::DRCaloTubesEventAction(): G4UserEventAction(),
+            NofCherDet(0), NofScinDet(0){
                 //FibreSignalsCher.resize(nfibres);
                 //FibreSignalsScin.resize(nfibres);
                 //for (int i=0; i<nfibres; i++){
@@ -23,9 +24,6 @@ namespace dd4hep {
             // FibreSignalsCher.clear();
             // FibreSignalsScin.clear();
 
-            
-
-            fRunAction->Reset();
         }
 
         void DRCaloTubesEventAction::EndOfEventAction(const G4Event*) {
@@ -33,7 +31,10 @@ namespace dd4hep {
             std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
             std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
 
-            fRunAction->Fill(NofCherDet, NofScinDet);
+            G4RootAnalysisManager* analysisManager = G4RootAnalysisManager::Instance();
+            analysisManager->FillNtupleDColumn(0, NofCherDet);
+            analysisManager->FillNtupleDColumn(1, NofScinDet);
+            analysisManager->AddNtupleRow();
         }
     } // namespace sim
 } // namespace drc

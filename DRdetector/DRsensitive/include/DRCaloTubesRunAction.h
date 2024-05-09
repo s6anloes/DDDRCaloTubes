@@ -1,7 +1,7 @@
 #ifndef DRCaloTubesRunAction_h
 #define DRCaloTubesRunAction_h 1
 
-//#include "DRCaloTubesEventAction.h"
+#include "DRCaloTubesEventAction.h"
 
 //Includers from Geant4
 //
@@ -10,8 +10,6 @@
 
 #include "TFile.h"
 #include "TTree.h"
-
-#include <unordered_map>
 
 class G4Run;
 
@@ -23,7 +21,7 @@ namespace dd4hep {
             public:
                 //Constructor
                 //
-                DRCaloTubesRunAction();
+                DRCaloTubesRunAction(DRCaloTubesEventAction* eventAction);
                 //De-constructor
                 //
                 virtual ~DRCaloTubesRunAction();
@@ -32,27 +30,9 @@ namespace dd4hep {
                 //
                 virtual void BeginOfRunAction(const G4Run*);
                 virtual void EndOfRunAction(const G4Run*);
-                void Reset(); 
-                void Fill(const G4int cher, const G4int scin);
 
             private:
-                //DRCaloTubesEventAction* fEventAction;
-                // TFile* fFile;
-
-
-                // TTree* fTree;
-
-                G4int     NofCherDet; //Number of Cherenkov p.e. detected 
-                G4int     NofScinDet; //Number of Scintillating p.e. detected
-
-                // std::vector<G4int> FibreSignalsCher;//{std::vector<G4int>(nfibres,0)};  // Cherenkov signal in each fibre
-                // std::vector<G4int> FibreSignalsScin;//{std::vector<G4int>(nfibres,0)};  // Scinitillation signal in each fibre
-
-                // std::vector<unsigned int> FibreIDsCher; // TubeIDs corresponding to signals (same order)
-                // std::vector<unsigned int> FibreIDsScin;
-
-
-
+                DRCaloTubesEventAction* fEventAction;
 
         };
     }

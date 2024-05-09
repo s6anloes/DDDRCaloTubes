@@ -101,8 +101,8 @@ namespace dd4hep {
 
             void beginRun(const G4Run* run)
             {
-                fRunAction = new DRCaloTubesRunAction();
-                fEventAction = new DRCaloTubesEventAction(fRunAction);
+                fEventAction = new DRCaloTubesEventAction();
+                fRunAction = new DRCaloTubesRunAction(fEventAction);
                 fSteppingAction = new DRCaloTubesSteppingAction(fEventAction);
                 fRunAction->BeginOfRunAction(run);
             }
