@@ -30,16 +30,13 @@ public:
     double calculate_tower_width(int given_row, bool backface = true);
     void assemble_tower(Volume& tower_air_volume);
     void construct_tower_trapezoid(Volume& trap_volume);
-    void calculate_tower_position(double phi);
+    void calculate_tower_position();
     void construct_tower(Volume& trap_volume);
     void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
     void place_tower(Volume& stave_volume,
                      Volume& tower_volume,
-                     unsigned int stave, 
-                     unsigned int layer,
-                     unsigned int tower_id,
-                     double phi);
+                     unsigned int layer);
 
     void construct_calorimeter(Volume& calorimeter_volume);
 

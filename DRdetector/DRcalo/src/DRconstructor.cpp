@@ -419,7 +419,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
 
 // Function to calculate the position of the tower in stave
-void DDDRCaloTubes::DRconstructor::calculate_tower_position(double phi)
+void DDDRCaloTubes::DRconstructor::calculate_tower_position()
 {
     
     double trap_centre_r = m_trap_half_length/std::cos(m_trap_polar_angle);
@@ -508,10 +508,7 @@ void DDDRCaloTubes::DRconstructor::reset_tower_parameters()
 
 void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
                  Volume& tower_volume,
-                 unsigned int stave, 
-                 unsigned int layer,
-                 unsigned int tower_id,
-                 double phi)
+                 unsigned int layer)
 {
 
 
@@ -528,16 +525,16 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
     RotationZ rot_first_fwd = RotationZ(0*deg);
     RotationX rot_second_fwd = RotationX(-m_covered_theta);
     Transform3D tower_fwd_tr(rot_fourth*rot_second_fwd*rot_first_fwd, Position(tower_x, tower_y, tower_z));
-    PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
-    tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
+    PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, layer, tower_fwd_tr);
+    tower_fwd_placed.addPhysVolID("layer", layer);
 
     // Backward barrel region
     Position m_tower_bwd_pos = Position(m_tower_position.x(), -m_tower_position.y(), m_tower_position.z());
     RotationZ rot_first_bwd = RotationZ(180*deg);
     RotationX rot_second_bwd = RotationX(m_covered_theta);
     Transform3D tower_bwd_tr(rot_fourth*rot_second_bwd*rot_first_bwd, m_tower_bwd_pos);
-    PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
-    tower_bwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", -layer);
+    PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -layer, tower_bwd_tr);
+    tower_bwd_placed.addPhysVolID("layer", -layer);
 
 }
 
@@ -546,43 +543,60 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 {
 
     double tower_length = (m_calo_outer_r-m_calo_inner_r);
+    double dy = m_calo_inner_half_z+tower_length;
+    double dx1 = m_calo_inner_r*m_tower_tan_half_phi;
+    double dx2 = m_calo_outer_r*m_tower_tan_half_phi;
     Trap stave_solid("stave_solid", tower_length/2.0, 0., 0., 
-                     m_calo_inner_half_z+tower_length, m_calo_inner_r*m_tower_tan_half_phi, m_calo_inner_r*m_tower_half_phi, 0.,
-                     m_calo_inner_half_z+tower_length, m_calo_outer_r*m_tower_tan_half_phi, m_calo_outer_r*m_tower_half_phi, 0.);
+                     dy, dx1, dx1, 0.,
+                     dy, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
     stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
     RotationZ rot_first = RotationZ(90*deg);
     RotationY rot_second = RotationY(90*deg);
     short int layer = 1;
-    while (m_covered_theta<m_barrel_endcap_angle) 
+    while (m_covered_theta<m_barrel_endcap_angle)
     {
         std::cout << "layer = " << layer << std::endl;
         Volume trap_volume("tower");
         trap_volume.setMaterial(m_trap_material);
         this->construct_tower(trap_volume);
 
-        double phi = 0*deg;
-        for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
-        {
-            if (layer==1)
-            {
-                RotationZ rot_fourth = RotationZ(phi);
-                double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
-                double stave_x = centre_stave_vol*std::cos(phi);
-                double stave_y = centre_stave_vol*std::sin(phi);
-                Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
-                calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
-            }
-            // if (layer != 5) continue;
-            this->calculate_tower_position(phi);
-            // TowerID composed of layer in first 16 bits, stave in last 16 bits
-            int tower_id = (layer << 16) | stave;
-            this->place_tower(stave_volume, trap_volume, stave, layer, tower_id, phi);
-        }
+        // double phi = 0*deg;
+        // for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
+        // {
+        //     if (layer==1)
+        //     {
+        //         RotationZ rot_fourth = RotationZ(phi);
+        //         double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
+        //         double stave_x = centre_stave_vol*std::cos(phi);
+        //         double stave_y = centre_stave_vol*std::sin(phi);
+        //         Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
+        //         calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
+        //     }
+        //     // if (layer != 5) continue;
+        //     this->calculate_tower_position(phi);
+        //     // TowerID composed of layer in first 16 bits, stave in last 16 bits
+        //     int tower_id = (layer << 16) | stave;
+        //     this->place_tower(stave_volume, trap_volume, stave, layer, tower_id, phi);
+        // }
 
+        this->calculate_tower_position();
+        this->place_tower(stave_volume, trap_volume, layer);
         this->increase_covered_theta(m_tower_theta);
         
         // if (layer >= 1) break;
         layer++;
+    }
+
+    double phi = 0*deg;
+    double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
+    for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
+    {
+        RotationZ rot_fourth = RotationZ(phi);
+        double stave_x = centre_stave_vol*std::cos(phi);
+        double stave_y = centre_stave_vol*std::sin(phi);
+        Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
+        PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
+        stave_placed.addPhysVolID("stave", stave);
     }
 }
