@@ -418,7 +418,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 }
 
 
-// Function to calculate the position of the tower in stave (for fixed phi = 0*deg)
+// Function to calculate the position of the tower in stave
 void DDDRCaloTubes::DRconstructor::calculate_tower_position(double phi)
 {
     
@@ -433,9 +433,9 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_position(double phi)
     double stave_z = std::sin(m_covered_theta)*trap_rad_centre + std::cos(m_covered_theta)*trap_centre_half_y;
 
     
-    double tower_x = std::cos(phi)*stave_x;
-    double tower_y = std::sin(phi)*stave_x;
-    double tower_z = stave_z;
+    double tower_x = 0;
+    double tower_y = stave_z;
+    double tower_z = stave_x-(m_calo_inner_r+m_trap_half_length);
 
     m_tower_position = dd4hep::Position(tower_x, tower_y, tower_z);
 }
@@ -506,7 +506,7 @@ void DDDRCaloTubes::DRconstructor::reset_tower_parameters()
     // m_back_shift = 0.0*mm;
 }
 
-void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
+void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
                  Volume& tower_volume,
                  unsigned int stave, 
                  unsigned int layer,
@@ -515,21 +515,28 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
 {
 
 
-    RotationZ rot_fourth = RotationZ(phi);
+    RotationZ rot_fourth = RotationZ(0*deg);
     
     // Forward barrel region
-    RotationZ rot_first_fwd = RotationZ(90*deg);
-    RotationY rot_second_fwd = RotationY(90*deg-m_covered_theta);
-    Transform3D tower_fwd_tr(rot_fourth*rot_second_fwd*rot_first_fwd, m_tower_position);
-    PlacedVolume tower_fwd_placed = calorimeter_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
+    // RotationZ rot_first_fwd = RotationZ(0*deg);
+    // RotationY rot_second_fwd = RotationY(90*deg-m_covered_theta);
+    double tower_x = m_tower_position.x();
+    double tower_y = m_tower_position.y();
+    double tower_z = m_tower_position.z();
+
+
+    RotationZ rot_first_fwd = RotationZ(0*deg);
+    RotationX rot_second_fwd = RotationX(-m_covered_theta);
+    Transform3D tower_fwd_tr(rot_fourth*rot_second_fwd*rot_first_fwd, Position(tower_x, tower_y, tower_z));
+    PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, tower_id, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", layer);
 
     // Backward barrel region
-    Position m_tower_bwd_pos = Position(m_tower_position.x(), m_tower_position.y(), -m_tower_position.z());
-    RotationZ rot_first_bwd = RotationZ(-90*deg);
-    RotationY rot_second_bwd = RotationY(90*deg+m_covered_theta);
+    Position m_tower_bwd_pos = Position(m_tower_position.x(), -m_tower_position.y(), m_tower_position.z());
+    RotationZ rot_first_bwd = RotationZ(180*deg);
+    RotationX rot_second_bwd = RotationX(m_covered_theta);
     Transform3D tower_bwd_tr(rot_fourth*rot_second_bwd*rot_first_bwd, m_tower_bwd_pos);
-    PlacedVolume tower_bwd_placed = calorimeter_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
+    PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -tower_id, tower_bwd_tr);
     tower_bwd_placed.addPhysVolID("stave", stave).addPhysVolID("layer", -layer);
 
 }
@@ -537,6 +544,15 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& calorimeter_volume,
 
 void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
 {
+
+    double tower_length = (m_calo_outer_r-m_calo_inner_r);
+    Trap stave_solid("stave_solid", tower_length/2.0, 0., 0., 
+                     m_calo_inner_half_z+tower_length, m_calo_inner_r*m_tower_tan_half_phi, m_calo_inner_r*m_tower_half_phi, 0.,
+                     m_calo_inner_half_z+tower_length, m_calo_outer_r*m_tower_tan_half_phi, m_calo_outer_r*m_tower_half_phi, 0.);
+    Volume stave_volume("stave_volume", stave_solid, m_air);
+    stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
+    RotationZ rot_first = RotationZ(90*deg);
+    RotationY rot_second = RotationY(90*deg);
     short int layer = 1;
     while (m_covered_theta<m_barrel_endcap_angle) 
     {
@@ -545,15 +561,23 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         trap_volume.setMaterial(m_trap_material);
         this->construct_tower(trap_volume);
 
-
         double phi = 0*deg;
         for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
         {
+            if (layer==1)
+            {
+                RotationZ rot_fourth = RotationZ(phi);
+                double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
+                double stave_x = centre_stave_vol*std::cos(phi);
+                double stave_y = centre_stave_vol*std::sin(phi);
+                Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
+                calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
+            }
             // if (layer != 5) continue;
             this->calculate_tower_position(phi);
             // TowerID composed of layer in first 16 bits, stave in last 16 bits
             int tower_id = (layer << 16) | stave;
-            this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
+            this->place_tower(stave_volume, trap_volume, stave, layer, tower_id, phi);
         }
 
         this->increase_covered_theta(m_tower_theta);
