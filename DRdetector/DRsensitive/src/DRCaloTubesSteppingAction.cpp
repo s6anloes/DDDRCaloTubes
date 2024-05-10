@@ -68,7 +68,7 @@ namespace dd4hep {
             volume_name = volume->GetName(); 
             G4int signalhit = 0;
             
-            if ( volume_name.substr(0, 4) == "scin" ) //scintillating fiber/tube
+            if ( volume_name.substr(0, 10) == "scin_fibre" ) //scintillating fiber/tube
             { 
                 //G4VPhysicalVolume* step_vol  = step->GetTrack()->GetVolume();
                 //std::cout<<"Step Volume in Geant4: " << step_vol->GetName() <<" : " << std::to_string(step_vol->GetCopyNo())<<std::endl; 
@@ -85,7 +85,7 @@ namespace dd4hep {
                 // fEventAction->AddFibreScin(fibre_id, signalhit); 
             } // end of scintillating fibre
 
-            else if ( volume_name.substr(0, 4) == "cher" ) //Cherenkov fiber/tube
+            else if ( volume_name.substr(0, 10) == "cher_fibre" ) //Cherenkov fiber/tube
             {
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                 {
