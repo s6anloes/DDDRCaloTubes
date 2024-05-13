@@ -44,10 +44,9 @@ namespace dd4hep {
             analysisManager->CreateNtuple("DRCaloTubesout", "DRCaloTubesoutput");
             analysisManager->CreateNtupleDColumn("NofCherDet");                     //0
             analysisManager->CreateNtupleDColumn("NofScinDet");                     //1
-            analysisManager->CreateNtupleDColumn("FibreIDsCher");
-            analysisManager->CreateNtupleDColumn("FibreSignalsCher");
-            analysisManager->CreateNtupleDColumn("FibreIDsScin");
-            analysisManager->CreateNtupleDColumn("FibreSignalsScin");
+            analysisManager->CreateNtupleDColumn("TowerID", fEventAction->GetTowerIDs());                        //2
+            analysisManager->CreateNtupleDColumn("FibreID", fEventAction->GetFibreIDs());                        //3
+            analysisManager->CreateNtupleDColumn("NofDet", fEventAction->GetFibreSignals());                         //4
             analysisManager->FinishNtuple();
             
         }

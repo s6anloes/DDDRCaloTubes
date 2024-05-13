@@ -3,6 +3,7 @@
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
 #include "G4VProcess.hh"
+#include "G4Tubs.hh"
 
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "DD4hep/DD4hepUnits.h"
@@ -24,8 +25,7 @@ namespace dd4hep {
         /// Apply Birks Law
         G4double DRCaloTubesSteppingAction::ApplyBirks( const G4double& de, const G4double& steplength ) 
         {
-            const G4double k_B = 0.126; //Birks constant
-            return (de/steplength) / ( 1+k_B*(de/steplength) ) * steplength;
+            return (de/steplength) / ( 1+fk_B*(de/steplength) ) * steplength;
         }
 
         /// Smear Scintillation Signal
@@ -38,6 +38,61 @@ namespace dd4hep {
         G4int DRCaloTubesSteppingAction::SmearCSignal( )
         {
             return G4Poisson(0.153);
+        }
+
+        //Define GetDistanceToSiPM() method
+        //
+        G4double DRCaloTubesSteppingAction::GetDistanceToSiPM(const G4Step* step) {
+
+            // Get the pre-step point
+            const G4StepPoint* preStepPoint = step->GetPreStepPoint();
+            // Get the global position of the pre-step point
+            G4ThreeVector globalPos = preStepPoint->GetPosition();
+            // Get the local position of the pre-step point in the current volume's coordinate system
+            G4ThreeVector localPos = preStepPoint->GetTouchableHandle()->GetHistory()->GetTopTransform().TransformPoint(globalPos);
+            // G4cout << "Local Position (X,Y,Z): (" << localPos.x()/CLHEP::mm << ", " << localPos.y()/CLHEP::mm << ", " << localPos.z()/CLHEP::mm << ") mm" << G4endl;
+
+            // Get the logical volume of the current step
+            G4LogicalVolume* currentVolume = preStepPoint->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
+            // Get the solid associated with the logical volume
+            G4Tubs* solid = dynamic_cast<G4Tubs*>(currentVolume->GetSolid());
+            // Get the dimensions of the solid (size of the volume)
+            G4double size = solid->GetZHalfLength();
+
+            G4double distance_to_sipm = size - localPos.z();
+            return distance_to_sipm;
+
+        }
+
+        //Define AttenuateHelper() method
+        G4int DRCaloTubesSteppingAction::AttenuateHelper(const G4int& signal, const G4double& distance, const G4double& attenuation_length) {
+            double probability_of_survival = exp(-distance/attenuation_length);
+
+            G4int survived_photons = 0;
+            for (int i=0; i<signal; i++)
+            {
+                // Simulate drawing between 0 and 1 with probability x of getting 1
+                if (G4UniformRand() <= probability_of_survival) survived_photons++;
+            }
+
+            return survived_photons;
+
+        }
+
+        //Define AttenuateSSignal() method
+        //
+        G4int DRCaloTubesSteppingAction::AttenuateSSignal(const G4int& signal, const G4double& distance) {
+
+            return AttenuateHelper(signal, distance, fSAttenuationLength);    
+
+        }
+
+        //Define AttenuateCSignal() method
+        //
+        G4int DRCaloTubesSteppingAction::AttenuateCSignal(const G4int& signal, const G4double& distance) {
+
+            return AttenuateHelper(signal, distance, fCAttenuationLength);    
+            
         }
 
         void DRCaloTubesSteppingAction::UserSteppingAction(const G4Step* step) {// Get step info
@@ -79,9 +134,18 @@ namespace dd4hep {
 
                 if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return; } //not ionizing particle
 
+                G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
+                // std::cout<<"UserSteppingAction:: Distance to SiPM: " << distance_to_sipm/CLHEP::mm << " mm" <<std::endl;
                 signalhit = DRCaloTubesSteppingAction::SmearSSignal( DRCaloTubesSteppingAction::ApplyBirks( edep, steplength ) );
+                signalhit = DRCaloTubesSteppingAction::AttenuateSSignal(signalhit, distance_to_sipm);
                 fEventAction->AddScin(signalhit);
-                // unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
+                auto handle = step->GetPreStepPoint()->GetTouchableHandle();
+                unsigned int fibre_id = handle->GetCopyNumber(2);
+                short int layer_id = handle->GetCopyNumber(4);
+                unsigned short int stave_id = handle->GetCopyNumber(5);
+                int tower_id = (layer_id << 16) | stave_id;
+                // G4cout << "Fibre ID: " << fibre_id << " Layer ID: " << layer_id << " Stave ID: " << stave_id << " Tower ID: " << tower_id << G4endl;
+                fEventAction->AddFibreSignal(tower_id, fibre_id, signalhit);
                 // fEventAction->AddFibreScin(fibre_id, signalhit); 
             } // end of scintillating fibre
 
@@ -111,8 +175,17 @@ namespace dd4hep {
                         case TotalInternalReflection: 
                         {
                             //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
+                            G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
-                            fEventAction->AddCher(c_signal);
+                            signalhit = DRCaloTubesSteppingAction::AttenuateSSignal(c_signal, distance_to_sipm);
+                            fEventAction->AddCher(signalhit);
+                            auto handle = step->GetPreStepPoint()->GetTouchableHandle();
+                            unsigned int fibre_id = handle->GetCopyNumber(2);
+                            short int layer_id = handle->GetCopyNumber(4);
+                            unsigned short int stave_id = handle->GetCopyNumber(5);
+                            int tower_id = (layer_id << 16) | stave_id;
+                            // G4cout << "Fibre ID: " << fibre_id << " Layer ID: " << layer_id << " Stave ID: " << stave_id << " Tower ID: " << tower_id << G4endl;
+                            fEventAction->AddFibreSignal(tower_id, fibre_id, signalhit);
                             // unsigned int fibre_id = step->GetTrack()->GetVolume()->GetCopyNo();
                             // fEventAction->AddFibreCher(fibre_id, c_signal); 
                             step->GetTrack()->SetTrackStatus( fStopAndKill );

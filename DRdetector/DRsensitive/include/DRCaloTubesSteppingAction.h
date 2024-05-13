@@ -35,6 +35,12 @@ namespace dd4hep {
             G4double ApplyBirks(const G4double& de, const G4double& steplength);
             G4int SmearSSignal( const G4double& satde );
             G4int SmearCSignal( );
+
+            G4double GetDistanceToSiPM(const G4Step* step);
+            G4int AttenuateHelper(const G4int& signal, const G4double& distance, const G4double& attenuation_length);
+            G4int AttenuateSSignal(const G4int& signal, const G4double& distance);
+            G4int AttenuateCSignal(const G4int& signal, const G4double& distance);
+
             DRCaloTubesEventAction*  fEventAction;
 
             //void setSegmentation(dd4hep::DDSegmentation::GridDRcalo* seg) { pSeg = seg; }
@@ -49,10 +55,14 @@ namespace dd4hep {
                 //bool checkId(edm4hep::SimCalorimeterHit edep, dd4hep::DDSegmentation::CellID& id64);
 
                 //void saveLeakage(G4Track* track, G4StepPoint* pre);
+            const G4double fk_B = 0.126; //Birks constant
+
+            const G4double fSAttenuationLength = 191.6*CLHEP::cm; // from test beam data
+            const G4double fCAttenuationLength = 388.9*CLHEP::cm; // from test beam data
 
                 
 
-                G4OpBoundaryProcess* fOpProcess;
+            G4OpBoundaryProcess* fOpProcess;
 
             // collections owned by DRCaloTubesEventAction
             //edm4hep::SimCalorimeterHitCollection* m_Edeps;

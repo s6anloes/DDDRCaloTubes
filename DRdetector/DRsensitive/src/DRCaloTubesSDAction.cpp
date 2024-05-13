@@ -50,18 +50,12 @@ namespace dd4hep {
 
             Geant4Sensitive*  sensitive{};
 
-            G4int     NofCherDet; //Number of Cherenkov p.e. detected 
-            G4int     NofScinDet; //Number of Scintillating p.e. detected
-
             DRCaloTubesRunAction*       fRunAction;
             DRCaloTubesEventAction*     fEventAction;
             DRCaloTubesSteppingAction*  fSteppingAction;
 
-            G4OpBoundaryProcess* fOpProcess;
 
-            DRCaloTubesSDData() :
-            NofCherDet(0),
-            NofScinDet(0)
+            DRCaloTubesSDData()
             {
             }
 
@@ -69,25 +63,6 @@ namespace dd4hep {
                 /// Clear collected information and restart for new hit
             void clear()  {
                 // nothing to clear
-            }
-
-            /// Apply Birks Law
-            G4double ApplyBirks( const G4double& de, const G4double& steplength ) 
-            {
-                const G4double k_B = 0.126; //Birks constant
-                return (de/steplength) / ( 1+k_B*(de/steplength) ) * steplength;
-            }
-
-            /// Smear Scintillation Signal
-            G4int SmearSSignal( const G4double& satde ) 
-            {
-                return G4Poisson(satde*9.5);
-            }
-
-            /// Smear Cherenkov Signal
-            G4int SmearCSignal( )
-            {
-                return G4Poisson(0.153);
             }
 
 
@@ -117,15 +92,10 @@ namespace dd4hep {
             {
                 
                 fEventAction->BeginOfEventAction(event);
-                NofScinDet = 0;
-                NofCherDet = 0;
             }
 
             /// Post-event action callback
             void endEvent(const G4Event* event)   {
-                //std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
-                //std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
-                //std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
 
                 fEventAction->EndOfEventAction(event);
             }
