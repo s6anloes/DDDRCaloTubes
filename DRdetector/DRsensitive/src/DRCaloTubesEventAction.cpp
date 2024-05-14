@@ -54,11 +54,19 @@ namespace dd4hep {
             G4RootAnalysisManager* analysisManager = G4RootAnalysisManager::Instance();
             analysisManager->FillNtupleDColumn(0, NofCherDet);
             analysisManager->FillNtupleDColumn(1, NofScinDet);
-            for (size_t i = 0; i < tower_ids.size(); ++i) {
-                analysisManager->FillNtupleIColumn(2, tower_ids.at(i)); // Fill each tower ID separately
-                analysisManager->FillNtupleIColumn(3, fibre_ids.at(i));
-                analysisManager->FillNtupleIColumn(4, fibre_signals.at(i));
-            }
+            // for (size_t i = 0; i < tower_ids.size(); ++i) {
+            //     analysisManager->FillNtupleDColumn(2, tower_ids.at(i)); // Fill each tower ID separately
+            //     analysisManager->FillNtupleDColumn(3, fibre_ids.at(i));
+            //     analysisManager->FillNtupleDColumn(4, fibre_signals.at(i));
+            // }
+            // analysisManager->FillNtupleDColumn(2, tower_ids);
+            // analysisManager->FillNtupleDColumn(3, fibre_ids);
+            // analysisManager->FillNtupleDColumn(4, fibre_signals);
+            analysisManager->FillNtupleDColumn(5, PrimaryParticleEnergy);
+            analysisManager->FillNtupleDColumn(6, PrimaryPDGID);
+            analysisManager->FillNtupleDColumn(7, PrimaryX);
+            analysisManager->FillNtupleDColumn(8, PrimaryY);
+            analysisManager->FillNtupleDColumn(9, PrimaryZ);
             
             analysisManager->AddNtupleRow();
         }

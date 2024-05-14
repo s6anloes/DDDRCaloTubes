@@ -47,6 +47,13 @@ namespace dd4hep {
             analysisManager->CreateNtupleDColumn("TowerID", fEventAction->GetTowerIDs());                        //2
             analysisManager->CreateNtupleDColumn("FibreID", fEventAction->GetFibreIDs());                        //3
             analysisManager->CreateNtupleDColumn("NofDet", fEventAction->GetFibreSignals());                         //4
+            analysisManager->CreateNtupleDColumn("PrimaryEnergy");                  //5
+            analysisManager->CreateNtupleDColumn("PrimaryPDGID");                   //6
+            analysisManager->CreateNtupleDColumn("PrimaryX");                       //7
+            analysisManager->CreateNtupleDColumn("PrimaryY");                       //8
+            analysisManager->CreateNtupleDColumn("PrimaryZ");                       //9
+            analysisManager->CreateNtupleDColumn("PrimaryTheta");                   //10
+            analysisManager->CreateNtupleDColumn("PrimaryPhi");                     //11
             analysisManager->FinishNtuple();
             
         }
