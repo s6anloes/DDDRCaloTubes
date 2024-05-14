@@ -3,6 +3,7 @@
 #include "DDG4/Factories.h"
 #include "DDG4/Geant4EventAction.h"
 #include "DDG4/Geant4RunAction.h"
+#include "DDG4/Geant4GeneratorAction.h"
 #include "DDG4/Geant4Mapping.h"
 #include "G4OpticalPhoton.hh"
 #include "G4VProcess.hh"
@@ -18,6 +19,7 @@
 #include "DRCaloTubesRunAction.h"
 #include "DRCaloTubesEventAction.h"
 #include "DRCaloTubesSteppingAction.h"
+#include "DRCaloTubesGeneratorAction.h"
 
 
 //Forward declarations from Geant4
@@ -53,6 +55,7 @@ namespace dd4hep {
             DRCaloTubesRunAction*       fRunAction;
             DRCaloTubesEventAction*     fEventAction;
             DRCaloTubesSteppingAction*  fSteppingAction;
+            DRCaloTubesGeneratorAction* fGeneratorAction;
 
 
             DRCaloTubesSDData()
@@ -79,6 +82,7 @@ namespace dd4hep {
                 fEventAction = new DRCaloTubesEventAction();
                 fRunAction = new DRCaloTubesRunAction(fEventAction);
                 fSteppingAction = new DRCaloTubesSteppingAction(fEventAction);
+                fGeneratorAction = new DRCaloTubesGeneratorAction(fEventAction);
                 fRunAction->BeginOfRunAction(run);
             }
 
@@ -99,6 +103,11 @@ namespace dd4hep {
 
                 fEventAction->EndOfEventAction(event);
             }
+
+            void generatePrimaries(G4Event* event)
+            {
+                fGeneratorAction->GeneratePrimaries(event);
+            }
     
 
         
@@ -108,12 +117,23 @@ namespace dd4hep {
         /// Initialization overload for specialization
         template <> void Geant4SensitiveAction<DRCaloTubesSDData>::initialize() 
         {
-                
+            
             eventAction().callAtBegin(&m_userData, &DRCaloTubesSDData::beginEvent);
             eventAction().callAtEnd(&m_userData,&DRCaloTubesSDData::endEvent);
 
             runAction().callAtBegin(&m_userData, &DRCaloTubesSDData::beginRun);
             runAction().callAtEnd(&m_userData, &DRCaloTubesSDData::endRun);
+
+            // typedef void (dd4hep::sim::DRCaloTubesGeneratorAction::*GeneratePrimariesFunctionPointer)(G4Event*);
+            // GeneratePrimariesFunctionPointer generatePrimariesFunctionPointer = &dd4hep::sim::DRCaloTubesGeneratorAction::GeneratePrimaries;
+            // generatorAction().call(&m_userData.fGeneratorAction, generatePrimariesFunctionPointer);
+
+            // Assuming fGeneratorAction is a pointer to an instance of DRCaloTubesGeneratorAction
+            // DRCaloTubesGeneratorAction* fGeneratorAction = new DRCaloTubesGeneratorAction(m_userData.fEventAction);
+            // Assuming m_calls is an instance of CallbackSequence
+            // generatorAction().call(m_userData.fGeneratorAction, &DRCaloTubesSDData::generatePrimaries);
+            // generatorAction().adopt(*m_userData.fGeneratorAction);
+
 
             m_userData.sensitive = this;
 
