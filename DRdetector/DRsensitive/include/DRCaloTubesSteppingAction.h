@@ -57,8 +57,8 @@ namespace dd4hep {
                 //void saveLeakage(G4Track* track, G4StepPoint* pre);
             const G4double fk_B = 0.126; //Birks constant
 
-            const G4double fSAttenuationLength = 191.6*CLHEP::cm; // from test beam data
-            const G4double fCAttenuationLength = 388.9*CLHEP::cm; // from test beam data
+            const G4double fSAttenuationLength = 1000.0*CLHEP::m; //191.6*CLHEP::cm; // from test beam data
+            const G4double fCAttenuationLength = 1000.0*CLHEP::m; //388.9*CLHEP::cm; // from test beam data
 
                 
 

@@ -3,6 +3,9 @@
 
 //#include "G4RunManager.hh"
 #include "G4RootAnalysisManager.hh"
+#include "G4ParticleDefinition.hh"
+
+#include <limits>
 
 namespace dd4hep {
     namespace sim {
@@ -28,9 +31,22 @@ namespace dd4hep {
             fibre_ids.clear();
             fibre_signals.clear();
 
+            PrimaryParticleEnergy = 0;
+            PrimaryPDGID = 0;
+            PrimaryX = std::numeric_limits<double>::quiet_NaN();
+            PrimaryY = std::numeric_limits<double>::quiet_NaN();
+            PrimaryZ = std::numeric_limits<double>::quiet_NaN();
+            PrimaryPX = std::numeric_limits<double>::quiet_NaN();
+            PrimaryPY = std::numeric_limits<double>::quiet_NaN();
+            PrimaryPZ = std::numeric_limits<double>::quiet_NaN();
+
+            Leakage = 0;
+            NeutrinoLeakage = 0;
+
+
         }
 
-        void DRCaloTubesEventAction::EndOfEventAction(const G4Event*) {
+        void DRCaloTubesEventAction::EndOfEventAction(const G4Event* evt) {
             std::cout<<"**********************************END OF EVENT********************************************"<<std::endl;
             std::cout<<"NofScinDet = "<<NofScinDet<<std::endl;
             std::cout<<"NofCherDet = "<<NofCherDet<<std::endl;
@@ -50,23 +66,30 @@ namespace dd4hep {
                 }
             }
 
+            G4PrimaryParticle* priPar = evt->GetPrimaryVertex()->GetPrimary();
+            PrimaryPDGID = priPar->GetParticleDefinition()->GetPDGEncoding();
+            PrimaryParticleEnergy = priPar->GetKineticEnergy();
+            PrimaryX = evt->GetPrimaryVertex()->GetX0();
+            PrimaryY = evt->GetPrimaryVertex()->GetY0();
+            PrimaryZ = evt->GetPrimaryVertex()->GetZ0();
+            PrimaryPX = priPar->GetMomentumDirection().x();
+            PrimaryPY = priPar->GetMomentumDirection().y();
+            PrimaryPZ = priPar->GetMomentumDirection().z();
+
 
             G4RootAnalysisManager* analysisManager = G4RootAnalysisManager::Instance();
             analysisManager->FillNtupleDColumn(0, NofCherDet);
             analysisManager->FillNtupleDColumn(1, NofScinDet);
-            // for (size_t i = 0; i < tower_ids.size(); ++i) {
-            //     analysisManager->FillNtupleDColumn(2, tower_ids.at(i)); // Fill each tower ID separately
-            //     analysisManager->FillNtupleDColumn(3, fibre_ids.at(i));
-            //     analysisManager->FillNtupleDColumn(4, fibre_signals.at(i));
-            // }
-            // analysisManager->FillNtupleDColumn(2, tower_ids);
-            // analysisManager->FillNtupleDColumn(3, fibre_ids);
-            // analysisManager->FillNtupleDColumn(4, fibre_signals);
             analysisManager->FillNtupleDColumn(5, PrimaryParticleEnergy);
             analysisManager->FillNtupleDColumn(6, PrimaryPDGID);
             analysisManager->FillNtupleDColumn(7, PrimaryX);
             analysisManager->FillNtupleDColumn(8, PrimaryY);
             analysisManager->FillNtupleDColumn(9, PrimaryZ);
+            analysisManager->FillNtupleDColumn(10, PrimaryPX);
+            analysisManager->FillNtupleDColumn(11, PrimaryPY);
+            analysisManager->FillNtupleDColumn(12, PrimaryPZ);
+            analysisManager->FillNtupleDColumn(13, Leakage);
+            analysisManager->FillNtupleDColumn(14, NeutrinoLeakage);
             
             analysisManager->AddNtupleRow();
         }

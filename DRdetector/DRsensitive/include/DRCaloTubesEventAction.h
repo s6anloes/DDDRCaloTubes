@@ -20,23 +20,12 @@ namespace dd4hep {
                 // void AddFibreCher(unsigned int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
                 // void AddFibreScin(unsigned int fibre_id, G4int n) { FibreSignalsScin[fibre_id] += n; }
                 void AddFibreSignal(int tower_id, unsigned int fibre_id, G4int n);
+                void AddLeakage(G4double energy) { Leakage += energy; }
+                void AddNeutrinoLeakage(G4double energy) { NeutrinoLeakage += energy; }
 
                 inline std::vector<double>& GetTowerIDs() { return tower_ids; }
                 inline std::vector<double>& GetFibreIDs() { return fibre_ids; }
                 inline std::vector<double>& GetFibreSignals() { return fibre_signals; }
-
-                inline void SavePrimaryPDGID(G4int pdgid){ PrimaryPDGID = pdgid; }
-                inline void SavePrimaryXYZ(G4double x, G4double y, G4double z){
-                    PrimaryX = x;
-                    PrimaryY = y;
-                    PrimaryZ = z;
-                }
-
-                inline void SavePrimaryEnergy(G4double primaryparticleenergy){ PrimaryParticleEnergy = primaryparticleenergy; }
-                void SavePrimaryMomentumDirection(G4double x, G4double y, G4double z){
-                    PrimaryTheta = std::acos(z/std::sqrt(x*x + y*y + z*z));
-                    PrimaryPhi = std::atan2(y, x);
-                }
 
                 std::vector<double> tower_ids;
                 std::vector<double> fibre_ids;
@@ -53,8 +42,12 @@ namespace dd4hep {
                 G4double PrimaryX; //Primary particle x position
                 G4double PrimaryY; //Primary particle y position
                 G4double PrimaryZ; //Primary particle z position
-                G4double PrimaryTheta; //Primary particle theta
-                G4double PrimaryPhi; //Primary particle phi
+                G4double PrimaryPX; //Primary particle momentum direction x
+                G4double PrimaryPY; //Primary particle momentum direction y
+                G4double PrimaryPZ; //Primary particle momentum direction z
+
+                G4double Leakage; //Leakage energy
+                G4double NeutrinoLeakage; //Neutrino leakage energy
                 
                 std::unordered_map<int, std::unordered_map<unsigned int, G4int>> fibre_signals_map;
                 

@@ -31,12 +31,13 @@ static Ref_t create_detector(Detector& description,
     double tower_length = calo_outer_r - calo_inner_r;
     if (tower_length<=0*mm) throw std::runtime_error("Outer calorimeter radius needs to be larger than inner radius");
 
-    Tube        calorimeter_solid(calo_inner_r, calo_inner_r+2*tower_length, calo_inner_half_length+2*tower_length); // Per design a "square" cylinder
+    Tube        calorimeter_solid(calo_inner_r, calo_inner_r+2*tower_length+1*cm, calo_inner_half_length+2*tower_length+1*cm); // Per design a "square" cylinder
     // Tube        calorimeter_solid(0, calo_inner_r+2*tower_length, 0); // Per design a "square" cylinder
     Volume      calorimeter_volume("calorimeter", calorimeter_solid, air);
     calorimeter_volume.setSolid(calorimeter_solid);
     calorimeter_volume.setMaterial(air);
     calorimeter_volume.setVisAttributes(description, "MyVis");
+    // calorimeter_volume.setSensitiveDetector(sens);
 
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
@@ -50,6 +51,13 @@ static Ref_t create_detector(Detector& description,
     PlacedVolume calorimeter_placed = mother_volume.placeVolume(calorimeter_volume, calorimeter_tr);
     calorimeter_placed.addPhysVolID("system", det_id);
     s_detElement.setPlacement(calorimeter_placed);
+
+    // // Tube leakage_help(calo_inner_r-1*cm, calo_inner_r+2*tower_length, calo_inner_half_length+2*tower_length);
+    Tube leakage_solid(calo_inner_r+2*tower_length, calo_inner_r+2*tower_length+1*cm, calo_inner_half_length+2*tower_length+1*cm);
+    Volume leakage_volume("leakage_volume", leakage_solid, air);
+    leakage_volume.setVisAttributes(description, "air_vis");
+    leakage_volume.setSensitiveDetector(sens);
+    PlacedVolume leakage_placed = calorimeter_volume.placeVolume(leakage_volume, calorimeter_tr);
 
 
     return s_detElement;

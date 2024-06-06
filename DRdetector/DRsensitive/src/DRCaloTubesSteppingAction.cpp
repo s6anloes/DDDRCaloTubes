@@ -109,18 +109,31 @@ namespace dd4hep {
             G4VPhysicalVolume* volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
             G4double edep = step->GetTotalEnergyDeposit();
             G4double steplength = step->GetStepLength();
+            std::string volume_name = volume->GetName(); 
+
+            if (volume_name.substr(0, 7) == "leakage")
+            {
+                if (step->IsLastStepInVolume())
+                {
+                    auto name = step->GetTrack()->GetDefinition()->GetParticleName();
+                    if (name=="nu_mu" || name=="nu_e" || name=="anti_nu_e" || name=="anti_nu_mu"){
+                        fEventAction->AddNeutrinoLeakage(step->GetTrack()->GetKineticEnergy());
+                        step->GetTrack()->SetTrackStatus(fStopAndKill);
+                    }
+                    else{
+                        fEventAction->AddLeakage(step->GetTrack()->GetKineticEnergy());
+                        step->GetTrack()->SetTrackStatus(fStopAndKill);
+                    }
+                } else {
+                    // return;
+                }
+            } 
             
             //--------------------------------------------------
             //Store information from Scintillation and Cherenkov
             //signals
             //--------------------------------------------------
 
-            std::string volume_name;
-            std::string scin_fibre_name = "scin_fibre_0";
-            std::string scin_clad_name  = "scin_clad_0";
-            std::string cher_fibre_name = "cher_fibre_0";
-            std::string cher_clad_name  = "cher_clad_0";
-            volume_name = volume->GetName(); 
             G4int signalhit = 0;
             
             if ( volume_name.substr(0, 10) == "scin_fibre" ) //scintillating fiber/tube

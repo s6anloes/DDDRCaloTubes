@@ -52,8 +52,11 @@ namespace dd4hep {
             analysisManager->CreateNtupleDColumn("PrimaryX");                       //7
             analysisManager->CreateNtupleDColumn("PrimaryY");                       //8
             analysisManager->CreateNtupleDColumn("PrimaryZ");                       //9
-            analysisManager->CreateNtupleDColumn("PrimaryTheta");                   //10
-            analysisManager->CreateNtupleDColumn("PrimaryPhi");                     //11
+            analysisManager->CreateNtupleDColumn("PrimaryPX");                      //10
+            analysisManager->CreateNtupleDColumn("PrimaryPY");                      //11
+            analysisManager->CreateNtupleDColumn("PrimaryPZ");                      //12
+            analysisManager->CreateNtupleDColumn("Leakage");                        //13
+            analysisManager->CreateNtupleDColumn("NeutrinoLeakage");                //14
             analysisManager->FinishNtuple();
             
         }
