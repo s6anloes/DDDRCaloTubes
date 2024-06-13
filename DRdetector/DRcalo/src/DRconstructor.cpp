@@ -573,7 +573,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             m_capillary_vol_to_be_placed = &(volume_map->at(key));
 
-            PlacedVolume    tube_placed = tower_air_volume.placeVolume(capillary_volume, tube_id, position);
+            PlacedVolume    tube_placed = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id, position);
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
             // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r)
             // std::cout << "Placed tube at row_"<<row<<"_col_"<<col<<std::endl;
@@ -645,7 +645,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
                                 
         Position tower_air_pos = Position(0,
                                          (1.0-1.0/std::cos(m_tower_theta))*m_trap_wall_thickness_sides,
-                                         (m_trap_wall_thickness_front-m_trap_wall_thickness_back)/2.0+10*nm);
+                                         (m_trap_wall_thickness_front-m_trap_wall_thickness_back)/2.0/* +10*nm */);
 
 
         // Subtraction solid used sometimes for easier visualisation. NOT TO BE USED IN FINAL GEOMETRY
@@ -653,13 +653,13 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         Volume tower_air_volume("tower_air_volume", tower_air_solid, m_air);
         tower_air_volume.setVisAttributes(*m_description, m_air_visString);
 
-        trap_volume.setSolid(solid);
+        trap_volume.setSolid(trap_solid);
         trap_volume.setVisAttributes(*m_description, m_trap_visString);
 
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
-        this->assemble_tower(tower_air_volume);
+        // this->assemble_tower(tower_air_volume);
     
 }
 
@@ -756,6 +756,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
         this->calculate_tower_position();
         this->place_tower(stave_volume, trap_volume, layer);
+        // this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         this->increase_covered_theta(m_tower_theta);
         
         // if (layer >= 1) break;

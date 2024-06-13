@@ -36,12 +36,9 @@ public:
     void construct_tower(Volume& trap_volume);
     void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
     void reset_tower_parameters();
-    void place_tower(Volume& calorimeter_volume,
-                     Volume& tower_volume,
-                     unsigned int stave, 
-                     unsigned int layer,
-                     unsigned int tower_id,
-                     double phi);
+    void place_tower(Volume& stave_volume,
+                        Volume& tower_volume,
+                        unsigned int layer);
 
     void construct_calorimeter(Volume& calorimeter_volume);
 
