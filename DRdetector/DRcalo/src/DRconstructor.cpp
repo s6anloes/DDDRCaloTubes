@@ -86,7 +86,7 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_air    = m_description->material(x_air.materialStr()); 
     m_air_visString     = x_air.visStr();
 
-    m_tolerance = 50; // tolerance in micrometers
+    m_tolerance = 50*um; // tolerance in micrometers
 
 }
 
@@ -254,7 +254,7 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher, uns
     
     if (tube_volume_map->find(key) != tube_volume_map->end()) return;
 
-    double length_rounded_down = key*m_tolerance*um;
+    double length_rounded_down = key*m_tolerance;
     std::cout << "Creating tube with length " << length_rounded_down/mm << " mm" << std::endl;
     // Capillary tube
     if (tube_solid_map->find(key) == tube_solid_map->end()) {
@@ -568,7 +568,9 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             if (cher) volume_map = &m_cher_tube_volume_map;
             else      volume_map = &m_scin_tube_volume_map;
             // Round length down to next multiple of tolerance (in mircometer)
-            int key = static_cast<int>(fast_floor(tube_half_length/um / m_tolerance));
+            int key = static_cast<int>(fast_floor(tube_half_length / m_tolerance));
+            if (key < 1) continue;
+            // if (key==0) continue;
             this->assert_tube_existence(key, cher, tube_id);
 
             m_capillary_vol_to_be_placed = &(volume_map->at(key));
@@ -659,7 +661,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
-        // this->assemble_tower(tower_air_volume);
+        this->assemble_tower(tower_air_volume);
     
 }
 
@@ -774,4 +776,9 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
         stave_placed.addPhysVolID("stave", stave);
     }
+
+    //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
+    std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
+    std::cout << "Length of S map = " << m_scin_tube_volume_map.size() << std::endl;
+
 }

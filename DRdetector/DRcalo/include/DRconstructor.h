@@ -105,7 +105,7 @@ private:
     std::unordered_map<int, Tube> m_cher_clad_solid_map;
     std::unordered_map<int, Tube> m_cher_core_solid_map;
 
-    int m_tolerance;
+    double m_tolerance;
 
     double m_capillary_diameter; // calculated from m_capillary_outer_r
 
