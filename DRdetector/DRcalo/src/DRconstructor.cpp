@@ -651,7 +651,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
 
         // Subtraction solid used sometimes for easier visualisation. NOT TO BE USED IN FINAL GEOMETRY
-        SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
+        // SubtractionSolid solid = SubtractionSolid("trap_final", trap_solid, tower_air_solid, tower_air_pos);
         Volume tower_air_volume("tower_air_volume", tower_air_solid, m_air);
         tower_air_volume.setVisAttributes(*m_description, m_air_visString);
 
