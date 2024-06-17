@@ -42,21 +42,23 @@ namespace dd4hep {
             //Define ntuple structure
             //
             analysisManager->CreateNtuple("DRCaloTubesout", "DRCaloTubesoutput");
-            analysisManager->CreateNtupleDColumn("NofCherDet");                     //0
-            analysisManager->CreateNtupleDColumn("NofScinDet");                     //1
-            analysisManager->CreateNtupleDColumn("TowerID", fEventAction->GetTowerIDs());                        //2
-            analysisManager->CreateNtupleDColumn("FibreID", fEventAction->GetFibreIDs());                        //3
-            analysisManager->CreateNtupleDColumn("NofDet", fEventAction->GetFibreSignals());                         //4
-            analysisManager->CreateNtupleDColumn("PrimaryEnergy");                  //5
-            analysisManager->CreateNtupleDColumn("PrimaryPDGID");                   //6
-            analysisManager->CreateNtupleDColumn("PrimaryX");                       //7
-            analysisManager->CreateNtupleDColumn("PrimaryY");                       //8
-            analysisManager->CreateNtupleDColumn("PrimaryZ");                       //9
-            analysisManager->CreateNtupleDColumn("PrimaryPX");                      //10
-            analysisManager->CreateNtupleDColumn("PrimaryPY");                      //11
-            analysisManager->CreateNtupleDColumn("PrimaryPZ");                      //12
-            analysisManager->CreateNtupleDColumn("Leakage");                        //13
-            analysisManager->CreateNtupleDColumn("NeutrinoLeakage");                //14
+            analysisManager->CreateNtupleDColumn("EnergyScin");                     //0
+            analysisManager->CreateNtupleDColumn("EnergyCher");                     //1
+            analysisManager->CreateNtupleDColumn("NofCherDet");                     //2
+            analysisManager->CreateNtupleDColumn("NofScinDet");                     //3
+            analysisManager->CreateNtupleDColumn("TowerID", fEventAction->GetTowerIDs());                        //4
+            analysisManager->CreateNtupleDColumn("FibreID", fEventAction->GetFibreIDs());                        //5
+            analysisManager->CreateNtupleDColumn("NofDet", fEventAction->GetFibreSignals());                         //6
+            analysisManager->CreateNtupleDColumn("PrimaryEnergy");                  //7
+            analysisManager->CreateNtupleDColumn("PrimaryPDGID");                   //8
+            analysisManager->CreateNtupleDColumn("PrimaryX");                       //9
+            analysisManager->CreateNtupleDColumn("PrimaryY");                       //10
+            analysisManager->CreateNtupleDColumn("PrimaryZ");                       //11
+            analysisManager->CreateNtupleDColumn("PrimaryPX");                      //12
+            analysisManager->CreateNtupleDColumn("PrimaryPY");                      //13
+            analysisManager->CreateNtupleDColumn("PrimaryPZ");                      //14
+            analysisManager->CreateNtupleDColumn("Leakage");                        //15
+            analysisManager->CreateNtupleDColumn("NeutrinoLeakage");                //16
             analysisManager->FinishNtuple();
             
         }

@@ -147,6 +147,7 @@ namespace dd4hep {
 
                 if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return; } //not ionizing particle
 
+                fEventAction->AddEdepScin(edep);
                 G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                 // std::cout<<"UserSteppingAction:: Distance to SiPM: " << distance_to_sipm/CLHEP::mm << " mm" <<std::endl;
                 signalhit = DRCaloTubesSteppingAction::SmearSSignal( DRCaloTubesSteppingAction::ApplyBirks( edep, steplength ) );
@@ -187,6 +188,7 @@ namespace dd4hep {
                                             
                         case TotalInternalReflection: 
                         {
+                            fEventAction->AddEdepCher(edep);
                             //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
                             G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );

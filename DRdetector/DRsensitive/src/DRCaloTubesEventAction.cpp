@@ -10,7 +10,7 @@
 namespace dd4hep {
     namespace sim {
         DRCaloTubesEventAction::DRCaloTubesEventAction(): G4UserEventAction(),
-            NofCherDet(0), NofScinDet(0){
+            EnergyScin(0), EnergyCher(0), NofCherDet(0), NofScinDet(0), Leakage(0), NeutrinoLeakage(0){
                 //FibreSignalsCher.resize(nfibres);
                 //FibreSignalsScin.resize(nfibres);
                 //for (int i=0; i<nfibres; i++){
@@ -22,6 +22,8 @@ namespace dd4hep {
         DRCaloTubesEventAction::~DRCaloTubesEventAction() {}
 
         void DRCaloTubesEventAction::BeginOfEventAction(const G4Event*) {
+            EnergyScin = 0;
+            EnergyCher = 0;
             NofScinDet = 0;
             NofCherDet = 0;
             // FibreSignalsCher.clear();
@@ -78,18 +80,20 @@ namespace dd4hep {
 
 
             G4RootAnalysisManager* analysisManager = G4RootAnalysisManager::Instance();
-            analysisManager->FillNtupleDColumn(0, NofCherDet);
-            analysisManager->FillNtupleDColumn(1, NofScinDet);
-            analysisManager->FillNtupleDColumn(5, PrimaryParticleEnergy);
-            analysisManager->FillNtupleDColumn(6, PrimaryPDGID);
-            analysisManager->FillNtupleDColumn(7, PrimaryX);
-            analysisManager->FillNtupleDColumn(8, PrimaryY);
-            analysisManager->FillNtupleDColumn(9, PrimaryZ);
-            analysisManager->FillNtupleDColumn(10, PrimaryPX);
-            analysisManager->FillNtupleDColumn(11, PrimaryPY);
-            analysisManager->FillNtupleDColumn(12, PrimaryPZ);
-            analysisManager->FillNtupleDColumn(13, Leakage);
-            analysisManager->FillNtupleDColumn(14, NeutrinoLeakage);
+            analysisManager->FillNtupleDColumn(0, EnergyScin);
+            analysisManager->FillNtupleDColumn(1, EnergyCher);
+            analysisManager->FillNtupleDColumn(2, NofCherDet);
+            analysisManager->FillNtupleDColumn(3, NofScinDet);
+            analysisManager->FillNtupleDColumn(7, PrimaryParticleEnergy);
+            analysisManager->FillNtupleDColumn(8, PrimaryPDGID);
+            analysisManager->FillNtupleDColumn(9, PrimaryX);
+            analysisManager->FillNtupleDColumn(10, PrimaryY);
+            analysisManager->FillNtupleDColumn(11, PrimaryZ);
+            analysisManager->FillNtupleDColumn(12, PrimaryPX);
+            analysisManager->FillNtupleDColumn(13, PrimaryPY);
+            analysisManager->FillNtupleDColumn(14, PrimaryPZ);
+            analysisManager->FillNtupleDColumn(15, Leakage);
+            analysisManager->FillNtupleDColumn(16, NeutrinoLeakage);
             
             analysisManager->AddNtupleRow();
         }

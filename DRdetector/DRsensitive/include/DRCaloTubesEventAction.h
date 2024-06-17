@@ -15,6 +15,8 @@ namespace dd4hep {
 
                 virtual void BeginOfEventAction(const G4Event*) final;
                 virtual void EndOfEventAction(const G4Event*) final;
+                inline void AddEdepScin(G4double edep) { EnergyScin += edep; }
+                inline void AddEdepCher(G4double edep) { EnergyCher += edep; }
                 inline void AddCher(G4int n) { NofCherDet += n; }
                 inline void AddScin(G4int n) { NofScinDet += n; }
                 // void AddFibreCher(unsigned int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
@@ -33,6 +35,8 @@ namespace dd4hep {
 
 
             private:
+                G4double  EnergyScin; //Energy deposited in scintillating fibres
+                G4double  EnergyCher; //Energy deposited in Cherenkov fibres
                 G4int     NofCherDet; //Number of Cherenkov p.e. detected 
                 G4int     NofScinDet; //Number of Scintillating p.e. detected
 
