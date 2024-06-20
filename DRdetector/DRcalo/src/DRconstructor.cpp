@@ -39,6 +39,7 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_capillary_outer_r     = x_capillary.outer_r();
     m_capillary_visString   = x_capillary.visStr();
     m_capillary_isSensitive = x_capillary.isSensitive();
+    m_tolerance             = x_capillary.threshold(50*um);
 
     xml_comp_t  x_scin_clad = x_tube.child(_Unicode(scin_clad));
     m_scin_clad_material    = m_description->material(x_scin_clad.materialStr()); 
@@ -85,8 +86,6 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     xml_comp_t  x_air = x_trap.child(_Unicode(air));
     m_air    = m_description->material(x_air.materialStr()); 
     m_air_visString     = x_air.visStr();
-
-    m_tolerance = 50*um; // tolerance in micrometers
 
 }
 
