@@ -138,6 +138,7 @@ namespace dd4hep {
             
             if ( volume_name.substr(0, 10) == "scin_fibre" ) //scintillating fiber/tube
             { 
+                fEventAction->AddEdepScin(edep);
                 //G4VPhysicalVolume* step_vol  = step->GetTrack()->GetVolume();
                 //std::cout<<"Step Volume in Geant4: " << step_vol->GetName() <<" : " << std::to_string(step_vol->GetCopyNo())<<std::endl; 
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() ) 
@@ -147,7 +148,6 @@ namespace dd4hep {
 
                 if ( step->GetTrack()->GetDefinition()->GetPDGCharge() == 0 || step->GetStepLength() == 0. ) { return; } //not ionizing particle
 
-                fEventAction->AddEdepScin(edep);
                 G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                 // std::cout<<"UserSteppingAction:: Distance to SiPM: " << distance_to_sipm/CLHEP::mm << " mm" <<std::endl;
                 signalhit = DRCaloTubesSteppingAction::SmearSSignal( DRCaloTubesSteppingAction::ApplyBirks( edep, steplength ) );
@@ -165,6 +165,7 @@ namespace dd4hep {
 
             else if ( volume_name.substr(0, 10) == "cher_fibre" ) //Cherenkov fiber/tube
             {
+                fEventAction->AddEdepCher(edep);
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )
                 {
                     G4OpBoundaryProcessStatus theStatus = Undefined;
@@ -188,7 +189,6 @@ namespace dd4hep {
                                             
                         case TotalInternalReflection: 
                         {
-                            fEventAction->AddEdepCher(edep);
                             //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
                             G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
