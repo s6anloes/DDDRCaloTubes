@@ -1,5 +1,5 @@
 from DDSim.DD4hepSimulation import DD4hepSimulation
-from g4units import mm, GeV, MeV
+from g4units import GeV, deg
 SIM = DD4hepSimulation()
 
 SIM.enableGun = True
@@ -10,17 +10,22 @@ SIM.action.calorimeterSDTypes = [u'calorimeter']
 SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 SIM.filter.calo = ""
 SIM.gun.particle = "e+"
-SIM.gun.position = ('0.87275324641*cm', '0.0*cm', '-100.0*cm')
-SIM.gun.momentumMin = 20*GeV
-SIM.gun.momentumMax = 20*GeV
+SIM.gun.position = ('0.0*cm', '0.0*cm', '0.0*cm')
+SIM.gun.distribution = 'uniform'
+SIM.gun.energy = 80*GeV
+SIM.gun.multiplicity = 1
+SIM.gun.phiMin = 89.5*deg
+SIM.gun.phiMax = 90.5*deg
+SIM.gun.thetaMin = 79.0*deg
+SIM.gun.thetaMax = 80.0*deg
 
 def setupCerenkov(kernel):
 	from DDG4 import PhysicsList
 	seq = kernel.physicsList()
 	cerenkov = PhysicsList(kernel, 'Geant4CerenkovPhysics/CerenkovPhys')
-	cerenkov.MaxNumPhotonsPerStep = 10
-	cerenkov.MaxBetaChangePerStep = 10.0
-	cerenkov.TrackSecondariesFirst = True
+	cerenkov.MaxNumPhotonsPerStep = 1000
+	# cerenkov.MaxBetaChangePerStep = 10.0
+	# cerenkov.TrackSecondariesFirst = True
 	cerenkov.VerboseLevel = 0
 	cerenkov.enableUI()
 	seq.adopt(cerenkov)

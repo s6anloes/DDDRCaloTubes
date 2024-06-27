@@ -65,13 +65,6 @@
         <constant name="world_y" value="world_side"/>
         <constant name="world_z" value="world_side"/>
 
-        <constant name="RotationZ" value="0.0*deg" />
-        <constant name="RotationY" value="1.0*deg" />
-        <constant name="RotationX" value="0.0*deg" />
-
-        <constant name="NumRows" value="2" />
-        <constant name="NumCols" value="4" />
-
         <constant name="CoreOuterRadius" value="0.485*mm"/>
         <constant name="CladOuterRadius"  value="0.5*mm"  />
         <constant name="TubeOuterRadius"  value="1.0*mm"  />

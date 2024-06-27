@@ -254,7 +254,7 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher, uns
     if (tube_volume_map->find(key) != tube_volume_map->end()) return;
 
     double length_rounded_down = key*m_tolerance;
-    std::cout << "Creating tube with length " << length_rounded_down/mm << " mm" << std::endl;
+    // std::cout << "Creating tube with length " << length_rounded_down/mm << " mm" << std::endl;
     // Capillary tube
     if (tube_solid_map->find(key) == tube_solid_map->end()) {
         Tube        capillary_solid(0.0*mm, m_capillary_outer_r, length_rounded_down);
@@ -364,7 +364,8 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
     double tower_centre_r = m_tower_half_length/std::cos(m_tower_polar_angle);
     double tower_centre_half_y = tower_centre_r*std::sin(m_tower_polar_angle)*std::sin(m_tower_azimuthal_angle) + m_tower_frontface_y/2.0;
 
-
+    
+    // Coordinates of corners of trapezoid
     Position back_upper_left_corner  = Position(-m_tower_backface_rightangleedge_x/2.0,  -tower_centre_half_y, m_tower_half_length);
     Position back_lower_left_corner  = Position(-m_tower_backface_thetaangleedge_x/2.0,  tower_centre_half_y,  m_tower_half_length);
     Position front_upper_left_corner = Position(-m_tower_frontface_rightangleedge_x/2.0, -tower_centre_half_y, -m_tower_half_length);
@@ -373,7 +374,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
     Position back_lower_right_corner  = Position(m_tower_backface_thetaangleedge_x/2.0,  tower_centre_half_y,  m_tower_half_length);
     Position front_upper_right_corner = Position(m_tower_frontface_rightangleedge_x/2.0, -tower_centre_half_y, -m_tower_half_length);
 
-
+    // plane equations to calculate length of tubes at the tower sides
     std::vector<double> plane_left_coefficients = get_plane_equation(back_upper_left_corner, back_lower_left_corner, front_upper_left_corner);
     std::vector<double> plane_right_coefficients = get_plane_equation(back_upper_right_corner, back_lower_right_corner, front_upper_right_corner);
     Direction line_direction = Direction(0, 0, -1);
@@ -452,8 +453,6 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
                 Position line_point = Position(x-first_tube_x-m_capillary_outer_r*std::cos(m_angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(m_angle_edges_x), m_tower_half_length);
                 Position intersection = get_intersection(plane_left_coefficients, line_point, line_direction);
 
-                // Position intersection = get_intersection(Direction(plane_left_coefficients[0], plane_left_coefficients[1], plane_left_coefficients[2]), back_upper_left_corner, line_point, line_direction);
-
                 
                 col_staggered_z = (m_tower_half_length + intersection.z())/2.0;
 
@@ -464,12 +463,6 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
                 col_staggered_z = (m_tower_half_length + intersection.z())/2.0;
             }
-
-            // if (col_staggered_z > m_tower_half_length) {
-            //     num_bad_cols++;
-            //     std::cout << "m_tower_half_length = " << m_tower_half_length/mm << " mm" << std::endl;
-            //     continue;
-            // }
 
 
             double z = (row_staggered_z > col_staggered_z) ? row_staggered_z : col_staggered_z ;
@@ -496,71 +489,10 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             if (tube_half_length < 0*mm) 
             {
-                // covered_tower_x += m_capillary_diameter;
-                // col++;
-                std::cout << "m_tower_half_length = " << m_tower_half_length/um << " um" << std::endl;
+                // std::cout << "m_tower_half_length = " << m_tower_half_length/um << " um" << std::endl;
                 continue;
             }
-            // std::cout << "Tube length row_"<<row<<"_col_"<<col<< " " << 2*tube_half_length/mm << " mm" << std::endl;
-            // std::cout << "Tube length row_"<<row<<"_col_"<<mirrored_col<< " " << 2*tube_half_length/mm << " mm" << std::endl;
-
-            /* if (tube_half_length < m_tower_half_length)
-            {
-
-            // Capillary tube
-            std::string capillary_name = "capillary_" + std::to_string(row) + "_" + std::to_string(col);
-            std::string capillary_name2 = "capillary_" + std::to_string(row) + "_" + std::to_string(mirrored_col);
-            Tube        capillary_solid(0.0*mm, m_capillary_outer_r, tube_half_length);
-            Volume      capillary_volume("capillary", capillary_solid, m_capillary_material);
-            Volume      capillary_volume2(capillary_name2, capillary_solid, m_capillary_material);
-            if (m_capillary_isSensitive) capillary_volume.setSensitiveDetector(*m_sens);
-            capillary_volume.setVisAttributes(*m_description, m_capillary_visString); 
-            capillary_volume2.setVisAttributes(*m_description, m_capillary_visString);
-
-
-            if (row & 1) // Cherenkov row
-            {
-                // Cherenkov cladding
-                Tube        cher_clad_solid(0.0*mm, m_cher_clad_outer_r, tube_half_length);
-                Volume      cher_clad_volume("cher_clad", cher_clad_solid, m_cher_clad_material);
-                if (m_cher_clad_isSensitive) cher_clad_volume.setSensitiveDetector(*m_sens);
-                PlacedVolume cher_clad_placed = capillary_volume.placeVolume(cher_clad_volume, tube_id);
-                cher_clad_volume.setVisAttributes(*m_description, m_cher_clad_visString);
-                cher_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 1);
-
-                // Chrerenkov fibre
-                Tube        cher_core_solid(0.0*mm, m_cher_core_outer_r, tube_half_length);
-                Volume      cher_core_volume("cher_fibre", cher_core_solid, m_cher_core_material);
-                if (m_cher_core_isSensitive) cher_core_volume.setSensitiveDetector(*m_sens);
-                PlacedVolume    cher_core_placed = cher_clad_volume.placeVolume(cher_core_volume, tube_id);
-                cher_core_volume.setVisAttributes(*m_description, m_cher_core_visString);
-                cher_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
-            }
-            else // Scintillation row
-            {
-                // Scintillation cladding
-                Tube        scin_clad_solid(0.0*mm, m_scin_clad_outer_r, tube_half_length);
-                Volume      scin_clad_volume("scin_clad", scin_clad_solid, m_scin_clad_material);
-                if (m_scin_clad_isSensitive) scin_clad_volume.setSensitiveDetector(*m_sens);
-                PlacedVolume scin_clad_placed = capillary_volume.placeVolume(scin_clad_volume, tube_id);
-                scin_clad_volume.setVisAttributes(*m_description, m_scin_clad_visString);
-                scin_clad_placed.addPhysVolID("clad", 1).addPhysVolID("cherenkov", 0);
-
-                // Scintillation fibre
-                Tube        scin_core_solid(0.0*mm, m_scin_core_outer_r, tube_half_length);
-                Volume      scin_core_volume("scin_fibre", scin_core_solid, m_scin_core_material);
-                if (m_scin_core_isSensitive) scin_core_volume.setSensitiveDetector(*m_sens);
-                PlacedVolume    scin_core_placed = scin_clad_volume.placeVolume(scin_core_volume, tube_id);
-                scin_core_volume.setVisAttributes(*m_description, m_scin_core_visString);
-                scin_core_placed.addPhysVolID("core", 1).addPhysVolID("clad", 0);
-            }
-
-                m_capillary_vol_to_be_placed = &capillary_volume;
-
-            } else {
-                if (row & 1) m_capillary_vol_to_be_placed = &m_cher_tube_volume_full_length;
-                else         m_capillary_vol_to_be_placed = &m_scin_tube_volume_full_length;
-            } */
+            
 
             bool cher = (row & 1);
             std::unordered_map<int, Volume>* volume_map;
@@ -576,15 +508,6 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
             PlacedVolume    tube_placed = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id, position);
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
-            // tube_placed.addPhysVolID("clad", 0).addPhysVolID("core", 0).addPhysVolID("q", q).addPhysVolID("r", r)
-            // std::cout << "Placed tube at row_"<<row<<"_col_"<<col<<std::endl;
-            // if (x_pos < 0.0) {
-            //     PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(capillary_volume2, tube_id2, position2);
-            //     tube_placed2.addPhysVolID("air",0).addPhysVolID("col", mirrored_col).addPhysVolID("row", row);
-            //     // std::cout << "Placed tube at row_"<<row<<"_col_"<<mirrored_col<<std::endl;
-            // }
-            // std::cout << "col = " << col << std::endl;
-            //
             
         }
 
@@ -735,25 +658,6 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         Volume trap_volume("tower");
         trap_volume.setMaterial(m_trap_material);
         this->construct_tower(trap_volume);
-
-        // double phi = 0*deg;
-        // for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
-        // {
-        //     if (layer==1)
-        //     {
-        //         RotationZ rot_fourth = RotationZ(phi);
-        //         double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
-        //         double stave_x = centre_stave_vol*std::cos(phi);
-        //         double stave_y = centre_stave_vol*std::sin(phi);
-        //         Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
-        //         calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
-        //     }
-        //     // if (layer != 5) continue;
-        //     this->calculate_tower_position(phi);
-        //     // TowerID composed of layer in first 16 bits, stave in last 16 bits
-        //     int tower_id = (layer << 16) | stave;
-        //     this->place_tower(stave_volume, trap_volume, stave, layer, tower_id, phi);
-        // }
 
         this->calculate_tower_position();
         this->place_tower(stave_volume, trap_volume, layer);
