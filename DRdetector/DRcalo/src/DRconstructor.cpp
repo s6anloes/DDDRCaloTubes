@@ -13,6 +13,8 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_description = description;
     m_sens = sens;
 
+    m_reuse_counter = 0;
+
     xml_dim_t x_dim = ((xml_det_t) entities).dimensions();
 
     // Calorimeter parameters
@@ -251,7 +253,10 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher, uns
         core_solid_map = &m_scin_core_solid_map;
     }
     
-    if (tube_volume_map->find(key) != tube_volume_map->end()) return;
+    if (tube_volume_map->find(key) != tube_volume_map->end()) {
+        m_reuse_counter++;
+        return;
+     }
 
     double length_rounded_down = key*m_tolerance;
     // std::cout << "Creating tube with length " << length_rounded_down/mm << " mm" << std::endl;
@@ -664,7 +669,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         // this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         this->increase_covered_theta(m_tower_theta);
         
-        // if (layer >= 1) break;
+        if (layer >= 2) break;
         layer++;
     }
 
@@ -683,5 +688,6 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
     std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
     std::cout << "Length of S map = " << m_scin_tube_volume_map.size() << std::endl;
+    std::cout << "Reused " << m_reuse_counter << " volumes" << std::endl;
 
 }

@@ -154,6 +154,7 @@ private:
     std::string m_trap_visString;
 
 
+    int m_reuse_counter;
     // Construction parameters
     double m_covered_theta;
     double m_back_shift;
