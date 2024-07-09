@@ -65,6 +65,11 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_cher_core_visString   = x_cher_core.visStr();
     m_cher_core_isSensitive = x_cher_core.isSensitive();
 
+    if (m_capillary_outer_r <= 0.0*mm) throw std::runtime_error("Capillary radius needs to be larger than 0");
+    if (m_capillary_outer_r < m_scin_clad_outer_r || m_capillary_outer_r < m_cher_clad_outer_r) throw std::runtime_error("Capillary radius needs to be larger than scintillation cladding and cherenkov cladding radii");
+    if (m_scin_clad_outer_r < m_scin_core_outer_r) throw std::runtime_error("Scintillation cladding radius needs to be larger than scintillation core radius");
+    if (m_cher_clad_outer_r < m_cher_core_outer_r) throw std::runtime_error("Cherenkov cladding radius needs to be larger than cherenkov core radius");
+
 
     // Tower parameters
     m_tower_theta = x_dim.deltatheta();
