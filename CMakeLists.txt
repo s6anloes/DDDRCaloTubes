@@ -12,7 +12,6 @@ set(CMAKE_MODULE_PATH
 include(GNUInstallDirs)
 
 find_package(ROOT REQUIRED)
-find_package(podio REQUIRED HINTS $ENV{PODIO})
 find_package(Gaudi REQUIRED)
 find_package(EDM4HEP)
 find_package(k4FWCore REQUIRED)
@@ -36,6 +35,8 @@ IF(NOT TARGET DD4hep::DDCore)
   include ( ${DD4hep_DIR}/cmake/DD4hepBuild.cmake )
   dd4hep_configure_output()
 ENDIF()
+
+find_package(podio REQUIRED HINTS $ENV{PODIO})
 
 dd4hep_set_compiler_flags()
 dd4hep_configure_output()
