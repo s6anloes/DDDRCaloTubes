@@ -192,7 +192,7 @@ namespace dd4hep {
                             //std::cout<<"SteppingAction:: Total Internal Refelction"<<std::endl;
                             G4double distance_to_sipm = DRCaloTubesSteppingAction::GetDistanceToSiPM(step);
                             G4int c_signal = DRCaloTubesSteppingAction::SmearCSignal( );
-                            signalhit = DRCaloTubesSteppingAction::AttenuateSSignal(c_signal, distance_to_sipm);
+                            signalhit = DRCaloTubesSteppingAction::AttenuateCSignal(c_signal, distance_to_sipm);
                             fEventAction->AddCher(signalhit);
                             auto handle = step->GetPreStepPoint()->GetTouchableHandle();
                             unsigned int fibre_id = handle->GetCopyNumber(2);
