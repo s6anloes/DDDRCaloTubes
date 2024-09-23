@@ -110,7 +110,7 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_parameters()
 
     m_tower_half_phi = m_tower_phi/2.0; // Half of the tower phi angle
     m_tower_tan_half_phi = std::tan(m_tower_half_phi); // Needed several times, calculate once here
-    m_trap_half_length  = (m_calo_outer_r - m_calo_inner_r)/2; // Trapezoid half length
+    m_trap_half_length  = (m_calo_outer_r*std::cos(m_tower_half_phi) - m_calo_inner_r)/2; // Trapezoid half length
     
     m_tower_half_length = m_trap_half_length - m_trap_wall_thickness_front/2.0 - m_trap_wall_thickness_back/2.0; // Tower half length
 
@@ -588,7 +588,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
-        this->assemble_tower(tower_air_volume);
+        // this->assemble_tower(tower_air_volume);
     
 }
 
@@ -645,12 +645,12 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
 void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
 {
 
-    double tower_length = (m_calo_outer_r-m_calo_inner_r);
+    // double tower_length = (m_calo_outer_r-m_calo_inner_r);
     double dy1 = m_calo_inner_half_z;
-    double dy2 = m_calo_inner_half_z+tower_length;
+    double dy2 = m_calo_inner_half_z+2*m_trap_half_length;
     double dx1 = m_calo_inner_r*m_tower_tan_half_phi;
-    double dx2 = m_calo_outer_r*m_tower_tan_half_phi;
-    Trap stave_solid("stave_solid", tower_length/2.0, 0., 0., 
+    double dx2 = m_calo_outer_r*std::sin(m_tower_half_phi);
+    Trap stave_solid("stave_solid", m_trap_half_length, 0., 0., 
                      dy1, dx1, dx1, 0.,
                      dy2, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
@@ -675,7 +675,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     }
 
     double phi = 0*deg;
-    double centre_stave_vol = m_calo_inner_r + tower_length/2.0;
+    double centre_stave_vol = m_calo_inner_r + m_trap_half_length;
     for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
         RotationZ rot_fourth = RotationZ(phi);
