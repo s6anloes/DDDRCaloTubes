@@ -646,12 +646,13 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 {
 
     double tower_length = (m_calo_outer_r-m_calo_inner_r);
-    double dy = m_calo_inner_half_z+tower_length;
+    double dy1 = m_calo_inner_half_z;
+    double dy2 = m_calo_inner_half_z+tower_length;
     double dx1 = m_calo_inner_r*m_tower_tan_half_phi;
     double dx2 = m_calo_outer_r*m_tower_tan_half_phi;
     Trap stave_solid("stave_solid", tower_length/2.0, 0., 0., 
-                     dy, dx1, dx1, 0.,
-                     dy, dx2, dx2, 0.);
+                     dy1, dx1, dx1, 0.,
+                     dy2, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
     stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
     RotationZ rot_first = RotationZ(90*deg);
