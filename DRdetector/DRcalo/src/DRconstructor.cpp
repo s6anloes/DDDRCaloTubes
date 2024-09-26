@@ -110,7 +110,16 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_parameters()
 
     m_tower_half_phi = m_tower_phi/2.0; // Half of the tower phi angle
     m_tower_tan_half_phi = std::tan(m_tower_half_phi); // Needed several times, calculate once here
-    m_trap_half_length  = (m_calo_outer_r*std::cos(m_tower_half_phi) - m_calo_inner_r)/2; // Trapezoid half length
+
+
+    m_stave_half_length  = (m_calo_outer_r*std::cos(m_tower_half_phi) - m_calo_inner_r)/2; // Trapezoid half length
+
+    // Protection against tilted towers in theta to go past the outer radius of the calorimeter
+    double protect_covered_z = std::tan(m_tower_theta)*m_calo_inner_r;
+    double protect_tower_z = std::tan(2*m_tower_theta)*m_calo_inner_r - protect_covered_z;
+    double protect_back_shift = std::sin(m_tower_theta)*protect_tower_z;
+
+    m_trap_half_length = m_stave_half_length/std::cos(m_tower_theta) - protect_back_shift/2;
     
     m_tower_half_length = m_trap_half_length - m_trap_wall_thickness_front/2.0 - m_trap_wall_thickness_back/2.0; // Tower half length
 
@@ -134,14 +143,7 @@ void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
 void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 {
     // Approximate tower position in z direction
-    // In case we're already at endcap region, refers to approximate height at which tower is placed
-    double covered_z;
-    if (m_covered_theta < m_barrel_endcap_angle) {
-        covered_z = std::tan(m_covered_theta)*m_calo_inner_r;
-    } else {
-        covered_z = std::tan(90*deg-m_covered_theta)*m_calo_inner_half_z;
-    }
-
+    double covered_z = std::tan(m_covered_theta)*m_calo_inner_r;
 
     double tower_max_theta = m_covered_theta+m_tower_theta;
     double tower_max_z = std::tan(tower_max_theta)*m_calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
@@ -395,7 +397,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
     double offset_col_x = (num_back_cols_rightangleedge&1) ? m_capillary_outer_r : 0.0*mm;
 
     double first_tube_x = half_num_back_cols*m_capillary_diameter + offset_col_x;
-    double gap_to_wall = m_tower_backface_rightangleedge_x/2.0 - first_tube_x;
+    double gap_to_wall = tower_x/2.0 - first_tube_x;
 
 
     int num_bad_rows = 0;
@@ -453,7 +455,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             }
 
             double col_staggered_z = 0.0*mm;
-            if (tower_x/2.0-(covered_tower_x-m_capillary_diameter) + m_capillary_outer_r*(1.0-std::cos(m_angle_edges_x)) > tower_front_x/2.0)
+            if (tower_x/2.0-(covered_tower_x-m_capillary_diameter) + m_capillary_outer_r*(2.0/* -std::cos(m_angle_edges_x) */) > tower_front_x/2.0)
             {
                 Position line_point = Position(x-first_tube_x-m_capillary_outer_r*std::cos(m_angle_edges_x), y-tower_centre_half_y-m_capillary_outer_r*std::sin(m_angle_edges_x), m_tower_half_length);
                 Position intersection = get_intersection(plane_left_coefficients, line_point, line_direction);
@@ -538,7 +540,7 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_position()
     
     double tower_x = 0;
     double tower_y = stave_z;
-    double tower_z = stave_x-(m_calo_inner_r+m_trap_half_length);
+    double tower_z = stave_x-(m_calo_inner_r+m_stave_half_length);
 
     m_tower_position = dd4hep::Position(tower_x, tower_y, tower_z);
 }
@@ -588,7 +590,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
-        // this->assemble_tower(tower_air_volume);
+        this->assemble_tower(tower_air_volume);
     
 }
 
@@ -644,13 +646,11 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
 
 void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
 {
-
-    // double tower_length = (m_calo_outer_r-m_calo_inner_r);
     double dy1 = m_calo_inner_half_z;
-    double dy2 = m_calo_inner_half_z+2*m_trap_half_length;
+    double dy2 = m_calo_inner_half_z+2*m_stave_half_length;
     double dx1 = m_calo_inner_r*m_tower_tan_half_phi;
     double dx2 = m_calo_outer_r*std::sin(m_tower_half_phi);
-    Trap stave_solid("stave_solid", m_trap_half_length, 0., 0., 
+    Trap stave_solid("stave_solid", m_stave_half_length, 0., 0., 
                      dy1, dx1, dx1, 0.,
                      dy2, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
@@ -666,7 +666,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         this->construct_tower(trap_volume);
 
         this->calculate_tower_position();
-        this->place_tower(stave_volume, trap_volume, layer);
+        /* if (layer==7)  */this->place_tower(stave_volume, trap_volume, layer);
         // this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         this->increase_covered_theta(m_tower_theta);
         
@@ -675,7 +675,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     }
 
     double phi = 0*deg;
-    double centre_stave_vol = m_calo_inner_r + m_trap_half_length;
+    double centre_stave_vol = m_calo_inner_r + m_stave_half_length;
     for (short int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
         RotationZ rot_fourth = RotationZ(phi);

@@ -138,6 +138,7 @@ private:
     double m_tower_azimuthal_angle;
 
     // Trapezoid support parameters
+    double m_stave_half_length;
     double m_trap_wall_thickness_sides;
     double m_trap_wall_thickness_front;
     double m_trap_wall_thickness_back;
