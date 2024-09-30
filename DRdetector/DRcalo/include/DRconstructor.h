@@ -27,7 +27,7 @@ public:
     void calculate_phi_parameters();
     void calculate_theta_parameters();
     void prepare_tube_volumes();
-    void assert_tube_existence(int key, bool cher, unsigned int tube_id);
+    void assert_tube_existence(int key, bool cher);
     double calculate_trap_width(double given_y, double given_z, bool backface = false);
     double calculate_tower_width(int given_row, bool backface = true);
     void assemble_tower(Volume& tower_air_volume);

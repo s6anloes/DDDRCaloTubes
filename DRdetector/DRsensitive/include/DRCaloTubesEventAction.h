@@ -19,9 +19,9 @@ namespace dd4hep {
                 inline void AddEdepCher(G4double edep) { EnergyCher += edep; }
                 inline void AddCher(G4int n) { NofCherDet += n; }
                 inline void AddScin(G4int n) { NofScinDet += n; }
-                // void AddFibreCher(unsigned int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
-                // void AddFibreScin(unsigned int fibre_id, G4int n) { FibreSignalsScin[fibre_id] += n; }
-                void AddFibreSignal(int tower_id, unsigned int fibre_id, G4int n);
+                // void AddFibreCher(int fibre_id, G4int n) { FibreSignalsCher[fibre_id] += n; }
+                // void AddFibreScin(int fibre_id, G4int n) { FibreSignalsScin[fibre_id] += n; }
+                void AddFibreSignal(int tower_id, int fibre_id, G4int n);
                 void AddLeakage(G4double energy) { Leakage += energy; }
                 void AddNeutrinoLeakage(G4double energy) { NeutrinoLeakage += energy; }
 
@@ -53,7 +53,7 @@ namespace dd4hep {
                 G4double Leakage; //Leakage energy
                 G4double NeutrinoLeakage; //Neutrino leakage energy
                 
-                std::unordered_map<int, std::unordered_map<unsigned int, G4int>> fibre_signals_map;
+                std::unordered_map<int, std::unordered_map<int, G4int>> fibre_signals_map;
                 
 
         };

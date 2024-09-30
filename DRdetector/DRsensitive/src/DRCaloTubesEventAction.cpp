@@ -59,7 +59,7 @@ namespace dd4hep {
                 const auto& fibre_map = tower_entry.second;
 
                 for (const auto& fibre_entry : fibre_map) {
-                    unsigned int fibre_id = fibre_entry.first;
+                    int fibre_id = fibre_entry.first;
                     G4int signal_count = fibre_entry.second;
 
                     tower_ids.push_back(tower_id);
@@ -98,13 +98,13 @@ namespace dd4hep {
             analysisManager->AddNtupleRow();
         }
 
-        void DRCaloTubesEventAction::AddFibreSignal(int tower_id, unsigned int fibre_id, G4int n) {
+        void DRCaloTubesEventAction::AddFibreSignal(int tower_id,  int fibre_id, G4int n) {
             // Check if the tower_id exists in the map
             auto tower_it = fibre_signals_map.find(tower_id);
             
             // If tower_id doesn't exist, create a new map for it
             if (tower_it == fibre_signals_map.end()) {
-                fibre_signals_map.insert({tower_id, std::unordered_map<unsigned int, G4int>()});
+                fibre_signals_map.insert({tower_id, std::unordered_map<int, G4int>()});
                 tower_it = fibre_signals_map.find(tower_id);
             }
             
