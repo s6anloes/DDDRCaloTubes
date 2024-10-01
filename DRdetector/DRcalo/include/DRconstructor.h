@@ -76,34 +76,9 @@ private:
     bool m_cher_clad_isSensitive;
     bool m_cher_core_isSensitive;
 
-    // Full length volumes placed repeatedly to reduce memory usage
-    Volume m_scin_tube_volume_full_length;
-    Volume m_scin_clad_volume_full_length;
-    Volume m_scin_core_volume_full_length;
-
-    Volume m_cher_tube_volume_full_length;
-    Volume m_cher_clad_volume_full_length;
-    Volume m_cher_core_volume_full_length;
-
-    Tube m_capillary_solid_full_length;
-    Tube m_scin_clad_solid_full_length;
-    Tube m_scin_core_solid_full_length;
-    Tube m_cher_clad_solid_full_length;
-    Tube m_cher_core_solid_full_length;
-
     Volume* m_capillary_vol_to_be_placed;
     std::unordered_map<int, Volume> m_scin_tube_volume_map;
     std::unordered_map<int, Volume> m_cher_tube_volume_map;
-    std::unordered_map<int, Volume> m_scin_clad_volume_map;
-    std::unordered_map<int, Volume> m_scin_core_volume_map;
-    std::unordered_map<int, Volume> m_cher_clad_volume_map;
-    std::unordered_map<int, Volume> m_cher_core_volume_map;
-    
-    std::unordered_map<int, Tube> m_capillary_solid_map;
-    std::unordered_map<int, Tube> m_scin_clad_solid_map;
-    std::unordered_map<int, Tube> m_scin_core_solid_map;
-    std::unordered_map<int, Tube> m_cher_clad_solid_map;
-    std::unordered_map<int, Tube> m_cher_core_solid_map;
 
     double m_tolerance;
 
