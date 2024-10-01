@@ -321,18 +321,24 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher)
 }
 
 
-
+// Similar to calculate_tower_width (see abelow), but for the encasing trapezoid support volume
+// Width is calculated for any given point in th z-y plane
 double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double given_z, bool backface)
 {
     // Calculate width (x_direction) of trapezoid at given y
-    // Assuming y=0 corresponds to m_trap_frontface_rightangleedge_x
+    // Assuming y=0 corresponds to right angle edge of the tower
     if (given_z>2*m_trap_half_length) throw std::runtime_error("calculate_trap_width: Given z is larger than length of trapezoid");
+
+    // Since the height (in y direction of the trapezoid) changes along z, we need to calculate the maximum y for a given z
     double max_y_for_given_z;
+    // given_z can be interpreted as distance from either the front or the back of the tower (in z direction)
     if (backface) max_y_for_given_z = m_trap_backface_y - given_z*m_tower_tan_theta;
     else          max_y_for_given_z = m_trap_frontface_y + given_z*m_tower_tan_theta;
     if (given_y > max_y_for_given_z) throw std::runtime_error("calculate_trap_width: Given y is larger than maximum y for given z");
 
+    // How much the width (x direction) changes due to the y position (tower becoming narrower to ensure constant phi)
     double delta_y = -2.0*given_y*std::tan(m_angle_edges_x);
+    // How much the width (x direction) changes due to the z position (tower becoming wider in the back to ensure projectivity)
     double delta_z;
     if (backface) delta_z = -2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
     else          delta_z =  2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
@@ -345,6 +351,20 @@ double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double
 
 }
 
+
+// Calculate width of tower in x direction at given row of tubes
+/*
+    Sketch of the tower volume in the xy plane
+    _____________________
+    \                   /
+     \-----------------/  Note that the width will not be calculated at the centre of the row
+      \               /   but instead, where the tubes first touch the wall
+   y^  \             /  
+    |   \___________/
+    |   
+    |______> x
+    /
+ |/_ z                                          */
 double DDDRCaloTubes::DRconstructor::calculate_tower_width(int given_row, bool backface)
 {
     // Calculate width (x_direction) of tower at given row
@@ -355,17 +375,17 @@ double DDDRCaloTubes::DRconstructor::calculate_tower_width(int given_row, bool b
 
 
     double tower_x;
+    // Toggle between the back and front in z direction (not shown in sketch)
     if (backface) tower_x = m_tower_backface_rightangleedge_x  - 2.0*y*std::tan(m_angle_edges_x);
     else          tower_x = m_tower_frontface_rightangleedge_x - 2.0*y*std::tan(m_angle_edges_x);
 
     return tower_x;
 }
 
-void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
-{
 
-    // Placement and shortening of tube depends on whether the rows have an offset or not
-    
+// Place all tubes which make up the tower
+void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
+{    
     // Y-distance of rightangle wall from coordinate system origin
     // Used throughout this function
     double tower_centre_r = m_tower_half_length/std::cos(m_tower_polar_angle);
@@ -381,7 +401,6 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
     // plane equations to calculate length of tubes at the tower sides
     std::vector<double> plane_right_coefficients = get_plane_equation(back_upper_right_corner, back_lower_right_corner, front_upper_right_corner);
     Direction line_direction = Direction(0, 0, -1);
-
 
     // width of tower at row 0 (right angle edge)
     // "at row X" meaning the width of the tower at the height of where the tubes first touch the wall in row X
@@ -416,6 +435,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
     std::cout << "TOTAL ROWS = " << num_rows << " COLS = " << num_back_cols_rightangleedge << std::endl;
 
+    // Loop over the rows of tubes in the tower, starting at the right angle edge
     for (unsigned int row = 0; row < num_rows; row++, covered_tower_y+=m_V)
     {
 
@@ -441,16 +461,19 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
         // 
         // Calculate starting column ID based on even or odd row and adapt the covered_tower_x accordingly.
         unsigned int col;
-        double covered_tower_x;
         if (num_back_cols_rightangleedge & 1)   // Uneven number of tubes (so we have a central tube with column ID = 0)
         {
-            col = row&1;                        // alternating between 0 and 1 (row index starts at 0, so first is colID = 0)
-            covered_tower_x = m_capillary_outer_r*std::cos(m_angle_edges_x); // How much the first tube covers in x direction, increases in loop
+            col = (row&1) ? 1 : 0;              // alternating between 0 and 1 (row index starts at 0, so first is colID = 0)
+
         } else                                  // Even number of tubes (no central tube, colID starts at 1)
         {
-            col = 1 - (row&1);
-            covered_tower_x = m_capillary_outer_r + m_capillary_outer_r*std::cos(m_angle_edges_x);
+            col = (row&1) ? 0 : 1;
         }
+
+        double covered_tower_x;  // How much the first tube covers in x direction, then increases in loop
+        // Start value depends on whether there is a central tube or not:
+        covered_tower_x = (col & 1) ? m_capillary_outer_r + m_capillary_outer_r*std::cos(m_angle_edges_x) 
+                                    : m_capillary_outer_r*std::cos(m_angle_edges_x);
 
         // Width of the tower at the front face for this row
         // Used to check when to shorten the tubes, along with covered_tower_x
@@ -458,6 +481,7 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 
         // We don't calculate how many tubes will fit beforehand, since this varies between rows
         // Instead, place tubes as long as there is space
+        // The column placement starts in the middle and goes outwards in both directions
         while (covered_tower_x < tower_x/2.0)
         {
             // TODO: Check what objects can be moved outside of loop (string _name, Tube _solid, etc.)
@@ -542,18 +566,20 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
 // Function to calculate the position of the tower in stave
 void DDDRCaloTubes::DRconstructor::calculate_tower_position()
 {
-    
+    // Since the Trapezoids are defined including polar and azimuthal angles, we need to convert between cartesian and polar coordinates
     double trap_centre_r = m_trap_half_length/std::cos(m_trap_polar_angle);
 
-    // double trap_centre_half_x = trap_centre_r*std::sin(m_trap_polar_angle)*std::cos(m_trap_azimuthal_angle) + m_trap_frontface_rightangleedge_x/2.0;
     double trap_centre_half_y = trap_centre_r*std::sin(m_trap_polar_angle)*std::sin(m_trap_azimuthal_angle) + m_trap_frontface_y/2.0;
+
+    // distance in radial direction (from the interaction point) along the z direction of the trapezoid
+    // Due to the coordinate system of the trapezoid, this is not in the centre of x and y
     double trap_rad_centre = m_calo_inner_r/std::cos(m_covered_theta) + m_back_shift + m_trap_half_length;
 
+    // coordinated of the tower as if it was in global coordinates (was easier to visualise this way during development)
     double stave_x = std::cos(m_covered_theta)*trap_rad_centre - std::sin(m_covered_theta)*trap_centre_half_y;
-    // double stave_y = 0;
     double stave_z = std::sin(m_covered_theta)*trap_rad_centre + std::cos(m_covered_theta)*trap_centre_half_y;
 
-    
+    // coordinates of the tower converted to the stave coordinate system
     double tower_x = 0;
     double tower_y = stave_z;
     double tower_z = stave_x-(m_calo_inner_r+m_stave_half_length);
