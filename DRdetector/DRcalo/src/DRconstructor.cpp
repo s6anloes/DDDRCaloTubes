@@ -10,6 +10,8 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
                                             SensitiveDetector* sens):
                                             m_entities(entities)
 {
+    // Initialising the all the calorimeter and tower variables
+
     m_description = description;
     m_sens = sens;
 
@@ -65,6 +67,7 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_cher_core_visString   = x_cher_core.visStr();
     m_cher_core_isSensitive = x_cher_core.isSensitive();
 
+    // Some safety checks for the entered tube parameters
     if (m_capillary_outer_r <= 0.0*mm) throw std::runtime_error("Capillary radius needs to be larger than 0");
     if (m_capillary_outer_r < m_scin_clad_outer_r || m_capillary_outer_r < m_cher_clad_outer_r) throw std::runtime_error("Capillary radius needs to be larger than scintillation cladding and cherenkov cladding radii");
     if (m_scin_clad_outer_r < m_scin_core_outer_r) throw std::runtime_error("Scintillation cladding radius needs to be larger than scintillation core radius");
@@ -76,11 +79,11 @@ DDDRCaloTubes::DRconstructor::DRconstructor(Detector* description,
     m_tower_phi   = x_dim.deltaphi();
 
 
-    // Construction parameters
+    // Construction parameters which change for each placed tower in a stave
     m_covered_theta = 0.0*deg;
     m_back_shift = 0.0*mm;
-    // m_tower_volume = nullptr;
 
+    // Calculate all the derived parameters which are not taken from the xml file
     this->calculate_tower_parameters();
     this->calculate_phi_parameters();
 
@@ -105,29 +108,35 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_parameters()
     // Constants used through the function
     double D = 4.0*m_capillary_outer_r/sqrt(3.0); // Long diagonal of hexagaon with capillary_outer_r as inradius
     m_V = 3.0*D/4.0;                        // Vertical spacing for pointy top oriented tubes
-    m_overlap = m_capillary_diameter - m_V; // Overlap between tubes
 
-
+    // Some values which are used multiple times are calculated here once
     m_tower_half_phi = m_tower_phi/2.0; // Half of the tower phi angle
     m_tower_tan_half_phi = std::tan(m_tower_half_phi); // Needed several times, calculate once here
 
 
     m_stave_half_length  = (m_calo_outer_r*std::cos(m_tower_half_phi) - m_calo_inner_r)/2; // Trapezoid half length
 
-    // Protection against tilted towers in theta to go past the outer radius of the calorimeter
+    // Protection against tilted towers in theta going past the outer radius of the calorimeter
     double protect_covered_z = std::tan(m_tower_theta)*m_calo_inner_r;
     double protect_tower_z = std::tan(2*m_tower_theta)*m_calo_inner_r - protect_covered_z;
     double protect_back_shift = std::sin(m_tower_theta)*protect_tower_z;
 
+    // "_trap_" always* refers to the Trap volume including the support structure
     m_trap_half_length = m_stave_half_length/std::cos(m_tower_theta) - protect_back_shift/2;
     
+    // "_tower_" always* refers to the collection of tubes forming the tower
+    // "Tower" volume encapsulates the air, which is "hollowing out" the trapezoid volume
     m_tower_half_length = m_trap_half_length - m_trap_wall_thickness_front/2.0 - m_trap_wall_thickness_back/2.0; // Tower half length
+
+    // * "always" means that I tried to use it consistently, but there might be exceptions (like m_tower_phi&theta refer to the full strucutre, including support)
+    // due to the history of the code, where I started out without the support, only the collection of tubes 
 }
 
 // Function to calculate tower parameters specifically for phi direction
 void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
 {
     double num_phi_towers_d = 360.0*deg/m_tower_phi;
+    if (num_phi_towers_d < 0.0) throw std::runtime_error("Negative tower phi coverage not allowed");
     // Check if num_phi_towers is a whole number
     if (check_for_integer(num_phi_towers_d)) m_num_phi_towers = static_cast<unsigned int>(std::round(num_phi_towers_d));
     else throw std::runtime_error("Not an integer number of towers in phi direction");
@@ -135,45 +144,84 @@ void DDDRCaloTubes::DRconstructor::calculate_phi_parameters()
     
 }
 
+// Function to calculate the size parameters for the trap volume (including support)
+// Depends a lot on m_covered_theta, which is increased with each tower placement in theta direction
+/*  Sketch of a tower in the z-x (or z-y) plane
+     ____________
+    |           /       Each tower is a trapezoid with a front face (bottom in the sketch) and a back face (top in the sketch)
+    |          /        The front face is narrower than the back face, to ensure that the tower is projective
+    |         /         Also each tower has a right angled face with the front and back face (left in the sketch) 
+    |        /          and a theta angle side (right in the sketch)
+    |       /           Anytime a variable contains "edge" it refers to the edge that would be running in y direction in this sketch with global coordinates
+    |      /            (but would be x direction in the local coordinate system of the Trap volume)
+ x  |     /
+ ^  |    /
+ |  |___/
+ |
+ |____> z
+
+*/
 void DDDRCaloTubes::DRconstructor::calculate_theta_parameters()
 {
-    // Approximate tower position in z direction
+    // How much the front faces of the placed towers cover in z direction in the global coordinate system
     double covered_z = std::tan(m_covered_theta)*m_calo_inner_r;
 
-    double tower_max_theta = m_covered_theta+m_tower_theta;
-    double tower_max_z = std::tan(tower_max_theta)*m_calo_inner_r - covered_z; // Max distance the front face of this tower covers in z (not regarding how many fibres actually fit)
-    double tower_max_frontface_y = std::cos(m_covered_theta)*tower_max_z; // Tower height (in theta direction) without regarding how many tubes actually fit
+    // The cummulative theta value which this trapezoid will cover once placed 
+    double trap_theta = m_covered_theta+m_tower_theta;
+    // Distance the front face of this trapezoid will cover in z 
+    double trap_z = std::tan(trap_theta)*m_calo_inner_r - covered_z; 
+     // Tower height 
+    double trap_frontface_y = std::cos(m_covered_theta)*trap_z;
 
-    if (tower_max_frontface_y < m_capillary_diameter)
+    if (trap_frontface_y < m_capillary_diameter)
     {
         throw std::runtime_error("Can't construct tower with given tower_theta and calo_inner_radius");
     }
 
+    // Used throughout construction, so calculate once here
     m_tower_tan_theta = std::tan(m_tower_theta);
-    m_trap_frontface_y = tower_max_frontface_y;
-    m_trap_backface_y  = tower_max_frontface_y + 2*m_trap_half_length*m_tower_tan_theta;
 
+    // Front and back face of the trapezoid
+    m_trap_frontface_y = trap_frontface_y;
+    m_trap_backface_y  = trap_frontface_y + 2*m_trap_half_length*m_tower_tan_theta; // calculated based on how much the tower widens in the back
+
+    // Tower sizes based on the wall thickness of the "support" envelope (needs adjustment for angles of tower)
     m_tower_frontface_y = m_trap_frontface_y + m_trap_wall_thickness_front*m_tower_tan_theta - m_trap_wall_thickness_sides*(1+1/std::cos(m_tower_theta));
     m_tower_backface_y  = m_trap_backface_y  - m_trap_wall_thickness_back*m_tower_tan_theta  - m_trap_wall_thickness_sides*(1+1/std::cos(m_tower_theta));
     
-    // Distance by which straight edge of this tower is shifted backwards to ensure inner radius of calorimeter
+    // Distance by which right angle edge of this tower is shifted backwards to ensure inner radius of calorimeter
     m_back_shift = std::tan(m_covered_theta)*m_trap_frontface_y;                      
 
-    // Frontface width of trapezoid support
+    // Width in y direction in sketch above (x direction in local coordinates)
     m_trap_frontface_rightangleedge_x = (m_calo_inner_r+std::cos(m_covered_theta)*m_back_shift)*2*m_tower_tan_half_phi;
     m_trap_frontface_thetaangleedge_x = m_calo_inner_r*2*m_tower_tan_half_phi;
 
-
-    double tower_backface_phi_increase_rightangleedge = 2*m_trap_half_length*std::cos(m_covered_theta) * 2*m_tower_tan_half_phi; // by how much the backface wides for both tower and trap
-    double tower_backface_phi_increase_thetaangleedge = 2*m_trap_half_length/std::cos(m_tower_theta)*std::cos(m_covered_theta+m_tower_theta) * 2*m_tower_tan_half_phi; // by how much the backface wides for both tower and trap
+    // by how much the backface widens for both tower and trap for the right angled side of the tower
+    double tower_backface_phi_increase_rightangleedge = 2*m_trap_half_length*std::cos(m_covered_theta) * 2*m_tower_tan_half_phi;
+     // the theta angles side widens differently, because they are not the same length
+    double tower_backface_phi_increase_thetaangleedge = 2*m_trap_half_length/std::cos(m_tower_theta)*std::cos(m_covered_theta+m_tower_theta) * 2*m_tower_tan_half_phi;
 
     m_trap_backface_rightangleedge_x = m_trap_frontface_rightangleedge_x + tower_backface_phi_increase_rightangleedge;
     m_trap_backface_thetaangleedge_x = m_trap_frontface_thetaangleedge_x + tower_backface_phi_increase_thetaangleedge;
 
+    // The effective thickness is used to calculate the size of the "air" tower volume
+    // It takes into account, that the wall is tilted in phi direction
     double effective_side_wall_thickness_x = m_trap_wall_thickness_sides/std::cos(m_tower_phi);
 
+    // When looking at the tower from the front (or back), the angle created by a vertical line and the sides of the tower
     m_angle_edges_x = std::atan2((m_trap_backface_rightangleedge_x-m_trap_backface_thetaangleedge_x)/2.0, m_trap_backface_y);
+     /*
+        ________________
+        \              /   So the angle in the bottom left (or right) corner here
+         \ _|         /   
+       y^ \ |        /  
+        |  \|_______/
+        |   
+        |______> x
+    
+    */
 
+    // Calculating all tower widths (horizontal lines in sketch above) for both front and back face (in z direction)
     m_tower_frontface_rightangleedge_x = calculate_trap_width(m_trap_wall_thickness_sides, m_trap_wall_thickness_front, false) - 2.0*effective_side_wall_thickness_x;
 
     m_tower_backface_rightangleedge_x = calculate_trap_width(m_trap_wall_thickness_sides, m_trap_wall_thickness_back, true) - 2.0*effective_side_wall_thickness_x;
@@ -268,9 +316,9 @@ double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double
     else          max_y_for_given_z = m_trap_frontface_y + given_z*m_tower_tan_theta;
     if (given_y > max_y_for_given_z) throw std::runtime_error("calculate_trap_width: Given y is larger than maximum y for given z");
 
-    // How much the width (x direction) changes due to the y position (tower becoming narrower to ensure constant phi)
+    // How much the width (x direction) changes due to the y position 
     double delta_y = -2.0*given_y*std::tan(m_angle_edges_x);
-    // How much the width (x direction) changes due to the z position (tower becoming wider in the back to ensure projectivity)
+    // How much the width (x direction) changes due to the z position
     double delta_z;
     if (backface) delta_z = -2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
     else          delta_z =  2.0*given_z*std::cos(m_covered_theta)*m_tower_tan_half_phi;
@@ -507,7 +555,7 @@ void DDDRCaloTubes::DRconstructor::calculate_tower_position()
     // Due to the coordinate system of the trapezoid, this is not in the centre of x and y
     double trap_rad_centre = m_calo_inner_r/std::cos(m_covered_theta) + m_back_shift + m_trap_half_length;
 
-    // coordinated of the tower as if it was in global coordinates (was easier to visualise this way during development)
+    // coordinates of the tower as if it was in global coordinates (was easier to visualise this way during development)
     double stave_x = std::cos(m_covered_theta)*trap_rad_centre - std::sin(m_covered_theta)*trap_centre_half_y;
     double stave_z = std::sin(m_covered_theta)*trap_rad_centre + std::cos(m_covered_theta)*trap_centre_half_y;
 
@@ -526,7 +574,6 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
         
         // polar coordinate conversion
-        // double delta_x = 0;
         double delta_y = (m_trap_backface_y - m_trap_frontface_y)/2.0;
         double delta_z = 2.0*m_trap_half_length;
         m_trap_polar_angle = std::acos(delta_z/std::sqrt(delta_y*delta_y + delta_z*delta_z));
@@ -538,7 +585,6 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
 
         // Air volume in which fibres are placed
-        // double delta_x_air = 0;
         double delta_y_air = (m_tower_backface_y - m_tower_frontface_y)/2.0;
         double delta_z_air = 2.0*m_tower_half_length;
         m_tower_polar_angle = std::acos(delta_z_air/std::sqrt(delta_y_air*delta_y_air + delta_z_air*delta_z_air));
@@ -547,7 +593,10 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         Trap tower_air_solid("tower_solid", m_tower_half_length, m_tower_polar_angle, m_tower_azimuthal_angle, 
                                       m_tower_frontface_y/2.0, m_tower_frontface_rightangleedge_x/2.0, m_tower_frontface_thetaangleedge_x/2.0, 0.,
                                       m_tower_backface_y/2.0,  m_tower_backface_rightangleedge_x/2.0,  m_tower_backface_thetaangleedge_x/2.0,  0.);
-                                
+
+        // Position of the air volume in the trapezoid
+        // y coordinate depends on wall thickness at the sides and how much the one wall is rotated in theta
+        // z coordinates depedns on how thick the front and back walls are                        
         Position tower_air_pos = Position(0,
                                          (1.0-1.0/std::cos(m_tower_theta))*m_trap_wall_thickness_sides,
                                          (m_trap_wall_thickness_front-m_trap_wall_thickness_back)/2.0/* +10*nm */);
@@ -564,6 +613,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         PlacedVolume tower_air_placed = trap_volume.placeVolume(tower_air_volume, tower_air_pos);
         tower_air_placed.addPhysVolID("air", 1);
 
+        // Place all the tubes inside the tower
         this->assemble_tower(tower_air_volume);
     
 }
@@ -571,47 +621,34 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
 
 void DDDRCaloTubes::DRconstructor::construct_tower(Volume& trap_volume)
 {
-    
+    // For each placed tower, recalculate the parameters
     this->calculate_theta_parameters();
-
+    // and construct the tower from this
     this->construct_tower_trapezoid(trap_volume);
-
 }
 
 
-void DDDRCaloTubes::DRconstructor::reset_tower_parameters()
-{
-    m_tower_tan_theta = 0.0;
-    // m_back_shift = 0.0*mm;
-}
-
+// Placement of the tower in the stave volume
 void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
                  Volume& tower_volume,
                  unsigned int layer)
 {
-
-
-    RotationZ rot_fourth = RotationZ(0*deg);
     
-    // Forward barrel region
-    // RotationZ rot_first_fwd = RotationZ(0*deg);
-    // RotationY rot_second_fwd = RotationY(90*deg-m_covered_theta);
     double tower_x = m_tower_position.x();
     double tower_y = m_tower_position.y();
     double tower_z = m_tower_position.z();
 
-
-    RotationZ rot_first_fwd = RotationZ(0*deg);
-    RotationX rot_second_fwd = RotationX(-m_covered_theta);
-    Transform3D tower_fwd_tr(rot_fourth*rot_second_fwd*rot_first_fwd, Position(tower_x, tower_y, tower_z));
+    // Forward barrel region
+    RotationX rot_fwd = RotationX(-m_covered_theta);
+    Transform3D tower_fwd_tr(rot_fwd, Position(tower_x, tower_y, tower_z));
     PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, layer, tower_fwd_tr);
     tower_fwd_placed.addPhysVolID("layer", layer);
 
     // Backward barrel region
-    Position m_tower_bwd_pos = Position(m_tower_position.x(), -m_tower_position.y(), m_tower_position.z());
+    Position m_tower_bwd_pos = Position(tower_x, -tower_y, tower_z);
     RotationZ rot_first_bwd = RotationZ(180*deg);
     RotationX rot_second_bwd = RotationX(m_covered_theta);
-    Transform3D tower_bwd_tr(rot_fourth*rot_second_bwd*rot_first_bwd, m_tower_bwd_pos);
+    Transform3D tower_bwd_tr(rot_second_bwd*rot_first_bwd, m_tower_bwd_pos);
     PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -layer, tower_bwd_tr);
     tower_bwd_placed.addPhysVolID("layer", -layer);
 

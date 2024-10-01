@@ -35,7 +35,6 @@ public:
     void calculate_tower_position();
     void construct_tower(Volume& trap_volume);
     void increase_covered_theta(const double& delta_theta) {m_covered_theta += delta_theta;}
-    void reset_tower_parameters();
     void place_tower(Volume& stave_volume,
                         Volume& tower_volume,
                         unsigned int layer);
@@ -87,7 +86,6 @@ private:
     // Constants used through the function (calculated from other parameters)
     // double m_D; // Long diagonal of hexagaon with capillary_outer_r as inradius
     double m_V; // Vertical spacing for pointy top oriented tubes
-    double m_overlap; // Overlap between tubes
 
     // Tower parameters
     double m_tower_theta;
