@@ -346,7 +346,7 @@
                 tower_phi="TowerPhiCoverage" />
 
             <!-- NO SPACES BETWEEN ID DESCRIPTORS!!! -->
-            <id>system:5,stave:10,layer:-8,air:1,col:10,row:7,clad:1,core:1,cherenkov:1</id>
+            <id>system:5,stave:10,layer:-8,air:1,col:-11,row:7,clad:1,core:1,cherenkov:1</id>
             
             <!-- <segmentation type="CartesianGridXY" 
                 grid_size_x="1*mm" 
@@ -393,14 +393,14 @@
             visible="true" />
 
         <vis name="air_vis" 
-            alpha="0.1"
+            alpha="0.10"
             r="1.0" g="0.0" b="0.0"
             showDaughters="true"
             visible="false" />
 
         <vis name="trap_vis"
-            alpha="1.0"
-            r="0." g="0.647" b="0."
+            alpha="0.10"
+            r="0.1" g="0.647" b="0.1"
             showDaughters="true"
             visible="true" />
 
