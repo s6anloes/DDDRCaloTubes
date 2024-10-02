@@ -521,16 +521,16 @@ void DDDRCaloTubes::DRconstructor::assemble_tower(Volume& tower_air_volume)
             this->assert_tube_existence(key, cher);
 
             // Get the right tube to be placed, including daughters
-            m_capillary_vol_to_be_placed = &(volume_map->at(key));
+            Volume capillary_vol_to_be_placed = volume_map->at(key);
 
             // Place the right side tube
-            PlacedVolume    tube_placed = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id, position);
+            PlacedVolume    tube_placed = tower_air_volume.placeVolume(capillary_vol_to_be_placed, tube_id, position);
             tube_placed.addPhysVolID("air",0).addPhysVolID("col", col).addPhysVolID("row", row);
 
             // If column is not the central one, place the mirrored tube on the other side of the tower
             if (col>0)
             {
-                PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(*m_capillary_vol_to_be_placed, tube_id_mirrored, position_mirrored);
+                PlacedVolume    tube_placed2 = tower_air_volume.placeVolume(capillary_vol_to_be_placed, tube_id_mirrored, position_mirrored);
                 tube_placed2.addPhysVolID("air",0).addPhysVolID("col", -col).addPhysVolID("row", row);
             }
             
@@ -657,6 +657,7 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
 
 void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_volume)
 {
+    // Parameters for stave contruction. Shape is a trapezoid over the full barrel region (forward and backward)
     double dy1 = m_calo_inner_half_z;
     double dy2 = m_calo_inner_half_z+2*m_stave_half_length;
     double dx1 = m_calo_inner_r*m_tower_tan_half_phi;
@@ -669,6 +670,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     RotationZ rot_first = RotationZ(90*deg);
     RotationY rot_second = RotationY(90*deg);
     short int layer = 1;
+    // Place towers in theta direection into the stave as long we are in the barrel region
     while (m_covered_theta<m_barrel_endcap_angle)
     {
         std::cout << "layer = " << layer << std::endl;
@@ -678,7 +680,6 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
         this->calculate_tower_position();
         /* if (layer==8)  */this->place_tower(stave_volume, trap_volume, layer);
-        // this->place_tower(calorimeter_volume, trap_volume, stave, layer, tower_id, phi);
         this->increase_covered_theta(m_tower_theta);
         
         // if (layer >= 1) break;
@@ -686,19 +687,22 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     }
 
     double phi = 0*deg;
+    // Variable used to calculate stave position
     double centre_stave_vol = m_calo_inner_r + m_stave_half_length;
+    // Placing of the staves
     for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
-        RotationZ rot_fourth = RotationZ(phi);
+        RotationZ rot_third = RotationZ(phi);
+        // stave position in the calorimeter volume
         double stave_x = centre_stave_vol*std::cos(phi);
         double stave_y = centre_stave_vol*std::sin(phi);
-        Transform3D stave_tr(rot_fourth*rot_second*rot_first, Position(stave_x,stave_y,0));
+        Transform3D stave_tr(rot_third*rot_second*rot_first, Position(stave_x,stave_y,0));
         PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
         stave_placed.addPhysVolID("stave", stave);
     }
 
     //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
-    std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
-    std::cout << "Length of S map = " << m_scin_tube_volume_map.size() << std::endl;
+    // std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
+    // std::cout << "Length of S map = " << m_scin_tube_volume_map.size() << std::endl;
 
 }

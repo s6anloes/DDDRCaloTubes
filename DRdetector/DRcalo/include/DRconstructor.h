@@ -75,7 +75,7 @@ private:
     bool m_cher_clad_isSensitive;
     bool m_cher_core_isSensitive;
 
-    Volume* m_capillary_vol_to_be_placed;
+
     std::unordered_map<int, Volume> m_scin_tube_volume_map;
     std::unordered_map<int, Volume> m_cher_tube_volume_map;
 
