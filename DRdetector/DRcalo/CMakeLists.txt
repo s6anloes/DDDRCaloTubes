@@ -11,7 +11,6 @@ dd4hep_add_plugin(DDDRCaloTubes SOURCES src/*.cpp USES
   ROOT::Geom
   ROOT::GenVector
   ROOT::MathCore
-  DRsegmentation
 )
 
 target_include_directories(DDDRCaloTubes PUBLIC

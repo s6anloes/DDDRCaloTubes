@@ -77,8 +77,8 @@
         <constant name="TowerThetaCoverage"  value="1.0*deg"/>
         <constant name="TowerPhiCoverage"    value="1.0*deg"  />
 
-        <constant name="SupportSideThickness" value="0.45*cm" />
-        <constant name="SupportFrontThickness" value="0.5*cm" />
+        <constant name="SupportSideThickness" value="1.0*mm" />
+        <constant name="SupportFrontThickness" value="1.0*mm" />
         <constant name="SupportBackThickness" value="0.0*cm" />
         
     </define>
@@ -340,18 +340,12 @@
 
     <readouts>
         <readout name="MyReadout">
-            <segmentation type="DRCaloTubesGrid" 
-                grid_size="2*TubeOuterRadius"
-                tower_theta="TowerThetaCoverage"
-                tower_phi="TowerPhiCoverage" />
-
             <!-- NO SPACES BETWEEN ID DESCRIPTORS!!! -->
             <id>system:5,stave:10,layer:-8,air:1,col:-11,row:7,clad:1,core:1,cherenkov:1</id>
             
-            <!-- <segmentation type="CartesianGridXY" 
+            <segmentation type="CartesianGridXY" 
                 grid_size_x="1*mm" 
                 grid_size_y="1*mm"/>
-            <id>system:5,side:2,module:9,stave:1,layer:9,submodule:4,x:32:-16,y:-16</id> -->
         </readout>
     </readouts>
 

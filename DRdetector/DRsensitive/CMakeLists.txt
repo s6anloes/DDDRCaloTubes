@@ -19,7 +19,6 @@ set_target_properties(DRsensitive PROPERTIES PUBLIC_HEADER "${headers}")
 
 target_link_libraries(
   DRsensitive
-  DRsegmentation
   DD4hep::DDCore
   DD4hep::DDG4
 )
