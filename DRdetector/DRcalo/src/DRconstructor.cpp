@@ -631,7 +631,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower(Volume& trap_volume)
 // Placement of the tower in the stave volume
 void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
                  Volume& tower_volume,
-                 unsigned int layer)
+                 unsigned int tower)
 {
     
     double tower_x = m_tower_position.x();
@@ -641,16 +641,16 @@ void DDDRCaloTubes::DRconstructor::place_tower(Volume& stave_volume,
     // Forward barrel region
     RotationX rot_fwd = RotationX(-m_covered_theta);
     Transform3D tower_fwd_tr(rot_fwd, Position(tower_x, tower_y, tower_z));
-    PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, layer, tower_fwd_tr);
-    tower_fwd_placed.addPhysVolID("layer", layer);
+    PlacedVolume tower_fwd_placed = stave_volume.placeVolume(tower_volume, tower, tower_fwd_tr);
+    tower_fwd_placed.addPhysVolID("tower", tower);
 
     // Backward barrel region
     Position m_tower_bwd_pos = Position(tower_x, -tower_y, tower_z);
     RotationZ rot_first_bwd = RotationZ(180*deg);
     RotationX rot_second_bwd = RotationX(m_covered_theta);
     Transform3D tower_bwd_tr(rot_second_bwd*rot_first_bwd, m_tower_bwd_pos);
-    PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -layer, tower_bwd_tr);
-    tower_bwd_placed.addPhysVolID("layer", -layer);
+    PlacedVolume tower_bwd_placed = stave_volume.placeVolume(tower_volume, -tower, tower_bwd_tr);
+    tower_bwd_placed.addPhysVolID("tower", -tower);
 
 }
 
@@ -669,21 +669,21 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
     RotationZ rot_first = RotationZ(90*deg);
     RotationY rot_second = RotationY(90*deg);
-    short int layer = 1;
+    short int tower = 1;
     // Place towers in theta direection into the stave as long we are in the barrel region
     while (m_covered_theta<m_barrel_endcap_angle)
     {
-        std::cout << "layer = " << layer << std::endl;
+        std::cout << "tower = " << tower << std::endl;
         Volume trap_volume("tower");
         trap_volume.setMaterial(m_trap_material);
         this->construct_tower(trap_volume);
 
         this->calculate_tower_position();
-        /* if (layer==8)  */this->place_tower(stave_volume, trap_volume, layer);
+        /* if (tower==8)  */this->place_tower(stave_volume, trap_volume, tower);
         this->increase_covered_theta(m_tower_theta);
         
-        // if (layer >= 1) break;
-        layer++;
+        // if (tower >= 1) break;
+        tower++;
     }
 
     double phi = 0*deg;
