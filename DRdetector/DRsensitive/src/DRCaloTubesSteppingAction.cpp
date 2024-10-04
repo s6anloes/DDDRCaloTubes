@@ -136,7 +136,7 @@ namespace dd4hep {
 
             G4int signalhit = 0;
             
-            if ( volume_name.substr(0, 10) == "scin_fibre" ) //scintillating fiber/tube
+            if ( volume_name.substr(0, 9) == "scin_core" ) //scintillating fiber/tube
             { 
                 fEventAction->AddEdepScin(edep);
                 //G4VPhysicalVolume* step_vol  = step->GetTrack()->GetVolume();
@@ -163,7 +163,7 @@ namespace dd4hep {
                 // fEventAction->AddFibreScin(fibre_id, signalhit); 
             } // end of scintillating fibre
 
-            else if ( volume_name.substr(0, 10) == "cher_fibre" ) //Cherenkov fiber/tube
+            else if ( volume_name.substr(0, 9) == "cher_core" ) //Cherenkov fiber/tube
             {
                 fEventAction->AddEdepCher(edep);
                 if ( step->GetTrack()->GetParticleDefinition() == G4OpticalPhoton::Definition() )

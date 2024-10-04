@@ -272,7 +272,7 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher)
 
         // Chrerenkov core
         Tube        cher_core_solid(0.0*mm, m_cher_core_outer_r, length_rounded_down);
-        Volume      cher_core_volume("cher_fibre", cher_core_solid, m_cher_core_material);
+        Volume      cher_core_volume("cher_core", cher_core_solid, m_cher_core_material);
         if (m_cher_core_isSensitive) cher_core_volume.setSensitiveDetector(*m_sens);
         PlacedVolume    cher_core_placed = cher_clad_volume.placeVolume(cher_core_volume);
         cher_core_volume.setVisAttributes(*m_description, m_cher_core_visString);
@@ -289,7 +289,7 @@ void DDDRCaloTubes::DRconstructor::assert_tube_existence(int key, bool cher)
 
         // Scintillation core
         Tube        scin_core_solid(0.0*mm, m_scin_core_outer_r, length_rounded_down);
-        Volume      scin_core_volume("scin_fibre", scin_core_solid, m_scin_core_material);
+        Volume      scin_core_volume("scin_core", scin_core_solid, m_scin_core_material);
         if (m_scin_core_isSensitive) scin_core_volume.setSensitiveDetector(*m_sens);
         PlacedVolume    scin_core_placed = scin_clad_volume.placeVolume(scin_core_volume);
         scin_core_volume.setVisAttributes(*m_description, m_scin_core_visString);
