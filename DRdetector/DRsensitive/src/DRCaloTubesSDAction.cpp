@@ -14,8 +14,6 @@
 #include "G4ProcessManager.hh"
 #include "G4OpBoundaryProcess.hh"
 
-
-#include "DRCaloTubesHit.h"
 #include "DRCaloTubesRunAction.h"
 #include "DRCaloTubesEventAction.h"
 #include "DRCaloTubesSteppingAction.h"
