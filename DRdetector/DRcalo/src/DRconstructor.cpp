@@ -339,10 +339,10 @@ double DDDRCaloTubes::DRconstructor::calculate_trap_width(double given_y, double
     \                   /
      \-----------------/  Note that the width will not be calculated at the centre of the row
       \               /   but instead, where the tubes first touch the wall
-   y^  \             /  
-    |   \___________/
-    |   
-    |______> x
+    y^ \             /  
+     |  \___________/
+     |   
+     |______> x
     /
  |/_ z                                          */
 double DDDRCaloTubes::DRconstructor::calculate_tower_width(int given_row, bool backface)
@@ -614,7 +614,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         tower_air_placed.addPhysVolID("air", 1);
 
         // Place all the tubes inside the tower
-        this->assemble_tower(tower_air_volume);
+        // this->assemble_tower(tower_air_volume);
     
 }
 
@@ -667,6 +667,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
                      dy2, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
     stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
+
     RotationZ rot_first = RotationZ(90*deg);
     RotationY rot_second = RotationY(90*deg);
     short int tower = 1;
@@ -679,7 +680,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         this->construct_tower(trap_volume);
 
         this->calculate_tower_position();
-        /* if (tower==8)  */this->place_tower(stave_volume, trap_volume, tower);
+        // /* if (tower==8)  */this->place_tower(stave_volume, trap_volume, tower);
         this->increase_covered_theta(m_tower_theta);
         
         // if (tower >= 1) break;
@@ -689,6 +690,13 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     double phi = 0*deg;
     // Variable used to calculate stave position
     double centre_stave_vol = m_calo_inner_r + m_stave_half_length;
+
+    Sphere null_solid(0.0*mm, 1.0*mm);
+    Volume united_staves_volume("united_staves_volume");
+    united_staves_volume.setVisAttributes(*m_description, m_cher_clad_visString);
+    united_staves_volume.setMaterial(m_air);
+    united_staves_volume.setSolid(null_solid);
+    // united_staves_volume.placeVolume(stave_volume);
     // Placing of the staves
     for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
@@ -697,9 +705,20 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         double stave_x = centre_stave_vol*std::cos(phi);
         double stave_y = centre_stave_vol*std::sin(phi);
         Transform3D stave_tr(rot_third*rot_second*rot_first, Position(stave_x,stave_y,0));
-        PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
-        stave_placed.addPhysVolID("stave", stave);
+        // PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
+        // stave_placed.addPhysVolID("stave", stave);
+
+        
+        UnionSolid united_staves_solid("united_staves_solid", united_staves_volume.solid(), stave_solid, stave_tr);
+        united_staves_volume.setSolid(united_staves_solid);
+        
     }
+
+    SubtractionSolid subtracted_start_volume("subtracted_start_volume", united_staves_volume.solid(), Sphere(0.0*mm, 1.1*mm));
+    united_staves_volume.setSolid(subtracted_start_volume);
+
+    PlacedVolume united_staves_placed = calorimeter_volume.placeVolume(united_staves_volume);
+    united_staves_placed.addPhysVolID("stave", 1);
 
     //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
     // std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;

@@ -22,7 +22,6 @@ static Ref_t create_detector(Detector& description,
 
     sens.setType("calorimeter");
 
-    // Cylinder encompassing entire calorimeter
     xml_dim_t   x_dim                  = x_det.dimensions();
     double      calo_inner_r           = x_dim.inner_radius();
     double      calo_outer_r           = x_dim.outer_radius();
@@ -38,7 +37,11 @@ static Ref_t create_detector(Detector& description,
     SubtractionSolid both_endcaps_subtraced(front_endcap_subtraced, place_for_endcaps, back_endcap_transform);
 
     Volume      barrel_volume("calorimeter_barrel", both_endcaps_subtraced, air);
-    barrel_volume.setVisAttributes(description, "scin_core_vis");
+    // Solid of barrel volume is created later (in the DRconstructor::construct_calorimeter) as union of the stave volumes
+    // This prevents air gaps between the straight edges of the staves and the envelope (when using a tube as envelope for example)
+    // Volume barrel_volume("calorimeter_barrel");
+    // barrel_volume.setMaterial(air);
+    // barrel_volume.setVisAttributes(description, "scin_core_vis");
 
 
     DetElement    s_detElement(det_name, det_id);
