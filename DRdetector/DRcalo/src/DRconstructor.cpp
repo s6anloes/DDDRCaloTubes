@@ -614,7 +614,7 @@ void DDDRCaloTubes::DRconstructor::construct_tower_trapezoid(Volume& trap_volume
         tower_air_placed.addPhysVolID("air", 1);
 
         // Place all the tubes inside the tower
-        // this->assemble_tower(tower_air_volume);
+        this->assemble_tower(tower_air_volume);
     
 }
 
@@ -680,23 +680,24 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         this->construct_tower(trap_volume);
 
         this->calculate_tower_position();
-        // /* if (tower==8)  */this->place_tower(stave_volume, trap_volume, tower);
+        /* if (tower==8)  */this->place_tower(stave_volume, trap_volume, tower);
         this->increase_covered_theta(m_tower_theta);
         
         // if (tower >= 1) break;
         tower++;
     }
 
+    // Very small solid used as start for the union solid
+    // This way the coordinate system is the same as the global one and we don't need a complicated way to calculate the stave positions
+    // This sphere is subtracted at the end from the solid
+    Sphere start_solid(0.0*mm, m_calo_inner_r*1.0/1000);
+    calorimeter_volume.setSolid(start_solid);
+
+    // Starting value for phi
     double phi = 0*deg;
     // Variable used to calculate stave position
     double centre_stave_vol = m_calo_inner_r + m_stave_half_length;
 
-    Sphere null_solid(0.0*mm, 1.0*mm);
-    Volume united_staves_volume("united_staves_volume");
-    united_staves_volume.setVisAttributes(*m_description, m_cher_clad_visString);
-    united_staves_volume.setMaterial(m_air);
-    united_staves_volume.setSolid(null_solid);
-    // united_staves_volume.placeVolume(stave_volume);
     // Placing of the staves
     for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
@@ -705,20 +706,22 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         double stave_x = centre_stave_vol*std::cos(phi);
         double stave_y = centre_stave_vol*std::sin(phi);
         Transform3D stave_tr(rot_third*rot_second*rot_first, Position(stave_x,stave_y,0));
-        // PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
-        // stave_placed.addPhysVolID("stave", stave);
 
-        
-        UnionSolid united_staves_solid("united_staves_solid", united_staves_volume.solid(), stave_solid, stave_tr);
-        united_staves_volume.setSolid(united_staves_solid);
+        // Update the solid to include this stave part via a union
+        // In each iteration of the loop, the space a new stave takes up is added to the calorimeter volume
+        UnionSolid united_staves_solid("united_staves_solid", calorimeter_volume.solid(), stave_solid, stave_tr);
+        calorimeter_volume.setSolid(united_staves_solid);
+
+        // Then the stave is immediately placed inside the volume
+        PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
+        stave_placed.addPhysVolID("stave", stave);
         
     }
 
-    SubtractionSolid subtracted_start_volume("subtracted_start_volume", united_staves_volume.solid(), Sphere(0.0*mm, 1.1*mm));
-    united_staves_volume.setSolid(subtracted_start_volume);
-
-    PlacedVolume united_staves_placed = calorimeter_volume.placeVolume(united_staves_volume);
-    united_staves_placed.addPhysVolID("stave", 1);
+    // Subtract the initial sphere from the calorimeter volume 
+    // Making it a bit larger to make sure, and also to not bug out the geoDisplay (doesn't do well with exact subtractions, still shows a bit of the volume)
+    SubtractionSolid subtracted_start_volume("calorimeter_barrel_solid", calorimeter_volume.solid(), Sphere(0.0*mm, m_calo_inner_r*2.0/1000));
+    calorimeter_volume.setSolid(subtracted_start_volume);
 
     //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
     // std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
