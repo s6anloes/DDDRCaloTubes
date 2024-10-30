@@ -37,9 +37,11 @@ static Ref_t create_detector(Detector& description,
     Transform3D back_endcap_transform(RotationZYX(0, 0, 180*deg), Position(0, 0, -(calo_inner_half_length+tower_length)/2));
     SubtractionSolid both_endcaps_subtraced(front_endcap_subtraced, place_for_endcaps, back_endcap_transform);
 
-    Volume      barrel_volume("calorimeter_barrel", both_endcaps_subtraced, air);
-    barrel_volume.setVisAttributes(description, "scin_core_vis");
+    // Volume      barrel_volume("calorimeter_barrel", both_endcaps_subtraced, air);
+    // barrel_volume.setVisAttributes(description, "scin_core_vis");
 
+    Assembly barrel_volume("calorimeter_barrel");
+    barrel_volume.setVisAttributes(description, "scin_core_vis");
 
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);
