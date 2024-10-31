@@ -31,16 +31,8 @@ static Ref_t create_detector(Detector& description,
     double tower_length = calo_outer_r - calo_inner_r;
     if (tower_length<=0*mm) throw std::runtime_error("Outer calorimeter radius needs to be larger than inner radius");
 
-    Tube        barrel_tube_solid(calo_inner_r, calo_outer_r, calo_inner_half_length+tower_length);
-    Cone        place_for_endcaps((calo_inner_half_length+tower_length)/2, 0, 0, 0, calo_outer_r);
-    SubtractionSolid front_endcap_subtraced(barrel_tube_solid, place_for_endcaps, Position(0, 0, (calo_inner_half_length+tower_length)/2));
-    Transform3D back_endcap_transform(RotationZYX(0, 0, 180*deg), Position(0, 0, -(calo_inner_half_length+tower_length)/2));
-    SubtractionSolid both_endcaps_subtraced(front_endcap_subtraced, place_for_endcaps, back_endcap_transform);
-
-    // Volume      barrel_volume("calorimeter_barrel", both_endcaps_subtraced, air);
-    // barrel_volume.setVisAttributes(description, "scin_core_vis");
-
     Assembly barrel_volume("calorimeter_barrel");
+    barrel_volume.setMaterial(air);
     barrel_volume.setVisAttributes(description, "scin_core_vis");
 
     DetElement    s_detElement(det_name, det_id);

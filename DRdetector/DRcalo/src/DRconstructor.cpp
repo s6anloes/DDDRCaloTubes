@@ -690,7 +690,6 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
     // Variable used to calculate stave position
     double centre_stave_vol = m_calo_inner_r + m_stave_half_length;
 
-    Assembly stave_assembly("stave_assembly");
 
     // Placing of the staves
     for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
@@ -702,12 +701,8 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
         Transform3D stave_tr(rot_third*rot_second*rot_first, Position(stave_x,stave_y,0));
         PlacedVolume stave_placed = calorimeter_volume.placeVolume(stave_volume, stave, stave_tr);
         stave_placed.addPhysVolID("stave", stave);
-
-        // PlacedVolume stave_placed = stave_assembly.placeVolume(stave_volume, stave, stave_tr);
-        // stave_placed.addPhysVolID("stave", stave);
     }
 
-    // calorimeter_volume.placeVolume(stave_assembly);
     //Print length of tube map m_cher_tube_volume_map and m_scin_tube_volume_map
     std::cout << "Length of C map = " << m_cher_tube_volume_map.size() << std::endl;
     std::cout << "Length of S map = " << m_scin_tube_volume_map.size() << std::endl;
