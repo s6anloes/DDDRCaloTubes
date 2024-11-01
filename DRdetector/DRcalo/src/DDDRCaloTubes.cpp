@@ -33,7 +33,7 @@ static Ref_t create_detector(Detector& description,
 
     Assembly barrel_volume("calorimeter_barrel");
     barrel_volume.setMaterial(air);
-    barrel_volume.setVisAttributes(description, "scin_core_vis");
+    barrel_volume.setVisAttributes(description, "assembly_vis");
 
     DetElement    s_detElement(det_name, det_id);
     Volume        mother_volume = description.pickMotherVolume(s_detElement);

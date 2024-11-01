@@ -666,7 +666,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
                      dy1, dx1, dx1, 0.,
                      dy2, dx2, dx2, 0.);
     Volume stave_volume("stave_volume", stave_solid, m_air);
-    stave_volume.setVisAttributes(*m_description, m_cher_clad_visString);
+    stave_volume.setVisAttributes(*m_description, "stave_vis");
     RotationZ rot_first = RotationZ(90*deg);
     RotationY rot_second = RotationY(90*deg);
     short int tower = 1;
@@ -692,7 +692,7 @@ void DDDRCaloTubes::DRconstructor::construct_calorimeter(Volume& calorimeter_vol
 
 
     // Placing of the staves
-    for (unsigned int stave=1; stave<=m_num_phi_towers; stave++, phi+=m_tower_phi)
+    for (unsigned int stave=0; stave<m_num_phi_towers; stave++, phi+=m_tower_phi)
     {
         RotationZ rot_third = RotationZ(phi);
         // stave position in the calorimeter volume
