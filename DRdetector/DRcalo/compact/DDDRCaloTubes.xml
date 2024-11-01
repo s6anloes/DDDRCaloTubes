@@ -75,7 +75,7 @@
         <constant name="InnerCaloHalfLength" value="2.0*m"  />
 
         <constant name="TowerThetaCoverage"  value="1.0*deg"/>
-        <constant name="TowerPhiCoverage"    value="1.0*deg"  />
+        <constant name="TowerPhiCoverage"    value="10.0*deg"  />
 
         <constant name="SupportSideThickness" value="1.0*mm" />
         <constant name="SupportFrontThickness" value="1.0*mm" />

@@ -9,6 +9,11 @@ SIM.action.calo = "DRCaloTubesSDAction"
 SIM.action.calorimeterSDTypes = [u'calorimeter']
 SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 SIM.filter.calo = ""
+# # configure regex SD
+# SIM.geometry.regexSensitiveDetector['DDDRCaloTubes'] = {'Match':['core'],
+#                                        'OutputLevel':3
+#                                       }
+
 SIM.gun.particle = "e+"
 SIM.gun.position = ('0.0*cm', '0.0*cm', '0.0*cm')
 SIM.gun.distribution = 'uniform'
