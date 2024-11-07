@@ -70,9 +70,9 @@
         <constant name="TubeOuterRadius"  value="1.0*mm"  />
         <constant name="TubeTolerance"    value="50*um" />
 
-        <constant name="InnerCaloRadius"     value="2.0*m"  />
-        <constant name="OuterCaloRadius"     value="4.0*m"  />
-        <constant name="InnerCaloHalfLength" value="2.0*m"  />
+        <constant name="InnerCaloRadius"     value="2.5*m"  />
+        <constant name="OuterCaloRadius"     value="4.5*m"  />
+        <constant name="InnerCaloHalfLength" value="2.5*m"  />
 
         <constant name="TowerThetaCoverage"  value="1.0*deg"/>
         <constant name="TowerPhiCoverage"    value="10.0*deg"  />
