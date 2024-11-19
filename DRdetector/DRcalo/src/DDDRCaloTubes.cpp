@@ -26,7 +26,6 @@ static Ref_t create_detector(Detector& description,
     xml_dim_t   x_dim                  = x_det.dimensions();
     double      calo_inner_r           = x_dim.inner_radius();
     double      calo_outer_r           = x_dim.outer_radius();
-    double      calo_inner_half_length = x_dim.z_length();
 
     double tower_length = calo_outer_r - calo_inner_r;
     if (tower_length<=0*mm) throw std::runtime_error("Outer calorimeter radius needs to be larger than inner radius");
