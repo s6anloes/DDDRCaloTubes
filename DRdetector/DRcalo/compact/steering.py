@@ -10,19 +10,19 @@ SIM.action.calorimeterSDTypes = [u'calorimeter']
 SIM.action.mapActions['DDDRCaloTubes'] = "DRCaloTubesSDAction"
 SIM.filter.calo = ""
 # # configure regex SD
-# SIM.geometry.regexSensitiveDetector['DDDRCaloTubes'] = {'Match':['core'],
+# SIM.geometry.regexSensitiveDetector['DDDRCaloTubes'] = {'Match':['DRBT'],
 #                                        'OutputLevel':3
 #                                       }
 
 SIM.gun.particle = "e+"
 SIM.gun.position = ('0.0*cm', '0.0*cm', '0.0*cm')
 SIM.gun.distribution = 'uniform'
-SIM.gun.energy = 80*GeV
+SIM.gun.energy = 10*GeV
 SIM.gun.multiplicity = 1
-SIM.gun.phiMin = 89.5*deg
-SIM.gun.phiMax = 90.5*deg
-SIM.gun.thetaMin = 79.0*deg
-SIM.gun.thetaMax = 80.0*deg
+SIM.gun.phiMin = -0.5*deg
+SIM.gun.phiMax = 0.5*deg
+SIM.gun.thetaMin = 109.0*deg
+SIM.gun.thetaMax = 110.0*deg
 
 def setupCerenkov(kernel):
 	from DDG4 import PhysicsList
@@ -55,4 +55,4 @@ def exampleUserPlugin(dd4hepSimulation):
 SIM.outputConfig.userOutputPlugin = exampleUserPlugin
 
 SIM.random.seed = 1234567890
-SIM.numberOfEvents = 10
+SIM.numberOfEvents = 1

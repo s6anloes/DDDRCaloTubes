@@ -70,12 +70,12 @@
         <constant name="TubeOuterRadius"  value="1.0*mm"  />
         <constant name="TubeTolerance"    value="50*um" />
 
-        <constant name="InnerCaloRadius"     value="2.5*m"  />
-        <constant name="OuterCaloRadius"     value="4.5*m"  />
-        <constant name="InnerCaloHalfLength" value="2.5*m"  />
+        <constant name="InnerCaloRadius"     value="2.8*m"  />
+        <constant name="OuterCaloRadius"     value="4.6*m"  />
+        <constant name="InnerCaloHalfLength" value="2.8*m"  />
 
         <constant name="TowerThetaCoverage"  value="1.0*deg"/>
-        <constant name="TowerPhiCoverage"    value="10.0*deg"  />
+        <constant name="TowerPhiCoverage"    value="5.0*deg"  />
 
         <constant name="SupportSideThickness" value="1.0*mm" />
         <constant name="SupportFrontThickness" value="1.0*mm" />
@@ -309,7 +309,7 @@
         <detector 
             name="DDDRCaloTubes"
             type="DDDRCaloTubes"
-            id="1234"
+            id="12"
             readout="MyReadout"
             vis="MyVis" >
 
